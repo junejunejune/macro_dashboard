@@ -98,7 +98,25 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .mx-lede { margin: 0; color: var(--color-fg-muted); line-height: 1.6; max-width: 68ch; }
 .mx-lede b { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
 .mx-bar { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); align-items: center; justify-content: space-between; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--color-bg); padding-block: var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); }
+.mx-bar { flex-direction: column; align-items: stretch; }
+.mx-groups { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
+.mx-groups::-webkit-scrollbar { display: none; }
+.mx-grp { font: inherit; font-size: 14px; border: 1px solid transparent; background: transparent; color: var(--color-fg-muted); padding: 6px 12px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+.mx-grp[aria-selected="true"] { background: var(--color-fg); color: var(--color-bg); font-weight: var(--cds-font-weight-medium); }
+.mx-grp:not([aria-selected="true"]):hover { border-color: var(--color-border-line); color: var(--color-fg); }
+.mx-grp:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.mx-bar2 { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); align-items: center; justify-content: space-between; }
 .mx-tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
+.mx-tabs:not(:has(.mx-tab:not([hidden]))) { display: none; }
+@media (max-width: 480px) {
+  .mx-grp { padding: 6px 9px; font-size: 13.5px; }
+  .mx-groups { gap: 2px; }
+  .mx-tab { padding: 5px 9px; font-size: 13px; }
+  .mx-rng { padding: 3px 7px; }
+  .mx-bar2 { flex-wrap: nowrap; }
+  .mx-bar2 .mx-tabs { flex: 1 1 auto; min-width: 0; }
+  .mx-ranges { flex: none; }
+}
 .mx-tabs::-webkit-scrollbar { display: none; }
 .mx-tab, .mx-rng { font: inherit; font-size: var(--cds-font-size-body); border: 0; background: transparent; color: var(--color-fg-muted); padding: 6px 12px; border-radius: var(--cds-radius); cursor: pointer; white-space: nowrap; }
 .mx-tab[aria-selected="true"] { background: var(--color-panel); color: var(--color-fg); font-weight: var(--cds-font-weight-medium); box-shadow: inset 0 0 0 1px var(--color-border-line); }
@@ -190,22 +208,31 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   </header>
 
   <div class="mx-bar">
-    <div class="mx-tabs" role="tablist" aria-label="대시보드 탭">
-      <button class="mx-tab" role="tab" data-tab="summary" aria-selected="true">요약</button>
-      <button class="mx-tab" role="tab" data-tab="krw" aria-selected="false">원화 가치</button>
-      <button class="mx-tab" role="tab" data-tab="kr-rates" aria-selected="false">한국 금리</button>
-      <button class="mx-tab" role="tab" data-tab="us-rates" aria-selected="false">미국 금리</button>
-      <button class="mx-tab" role="tab" data-tab="us-macro" aria-selected="false">미국 물가·고용</button>
-      <button class="mx-tab" role="tab" data-tab="markets" aria-selected="false">미국 증시·금</button>
-      <button class="mx-tab" role="tab" data-tab="risk" aria-selected="false">유가·달러·위험</button>
-      <button class="mx-tab" role="tab" data-tab="us-debt" aria-selected="false">미국 부채·국채</button>
-      <button class="mx-tab" role="tab" data-tab="demog" aria-selected="false">인구</button>
+    <div class="mx-groups" role="tablist" aria-label="분야">
+      <button class="mx-grp" role="tab" data-group="home" aria-selected="true">한눈에</button>
+      <button class="mx-grp" role="tab" data-group="korea" aria-selected="false">한국</button>
+      <button class="mx-grp" role="tab" data-group="us" aria-selected="false">미국 경제</button>
+      <button class="mx-grp" role="tab" data-group="mkt" aria-selected="false">시장</button>
+      <button class="mx-grp" role="tab" data-group="long" aria-selected="false">재정·인구</button>
+    </div>
+    <div class="mx-bar2">
+    <div class="mx-tabs" role="tablist" aria-label="세부 탭">
+      <button class="mx-tab" role="tab" data-tab="summary" data-group="home" aria-selected="true">요약</button>
+      <button class="mx-tab" role="tab" data-tab="krw" data-group="korea" aria-selected="false" hidden>원화 가치</button>
+      <button class="mx-tab" role="tab" data-tab="kr-rates" data-group="korea" aria-selected="false" hidden>한국 금리</button>
+      <button class="mx-tab" role="tab" data-tab="us-rates" data-group="us" aria-selected="false" hidden>미국 금리</button>
+      <button class="mx-tab" role="tab" data-tab="us-macro" data-group="us" aria-selected="false" hidden>물가·고용</button>
+      <button class="mx-tab" role="tab" data-tab="markets" data-group="mkt" aria-selected="false" hidden>증시·금</button>
+      <button class="mx-tab" role="tab" data-tab="risk" data-group="mkt" aria-selected="false" hidden>유가·달러·위험</button>
+      <button class="mx-tab" role="tab" data-tab="us-debt" data-group="long" aria-selected="false" hidden>부채·국채</button>
+      <button class="mx-tab" role="tab" data-tab="demog" data-group="long" aria-selected="false" hidden>인구</button>
     </div>
     <div class="mx-ranges" role="group" aria-label="차트 기간">
       <button class="mx-rng" data-range="1" aria-pressed="false">1년</button>
       <button class="mx-rng" data-range="3" aria-pressed="false">3년</button>
       <button class="mx-rng" data-range="5" aria-pressed="true">5년</button>
       <button class="mx-rng" data-range="99" aria-pressed="false">전체</button>
+    </div>
     </div>
   </div>
 
@@ -1232,13 +1259,22 @@ dash.draw('ch-curve', (el) => {
 // ---------- 탭과 기간 ----------
 (() => {
   const ids = ['summary', 'krw', 'kr-rates', 'us-rates', 'us-macro', 'markets', 'risk', 'us-debt', 'demog'];
+  const groupOf = (id) => document.querySelector(`.mx-tab[data-tab="${id}"]`)?.dataset.group;
+  const lastIn = {}; // 묶음마다 마지막으로 본 탭
   const open = (id) => {
     if (!ids.includes(id)) id = 'summary';
+    const g = groupOf(id); lastIn[g] = id;
     document.querySelectorAll('.mx-sec').forEach((s) => { s.hidden = s.dataset.sec !== id; });
-    document.querySelectorAll('.mx-tab').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === id)));
+    document.querySelectorAll('.mx-grp').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.group === g)));
+    const inGroup = [...document.querySelectorAll('.mx-tab')].filter((b) => b.dataset.group === g);
+    document.querySelectorAll('.mx-tab').forEach((b) => { b.hidden = b.dataset.group !== g || inGroup.length < 2; b.setAttribute('aria-selected', String(b.dataset.tab === id)); });
     dash.setLink(id);
   };
   document.querySelectorAll('.mx-tab').forEach((b) => b.addEventListener('click', () => open(b.dataset.tab)));
+  document.querySelectorAll('.mx-grp').forEach((b) => b.addEventListener('click', () => {
+    const g = b.dataset.group;
+    open(lastIn[g] || document.querySelector(`.mx-tab[data-group="${g}"]`).dataset.tab);
+  }));
   document.querySelectorAll('.mx-rng').forEach((b) => b.addEventListener('click', () => {
     mx.range = +b.dataset.range;
     mx.view = {};
@@ -1246,7 +1282,7 @@ dash.draw('ch-curve', (el) => {
     ['ch-usdkrw', 'ch-krwidx', 'ch-goldkrw', 'ch-m2', 'ch-krgov', 'ch-krbank', 'ch-fed', 'ch-uslong', 'ch-spread', 'ch-debt', 'ch-comp', 'ch-iss', 'ch-issshare', 'ch-infl', 'ch-jobs', 'ch-unrate', 'ch-claims', 'ch-dji', 'ch-ixic', 'ch-idx', 'ch-m7', 'ch-gold', 'ch-oil', 'ch-dxy', 'ch-real', 'ch-hy', 'ch-vix', 'ch-med', 'ch-spend', 'ch-tfr', 'ch-old', 'ch-agekr', 'ch-ageus'].forEach((n) => dash.draw(n));
   }));
   const h = (location.hash || '').slice(1);
-  if (h) open(h);
+  open(h || 'summary'); // 주소의 #탭이 있으면 그 탭, 없으면 요약
   window.addEventListener('hashchange', () => { const x = (location.hash || '').slice(1); if (x) open(x); });
   let was = null;
   window.addEventListener('beforeprint', () => { if (was === null) { was = [...document.querySelectorAll('.mx-sec')].map((s) => s.hidden); document.querySelectorAll('.mx-sec').forEach((s) => { s.hidden = false; }); } });
