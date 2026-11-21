@@ -288,6 +288,49 @@ const jobs = {
     save('events.csv', rows, ['kind', 'date', 'ref', 'a', 'b', 'c'], 4);
   },
 
+  // 장기 국채(10년·30년, 재발행 포함, 물가연동채 제외) 입찰 결과
+  async auctions() {
+    const rows = await fd('/v1/accounting/od/auctions_query', `fields=auction_date,security_term,original_security_term,inflation_index_security,bid_to_cover_ratio,high_yield,comp_accepted,indirect_bidder_accepted,direct_bidder_accepted,primary_dealer_accepted&filter=original_security_term:in:(10-Year,30-Year),auction_date:gte:2019-01-01&sort=auction_date`);
+    const n = (v) => (v === 'null' || v === '' || v == null ? null : +v);
+    const out = rows.filter((r) => r.inflation_index_security !== 'Yes' && n(r.bid_to_cover_ratio) && n(r.comp_accepted)).map((r) => {
+      const c = n(r.comp_accepted);
+      return {
+        date: r.auction_date, term: r.original_security_term === '10-Year' ? '10y' : '30y', reopen: r.security_term !== r.original_security_term ? 1 : 0,
+        btc: n(r.bid_to_cover_ratio), yield: n(r.high_yield),
+        indirect: round(n(r.indirect_bidder_accepted) / c * 100, 1), direct: round(n(r.direct_bidder_accepted) / c * 100, 1), dealer: round(n(r.primary_dealer_accepted) / c * 100, 1),
+      };
+    });
+    save('auctions.csv', out, ['date', 'term', 'reopen', 'btc', 'yield', 'indirect', 'direct', 'dealer']);
+  },
+
+  // 재무부 현금 잔고(TGA, 주간 수요일, 조 달러)
+  async tga() {
+    const m = await fred('WDTGAL', '2019-01-01');
+    save('tga.csv', [...m].sort((a, b) => a[0].localeCompare(b[0])).map(([date, v]) => ({ date, tga: round(v / 1e6, 3) })), ['date', 'tga']);
+  },
+
+  // 재정수지(월별, 조 달러): 최근 12개월 합계 세입·세출·적자, 그 달 적자
+  async deficit() {
+    const r = await fred('MTSR133FMS', '2014-01-01'), o = await fred('MTSO133FMS', '2014-01-01');
+    const ms = [...r.keys()].filter((k) => o.has(k)).sort();
+    const out = [];
+    for (let i = 11; i < ms.length; i++) {
+      const w = ms.slice(i - 11, i + 1);
+      const rs = w.reduce((a, k) => a + r.get(k), 0) / 1e6, os = w.reduce((a, k) => a + o.get(k), 0) / 1e6;
+      out.push({ month: ms[i].slice(0, 7), receipts_12m: round(rs, 3), outlays_12m: round(os, 3), deficit_12m: round(os - rs, 3), deficit_m: round((o.get(ms[i]) - r.get(ms[i])) / 1e6, 3) });
+    }
+    save('deficit.csv', out, ['month', 'receipts_12m', 'outlays_12m', 'deficit_12m', 'deficit_m']);
+  },
+
+  // 시장성 국채 평균 이자율(월말, %)
+  async avgrate() {
+    const rows = await fd('/v2/accounting/od/avg_interest_rates', `fields=record_date,security_desc,avg_interest_rate_amt&filter=record_date:gte:${START},security_desc:in:(Total%20Marketable,Treasury%20Bills,Treasury%20Notes,Treasury%20Bonds)&sort=record_date`);
+    const key = { 'Total Marketable': 'total', 'Treasury Bills': 'bills', 'Treasury Notes': 'notes', 'Treasury Bonds': 'bonds' };
+    const by = new Map();
+    for (const r of rows) { const k = key[r.security_desc]; if (!k) continue; const o = by.get(r.record_date) || { month: r.record_date.slice(0, 7) }; o[k] = +r.avg_interest_rate_amt; by.set(r.record_date, o); }
+    save('avgrate.csv', [...by.values()], ['month', 'total', 'bills', 'notes', 'bonds']);
+  },
+
   // 미국 연방 총부채(일별 → 월말, 조 달러)
   async us_debt() {
     const penny = await fd('/v2/accounting/od/debt_to_penny', `fields=record_date,tot_pub_debt_out_amt,debt_held_public_amt,intragov_hold_amt&filter=record_date:gte:${START}&sort=record_date`);

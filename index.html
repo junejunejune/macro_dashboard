@@ -20,7 +20,7 @@ try { const t = localStorage.getItem('mx-theme'); if (t === 'light' || t === 'da
 // data/*.csv 를 읽고, 아래 페이지 스크립트가 쓰는 dash.calc / dash.data / dash.draw 를 제공합니다.
 // 새 CSV를 추가하면 FILES에 이름을 넣으세요.
 window.dash = (() => {
-  const FILES = ['krw_value', 'money_supply', 'kr_rates', 'us_rates', 'us_macro', 'us_claims', 'markets', 'risk', 'events', 'fiscal', 'demog', 'us_debt', 'treasury_composition', 'treasury_issuance'];
+  const FILES = ['krw_value', 'money_supply', 'kr_rates', 'us_rates', 'us_macro', 'us_claims', 'markets', 'risk', 'events', 'fiscal', 'demog', 'auctions', 'tga', 'deficit', 'avgrate', 'us_debt', 'treasury_composition', 'treasury_issuance'];
   const raw = {}, calcs = {}, cache = {}, draws = [];
   let status = 'loading';
   const runOne = (name, fn) => document.querySelectorAll(`[data-draw="${name}"]`).forEach((el) => {
@@ -191,6 +191,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .mx-theme button[aria-pressed="true"] { background: var(--color-fg); color: var(--color-bg); }
 .mx-theme button:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 1px; }
 @media (max-width: 480px) { .mx-theme button span { display: none; } .mx-theme button { padding: 5px 8px; } }
+.mx-tablewrap { overflow-x: auto; margin-top: 4px; }
+.mx-table { border-collapse: collapse; width: 100%; font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mx-table th { text-align: right; font-weight: 500; color: var(--color-fg-muted); padding: 4px 6px; border-bottom: 1px solid var(--color-border-line); }
+.mx-table td { text-align: right; padding: 5px 6px; border-bottom: 1px solid var(--color-border-line); }
+.mx-table th:first-child, .mx-table td:first-child, .mx-table th:nth-child(2), .mx-table td:nth-child(2) { text-align: left; }
+.mx-table td.mx-bad { color: var(--warn); font-weight: 600; }
+.mx-table td.mx-good { color: var(--ok); font-weight: 600; }
+@media (max-width: 480px) { .mx-table { font-size: 11.5px; } .mx-table th, .mx-table td { padding: 4px 3px; } }
 .mx-hint { margin: 2px 0 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
 .mx-plot text { fill: var(--cds-text-secondary); font-size: 11px; font-family: var(--font-anthropic-sans); }
 .mx-plot .grid line { stroke: var(--cds-chart-grid); }
@@ -538,9 +546,17 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
         <p class="mx-trend" data-draw="t-debt"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>부채가 빨리 늘수록 국채 발행이 늘어, 시장이 정하는 장기 국채 금리를 밀어올리는 요인이 됩니다. 연준이 정하는 기준금리와는 다른 이야기입니다.</li><li>부채한도 협상 기간에는 증가가 멈췄다가, 합의 뒤 계단처럼 한꺼번에 늘어납니다.</li><li>민간 보유분이 실제로 시장에서 사줘야 하는 물량이고, 정부 내부 보유분은 사회보장기금 같은 정부 계정이 가진 몫입니다.</li></ul></details>
       </div>
+      <div class="mx-card" id="card-deficit"><h3>재정적자 (최근 12개월 합계, 조 달러)</h3><p>세입(세금 등), 세출, 그 차이인 적자. 월간 재정 보고서(MTS) 기준.</p><div class="mx-chart" data-draw="ch-deficit" data-source="deficit"></div>
+        <p class="mx-trend" data-draw="t-deficit"></p>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>최근 12개월 세출과 세입, 그 차이(적자)를 매달 다시 계산한 값입니다. 한 달 값은 세금 내는 달에 따라 크게 출렁여서 12개월 합계로 봅니다.</li><li>적자만큼 국채를 새로 발행해야 하므로, 적자가 커지면 앞으로 국채 공급이 늘어 장기 금리 상승 압력이 됩니다.</li><li>경기가 나쁘지 않은데도 적자가 크면, 정작 경기 침체가 왔을 때 쓸 재정 여력이 적다는 뜻이기도 합니다.</li></ul></details>
+      </div>
       <div class="mx-card" id="card-spend"><h3>미국 정부 주요 지출 (연율, 조 달러)</h3><p>국방비, 국채 이자, 메디케어·메디케이드(의료), 사회보장(연금). 분기별, 1년 치로 환산한 금액.</p><div class="mx-chart" data-draw="ch-spend" data-source="fiscal"></div>
         <p class="mx-trend" data-draw="t-spend"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>분기 지출을 1년 치로 환산한 금액(조 달러)입니다. 사회보장·메디케어는 고령화와 함께 자동으로 늘어나는 "의무 지출"이라 정치적으로 줄이기 어렵습니다.</li><li>이자 비용이 국방비와 맞먹을 만큼 커진 것은 금리 상승과 부채 증가가 겹친 결과로, 재정 부담을 보여주는 대표 지표입니다. 이자가 늘수록 국채를 더 발행해야 하는 악순환이 생길 수 있습니다.</li><li>메디케이드는 연방과 주 정부가 함께 지급하는 금액입니다. 국방비는 국방 소비·투자 지출(미 경제분석국 BEA 기준)이라 예산서의 국방 예산과는 조금 다릅니다.</li></ul></details>
+      </div>
+      <div class="mx-card" id="card-avgrate"><h3>국채 평균 이자율 (%)</h3><p>남아 있는 시장성 국채 전체와 종류별 평균 이자율. 점선은 미 10년물 시장 금리 수준.</p><div class="mx-chart" data-draw="ch-avgrate" data-source="avgrate"></div>
+        <p class="mx-trend" data-draw="t-avgrate"></p>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>재무부가 이미 발행해 남아 있는 국채 전체에 내는 평균 이자율입니다(월말 기준).</li><li>새로 발행하는 국채 금리(시장 금리)가 평균 이자율보다 높으면, 만기가 돌아온 국채를 갈아탈 때마다 평균 이자율과 이자 비용이 계속 올라갑니다.</li><li>T-bill은 1년 안에 모두 갈아타 금리 변화가 가장 빨리 반영되고, Bond(20·30년)는 아주 천천히 반영됩니다.</li></ul></details>
       </div>
       <div class="mx-card" id="card-comp"><h3>시장성 국채 만기 구성 (잔액 비중)</h3><p>T-bill(1년 이하), Note(2~10년), Bond(20·30년), 물가연동채(TIPS), 변동금리채(FRN). 월간 국채 명세서(MSPD) 기준.</p><div class="mx-chart" data-draw="ch-comp" data-source="comp_share"></div>
         <p class="mx-trend" data-draw="t-comp"></p>
@@ -553,6 +569,15 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       <div class="mx-card" id="card-issshare"><h3>발행액 중 T-bill 이외 비중</h3><p>Note·Bond·TIPS·FRN 발행이 전체에서 차지하는 비율. 높아질수록 재무부가 장기 조달을 늘린 것입니다.</p><div class="mx-chart" data-draw="ch-issshare" data-source="iss_share"></div>
         <p class="mx-trend" data-draw="t-issshare"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>높아질수록 재무부가 장기 조달을 늘린 것으로, 장기 금리 상승 압력이 됩니다.</li><li>월별로 들쭉날쭉하므로 3~6개월 평균 흐름으로 보세요.</li><li>T-bill 비중을 늘리면 장기 금리 부담은 줄지만 단기 금리 변화에 재정이 더 민감해집니다.</li></ul></details>
+      </div>
+      <div class="mx-card" id="card-auction"><h3>장기 국채 입찰 수요 (응찰률, 배)</h3><p>10년물·30년물 입찰(재발행 포함)의 응찰률. 높을수록 사겠다는 돈이 많았다는 뜻. 표의 (재)는 재발행, 초록은 평소보다 좋음, 주황은 평소보다 나쁨.</p><div class="mx-chart" data-draw="ch-auction" data-source="auctions"></div>
+        <div class="mx-tablewrap"><table class="mx-table" aria-label="최근 장기 국채 입찰"><thead><tr><th>입찰일</th><th>만기</th><th>낙찰 금리</th><th>응찰률</th><th>해외·기관</th><th>딜러</th></tr></thead><tbody data-draw="tb-auction" data-source="auctions"></tbody></table></div>
+        <p class="mx-trend" data-draw="t-auction"></p>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>응찰률(bid-to-cover)은 팔려는 금액 대비 사겠다고 들어온 금액의 배수입니다. 10년·30년물은 보통 2.3~2.6배 안팎이고, 평소보다 낮으면 수요가 약했다는 뜻입니다.</li><li>간접 응찰자(해외 중앙은행·자산운용사 등)가 많이 가져가면 수요가 탄탄한 것이고, 프라이머리 딜러가 많이 떠안으면 팔리지 않은 물량을 받아준 것이라 "부진한 입찰"로 봅니다.</li><li>부진한 입찰이 나오면 그날 장기 금리가 뛰는 경우가 많습니다. 아래 표에서 최근 입찰을 이전 평균과 비교해 보세요. 물가연동채(TIPS) 입찰은 뺐습니다.</li></ul></details>
+      </div>
+      <div class="mx-card" id="card-tga"><h3>재무부 현금 잔고 (TGA, 조 달러)</h3><p>재무부가 연준에 넣어둔 현금. 늘면 시중 유동성이 줄고, 줄면 늘어납니다.</p><div class="mx-chart" data-draw="ch-tga" data-source="tga"></div>
+        <p class="mx-trend" data-draw="t-tga"></p>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>재무부가 연준에 넣어둔 현금 잔고(Treasury General Account)입니다. 매주 수요일 기준.</li><li>재무부가 국채를 팔아 현금을 쌓으면 그만큼 금융 시스템의 돈(유동성)이 빠져나가고, 현금을 쓰면 시중에 돈이 풀립니다. 그래서 TGA가 빠르게 늘 때는 주식·채권 시장에 부담이 되기 쉽습니다.</li><li>부채한도에 걸리면 재무부가 현금을 꺼내 써서 TGA가 줄고, 합의 직후에는 국채를 대량 발행해 TGA를 다시 채웁니다.</li></ul></details>
       </div>
     </div>
   </section>
@@ -730,6 +755,13 @@ dash.calc('m7', {
     return mk.filter((r) => M7.every(([k]) => r[k] !== '' && r[k] !== null))
       .map((r) => ({ date: r.date, m7: +(d3.mean(M7, ([k]) => +r[k] / base[k] * 100)).toFixed(2) }));
   },
+});
+
+dash.calc('auction_wide', {
+  inputs: ['auctions'],
+  title: '장기 국채 입찰 응찰률(10년·30년)',
+  description: '입찰일마다 10년물 또는 30년물 응찰률을 한 열에 놓은 표',
+  fn: (a) => a.map((r) => ({ date: r.date, btc10: r.term === '10y' ? +r.btc : null, btc30: r.term === '30y' ? +r.btc : null })),
 });
 
 dash.calc('latest', {
@@ -1027,7 +1059,7 @@ mx.line = (el, rows, series, o) => {
       const ar = d3.area().defined((d) => val(d, s.key) !== null).x((d) => x(d.x)).y0(y(Math.max(y.domain()[0], 0))).y1((d) => y(val(d, s.key)));
       svg.append('path').datum(data).attr('d', ar).style('fill', colors[i]).style('opacity', 0.12);
     }
-    svg.append('path').datum(data).attr('d', gen).style('fill', 'none').style('stroke', colors[i]).style('stroke-width', s.width || 1.8).style('stroke-dasharray', s.dash || null);
+    svg.append('path').datum(o.connect ? data.filter((d) => val(d, s.key) !== null) : data).attr('d', gen).style('fill', 'none').style('stroke', colors[i]).style('stroke-width', s.width || 1.8).style('stroke-dasharray', s.dash || null);
     if (o.dots) svg.append('g').selectAll('circle').data(data.filter((d) => val(d, s.key) !== null)).join('circle').attr('cx', (d) => x(d.x)).attr('cy', (d) => y(val(d, s.key))).attr('r', 2.2).style('fill', colors[i]); // 점이 적은 차트용
     const last = [...data].reverse().find((d) => val(d, s.key) !== null);
     if (last) svg.append('circle').attr('cx', x(last.x)).attr('cy', y(val(last, s.key))).attr('r', 3).style('fill', colors[i]);
@@ -1238,6 +1270,28 @@ mx.ts('ch-tfr', 'demog', (el, rows) => mx.line(el, mx.cut(rows.filter((r) => r.t
 mx.ts('ch-old', 'demog', (el, rows) => mx.line(el, mx.cut(rows, 'year', 99), [{ key: 'old_kr', label: '한국', width: 2.4 }, { key: 'old_us', label: '미국' }], { xKey: 'year', fmt: d3.format('.1f'), unit: '%', refY: 20, label: '한국과 미국 65세 이상 인구 비중' }));
 mx.ts('ch-agekr', 'demog', (el, rows) => mx.stack(el, mx.cut(rows.filter((r) => r.work_kr !== ''), 'year', 99), [{ key: 'young_kr', label: '0~14세' }, { key: 'work_kr', label: '15~64세' }, { key: 'old_kr', label: '65세 이상' }], { xKey: 'year', fmt: d3.format('.0f'), unit: '%', max: 100, label: '한국 연령대별 인구 비중' }));
 mx.ts('ch-ageus', 'demog', (el, rows) => mx.stack(el, mx.cut(rows.filter((r) => r.work_us !== ''), 'year', 99), [{ key: 'young_us', label: '0~14세' }, { key: 'work_us', label: '15~64세' }, { key: 'old_us', label: '65세 이상' }], { xKey: 'year', fmt: d3.format('.0f'), unit: '%', max: 100, label: '미국 연령대별 인구 비중' }));
+mx.ts('ch-deficit', 'deficit', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'outlays_12m', label: '세출' }, { key: 'receipts_12m', label: '세입' }, { key: 'deficit_12m', label: '적자', width: 2.6, color: 'var(--s4)' }], { xKey: 'month', fmt: d3.format('.2f'), unit: '조$', label: '미국 재정 세입, 세출, 적자, 최근 12개월 합계' }));
+mx.ts('ch-avgrate', 'avgrate', (el, rows) => {
+  const us = dash.data('us_rates'); const t10 = us.status === 'ok' ? +us.data.filter((r) => r.t10y !== '').at(-1).t10y : undefined;
+  mx.line(el, mx.cut(rows, 'month'), [{ key: 'total', label: '전체', width: 2.6 }, { key: 'bills', label: 'T-bill' }, { key: 'notes', label: 'Note' }, { key: 'bonds', label: 'Bond' }], { xKey: 'month', fmt: pct, unit: '%', refY: t10, label: '미국 시장성 국채 평균 이자율' });
+});
+mx.ts('ch-auction', 'auction_wide', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'btc10', label: '10년물' }, { key: 'btc30', label: '30년물' }], { xKey: 'date', fmt: d3.format('.2f'), unit: '배', dots: true, connect: true, label: '10년물과 30년물 국채 입찰 응찰률' }));
+mx.ts('ch-tga', 'tga', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'tga', label: 'TGA', color: 'var(--s6)' }], { xKey: 'date', fmt: d3.format('.2f'), unit: '조$', area: true, label: '미국 재무부 현금 잔고 TGA' }));
+// 최근 입찰 표(최신 6건)
+dash.draw('tb-auction', (tb) => {
+  const d = dash.data('auctions');
+  if (d.status !== 'ok') { tb.replaceChildren(); return; }
+  const rows = d.data.slice(-6).reverse();
+  const avg = (term, k, before) => { const p = d.data.filter((r) => r.term === term && r.date < before).slice(-6); return d3.mean(p, (r) => +r[k]); };
+  tb.replaceChildren(...rows.map((r) => {
+    const tr = document.createElement('tr');
+    const a = avg(r.term, 'btc', r.date), dl = avg(r.term, 'dealer', r.date);
+    const weak = +r.btc < a - 0.1 || +r.dealer > dl + 4, strong = +r.btc > a + 0.1 && +r.dealer < dl - 2;
+    const cells = [r.date.slice(2).replace(/-/g, '.'), (r.term === '10y' ? '10년' : '30년') + (r.reopen === '1' ? '(재)' : ''), d3.format('.3f')(+r.yield) + '%', d3.format('.2f')(+r.btc) + '배', d3.format('.1f')(+r.indirect) + '%', d3.format('.1f')(+r.dealer) + '%'];
+    cells.forEach((c, i) => { const td = document.createElement('td'); td.textContent = c; if (i === 3 || i === 5) td.className = weak ? 'mx-bad' : strong ? 'mx-good' : ''; tr.appendChild(td); });
+    return tr;
+  }));
+});
 
 // 수익률 곡선
 dash.draw('ch-curve', (el) => {
@@ -1298,7 +1352,7 @@ dash.draw('ch-curve', (el) => {
     mx.range = +b.dataset.range;
     mx.view = {};
     document.querySelectorAll('.mx-rng').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-    ['ch-usdkrw', 'ch-krwidx', 'ch-goldkrw', 'ch-m2', 'ch-krgov', 'ch-krbank', 'ch-fed', 'ch-uslong', 'ch-spread', 'ch-debt', 'ch-comp', 'ch-iss', 'ch-issshare', 'ch-infl', 'ch-jobs', 'ch-unrate', 'ch-claims', 'ch-dji', 'ch-ixic', 'ch-idx', 'ch-m7', 'ch-gold', 'ch-oil', 'ch-dxy', 'ch-real', 'ch-hy', 'ch-vix', 'ch-med', 'ch-spend', 'ch-tfr', 'ch-old', 'ch-agekr', 'ch-ageus'].forEach((n) => dash.draw(n));
+    ['ch-usdkrw', 'ch-krwidx', 'ch-goldkrw', 'ch-m2', 'ch-krgov', 'ch-krbank', 'ch-fed', 'ch-uslong', 'ch-spread', 'ch-debt', 'ch-comp', 'ch-iss', 'ch-issshare', 'ch-infl', 'ch-jobs', 'ch-unrate', 'ch-claims', 'ch-dji', 'ch-ixic', 'ch-idx', 'ch-m7', 'ch-gold', 'ch-oil', 'ch-dxy', 'ch-real', 'ch-hy', 'ch-vix', 'ch-med', 'ch-spend', 'ch-tfr', 'ch-old', 'ch-agekr', 'ch-ageus', 'ch-deficit', 'ch-avgrate', 'ch-auction', 'ch-tga'].forEach((n) => dash.draw(n));
   }));
   const h = (location.hash || '').slice(1);
   open(h || 'summary'); // 주소의 #탭이 있으면 그 탭, 없으면 요약
@@ -1525,6 +1579,32 @@ dash.draw('ch-curve', (el) => {
       ${c.b >= 30 ? '공포 국면입니다. 주가 변동이 매우 큰 시기입니다.' : c.b >= 20 ? '평소보다 불안한 상태입니다.' : c.b <= 15 ? '시장이 안심하고 있는 상태입니다.' : '보통 수준입니다.'}`;
   });
 
+  // 재정적자·평균 이자율·입찰·TGA
+  say('t-deficit', ['deficit'], (rows) => {
+    const L = rows.at(-1), P = rows.find((r) => r.month === `${+L.month.slice(0, 4) - 1}${L.month.slice(4)}`);
+    return `${L.month.slice(0, 4)}년 ${mon(L.month)}까지 12개월 동안 세출 ${f2(+L.outlays_12m)}조 달러, 세입 ${f2(+L.receipts_12m)}조 달러로 적자는 ${f2(+L.deficit_12m)}조 달러입니다.
+      ${P ? `1년 전(${f2(+P.deficit_12m)}조 달러)보다 적자가 ${+L.deficit_12m >= +P.deficit_12m ? '커졌습니다. 그만큼 국채 발행 압력이 커집니다.' : '줄었습니다.'}` : ''}`;
+  }, '최근 발표');
+  say('t-avgrate', ['avgrate', 'us_rates'], (rows, us) => {
+    const L = rows.at(-1), P = rows.find((r) => r.month === `${+L.month.slice(0, 4) - 1}${L.month.slice(4)}`);
+    const t10 = +us.filter((r) => ok(r.t10y)).at(-1).t10y;
+    return `${mon(L.month)} 말 국채 평균 이자율은 ${f2(+L.total)}%로 1년 전보다 ${sg(+L.total - +P.total)}입니다(T-bill ${f2(+L.bills)}%, Note ${f2(+L.notes)}%, Bond ${f2(+L.bonds)}%).
+      ${t10 > +L.total ? `지금 10년물 시장 금리(${f2(t10)}%)가 평균보다 높아, 국채를 갈아탈수록 이자 비용이 계속 늘어나는 구조입니다.` : '시장 금리가 평균보다 낮아 이자 부담 증가가 둔해질 수 있습니다.'}`;
+  }, '최근 발표');
+  say('t-auction', ['auctions'], (rows) => {
+    const one = (term) => {
+      const rs = rows.filter((r) => r.term === term), L = rs.at(-1), prev = rs.slice(-7, -1);
+      const a = d3.mean(prev, (r) => +r.btc), dl = d3.mean(prev, (r) => +r.dealer);
+      const v = +L.btc < a - 0.1 || +L.dealer > dl + 4 ? '부진' : +L.btc > a + 0.1 && +L.dealer < dl - 2 ? '호조' : '보통';
+      return `${term === '10y' ? '10년물' : '30년물'}(${day(L.date)}) 응찰률 ${f2(+L.btc)}배(직전 6회 평균 ${f2(a)}배), 딜러 비중 ${f1(+L.dealer)}%(평균 ${f1(dl)}%)로 ${v === '부진' ? '부진했습니다' : v === '호조' ? '호조였습니다' : '평소 수준이었습니다'}.`;
+    };
+    return `${one('10y')} ${one('30y')}`;
+  }, '최근 입찰');
+  say('t-tga', ['tga'], (rows) => {
+    const { prev, last } = ago(rows, 'date', 'tga'), d = +last.tga - +prev.tga;
+    return `TGA는 ${day(prev.date)} ${f2(+prev.tga)}조 달러에서 ${day(last.date)} ${f2(+last.tga)}조 달러로 ${Math.abs(d) < 0.01 ? '거의 변화가 없었습니다.' : `${won(Math.abs(d) * 1e4)}억 달러 ${d >= 0 ? '늘었습니다. 그만큼 시중 유동성이 빠져나갔습니다.' : '줄었습니다. 그만큼 시중에 돈이 풀렸습니다.'}`}`;
+  });
+
   // 의료비·정부 지출·인구
   say('t-med', ['inflation'], (rows) => {
     const [a, b] = two(rows, 'med_yoy'), c = two(rows, 'cpi_yoy')[1];
@@ -1598,6 +1678,7 @@ dash.draw('ch-curve', (el) => {
 // 각 항목: 상태(warn 주의 / ok 완화 / mid 보통), 제목, 설명 문장. 데이터가 바뀌면 판단도 바뀝니다.
 dash.draw('debt-check', (el) => {
   const ids = ['us_debt', 'comp_share', 'iss_share', 'us_rates'];
+  dash.data('auctions'); dash.data('tga'); // 함께 불러옴
   const ds = ids.map((i) => dash.data(i));
   if (ds.some((d) => d.status !== 'ok' || !Array.isArray(d.data) || !d.data.length)) {
     el.replaceChildren(); const li = document.createElement('li'); li.className = 'mx-msg';
@@ -1658,6 +1739,32 @@ dash.draw('debt-check', (el) => {
     }
   }
 
+  // 5. 장기 국채 입찰 수요: 최근 4회(10·30년) vs 그 전 12회
+  {
+    const ad = dash.data('auctions');
+    if (ad.status === 'ok' && ad.data.length > 16) {
+      const a = ad.data, r4 = a.slice(-4), p12 = a.slice(-16, -4);
+      const b4 = d3.mean(r4, (r) => +r.btc), b12 = d3.mean(p12, (r) => +r.btc), d4 = d3.mean(r4, (r) => +r.dealer), d12 = d3.mean(p12, (r) => +r.dealer);
+      const weak = b4 < b12 - 0.08 || d4 > d12 + 3, strong = b4 > b12 + 0.08 && d4 < d12 - 2;
+      items.push({
+        st: weak ? 'warn' : strong ? 'ok' : 'mid',
+        title: '장기 국채 입찰 수요',
+        text: `최근 4번의 10·30년물 입찰 응찰률 평균 ${f2(b4)}배(그 전 12번 ${f2(b12)}배), 딜러가 떠안은 비중 ${f1(d4)}%(그 전 ${f1(d12)}%)입니다. ${weak ? '수요가 약해지고 있어 장기 금리가 튈 위험이 있습니다.' : strong ? '수요가 탄탄해 늘어난 발행을 잘 소화하고 있습니다.' : '수요는 평소 수준입니다.'}`,
+      });
+    }
+  }
+  // 6. 재무부 현금(TGA): 4주 변화
+  {
+    const td = dash.data('tga');
+    if (td.status === 'ok' && td.data.length > 5) {
+      const L = td.data.at(-1), P = td.data.at(-5), d = (+L.tga - +P.tga) * 1e4; // 억 달러
+      items.push({
+        st: d > 1500 ? 'warn' : d < -1500 ? 'ok' : 'mid',
+        title: '재무부 현금 잔고(TGA)',
+        text: `최근 4주 동안 ${d3.format(',.0f')(Math.abs(d))}억 달러 ${d >= 0 ? '늘어' : '줄어'} ${f2(+L.tga)}조 달러입니다. ${d > 1500 ? '재무부가 현금을 빠르게 쌓으며 시중 유동성을 흡수하고 있습니다.' : d < -1500 ? '재무부가 현금을 풀어 시중 유동성이 늘고 있습니다.' : '유동성에 주는 영향은 크지 않습니다.'}`,
+      });
+    }
+  }
   const label = { warn: '주의', ok: '완화', mid: '보통' };
   el.replaceChildren(...items.map((it) => {
     const li = document.createElement('li');
@@ -1801,15 +1908,15 @@ dash.draw('debt-check', (el) => {
     ];
   });
 
-  brief('us-debt', ['us_debt', 'fiscal', 'comp_share'], (debt, fis, comp) => {
+  brief('us-debt', ['us_debt', 'fiscal', 'comp_share', 'deficit', 'auctions', 'tga'], (debt, fis, comp, dfc) => {
     const L = debt.at(-1), t = new Date(L.date); t.setUTCFullYear(t.getUTCFullYear() - 1);
     const iso = t.toISOString().slice(0, 10); let P = debt[0]; for (const r of debt) if (r.date <= iso) P = r;
     const F = fis.at(-1), b = +comp.at(-1).bills;
     const warn = document.querySelectorAll('[data-draw="debt-check"] .mx-chip.mx-warn').length;
     return [
-      `연방 총부채는 ${f2(+L.total_tril)}조 달러로 1년 새 ${f2(+L.total_tril - +P.total_tril)}조 달러(${sp(pc(+P.total_tril, +L.total_tril))}) 늘었습니다.`,
+      `연방 총부채는 ${f2(+L.total_tril)}조 달러로 1년 새 ${f2(+L.total_tril - +P.total_tril)}조 달러(${sp(pc(+P.total_tril, +L.total_tril))}) 늘었고, 최근 12개월 재정적자는 ${f2(+dfc.at(-1).deficit_12m)}조 달러입니다.`,
       `연간 국채 이자 ${f2(+F.interest)}조 달러로 국방비(${f2(+F.defense)}조 달러)${+F.interest >= +F.defense ? '를 넘었습니다' : '에 육박합니다'}. T-bill 비중은 ${f1(b)}%${b > 20 ? '로 권고 범위(15~20%) 위입니다' : '입니다'}.`,
-      warn ? `아래 상태 체크 4개 중 ${warn}개가 '주의'입니다.` : '',
+      warn ? `아래 상태 체크 ${document.querySelectorAll('[data-draw="debt-check"] .mx-chip').length}개 중 ${warn}개가 '주의'입니다.` : '',
     ];
   });
 

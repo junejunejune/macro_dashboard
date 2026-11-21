@@ -55,7 +55,24 @@
     "demog": {
       "updated": "2026-11-21T06:06:03.838Z",
       "error": null
+    },
+    "auctions": {
+      "updated": "2026-11-21T06:20:46.734Z",
+      "error": null
+    },
+    "tga": {
+      "updated": "2026-11-21T06:20:46.734Z",
+      "error": null
+    },
+    "deficit": {
+      "updated": "2026-11-21T06:20:46.734Z",
+      "error": null
+    },
+    "avgrate": {
+      "error": null,
+      "failedAt": "2026-11-21T06:20:46.734Z",
+      "updated": "2026-11-21T06:20:59.742Z"
     }
   },
-  "checked": "2026-11-21T06:06:03.838Z"
+  "checked": "2026-11-21T06:20:59.742Z"
 }

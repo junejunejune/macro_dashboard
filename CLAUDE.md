@@ -40,6 +40,9 @@
 
 - 화면 테마: 제목 옆 자동/라이트/다크 버튼. `<html data-theme="light|dark">`, 없으면 기기 설정. 선택은 `localStorage`의 `mx-theme`(이 브라우저에만). `<head>`의 작은 스크립트가 그리기 전에 적용한다.
 
+- 재무부 국채 보충(부채·국채 탭): `auctions.csv`(10·30년물 입찰, TIPS 제외: 응찰률 btc, 낙찰 금리, 간접·직접·딜러 낙찰 비중 %), `tga.csv`(WDTGAL 주간, 조 달러), `deficit.csv`(MTS 세입·세출 12개월 합계와 적자, 조 달러), `avgrate.csv`(Fiscal Data 평균 이자율: 전체·T-bill·Note·Bond). 입찰은 `auction_wide` 계산으로 10·30년을 두 열로 펼치고 `connect: true`로 점끼리 잇는다. 최근 6건 표는 `tb-auction`. 상태 체크에 입찰 수요·TGA 항목 추가(총 6개).
+- Fiscal Data 필터 값에 공백이 있으면 `%20`으로 써야 한다(curl이 공백 URL을 거부).
+
 ## 지표 추가하는 법
 
 1. `scripts/fetch-data.mjs`의 `jobs`에 묶음을 추가하거나 기존 묶음에 열을 추가한다.
