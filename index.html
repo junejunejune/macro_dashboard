@@ -536,11 +536,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     <h2>유가·달러·위험</h2>
     <ul class="mx-brief" data-draw="b-risk" aria-label="유가·달러·위험 최근 동향 요약"></ul>
     <div class="mx-grid">
-      <div class="mx-card" id="card-oil"><h3>국제 유가 (달러/배럴)</h3><p>WTI와 브렌트 원유 일별 가격.</p><div class="mx-chart" data-draw="ch-oil" data-source="risk"></div>
+      <div class="mx-card" id="card-oil"><h3>국제 유가 (달러/배럴)</h3><p>WTI와 브렌트 원유 일별 가격. 처음에는 최근 2년을 보여줍니다.</p><div class="mx-chart" data-draw="ch-oil" data-source="risk"></div>
         <p class="mx-trend" data-draw="t-oil"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>WTI는 미국, 브렌트는 유럽·중동 원유 가격의 기준입니다. 한국이 주로 들여오는 두바이유는 브렌트와 비슷하게 움직입니다.</li><li>유가가 오르면 몇 달 시차를 두고 휘발유·운송비를 통해 물가(헤드라인 CPI)가 오르고, 금리 인하가 늦어질 수 있습니다.</li><li>한국은 원유를 거의 전량 수입해서, 유가 상승은 무역수지를 나쁘게 하고 원화 약세 요인이 됩니다.</li></ul></details>
       </div>
-      <div class="mx-card" id="card-dxy"><h3>달러 인덱스</h3><p>주요 교역국 통화 대비 달러 가치. 오르면 달러 강세.</p><div class="mx-chart" data-draw="ch-dxy" data-source="risk"></div>
+      <div class="mx-card" id="card-dxy"><h3>달러 인덱스</h3><p>주요 교역국 통화 대비 달러 가치. 오르면 달러 강세. 처음에는 최근 1년을 보여줍니다.</p><div class="mx-chart" data-draw="ch-dxy" data-source="risk"></div>
         <p class="mx-trend" data-draw="t-dxy"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>주요 교역국 통화 대비 달러 가치(연준 광의 달러 인덱스, 2006년 1월 = 100)입니다. 오르면 달러 강세입니다.</li><li>달러가 강하면 원/달러 환율도 오르는(원화 약세) 경향이 있고, 달러로 값이 매겨지는 금·원자재 가격에는 부담입니다.</li><li>미국 금리가 다른 나라보다 높거나 세계 경제가 불안할 때 달러가 강해지는 경향이 있습니다.</li></ul></details>
       </div>
@@ -1560,8 +1560,8 @@ mx.ts('ch-schd', 'schd', (el, rows) => {
   mx.line(el, r, [{ key: 'tr', label: '배당 재투자', width: 2.6 }, { key: 'price', label: '가격만' }, { key: 'dji', label: '다우', dash: '4 3', color: 'var(--cds-chart-muted)' }], { xKey: 'date', fmt: d3.format(',.0f'), refY: 100, label: 'SCHD 가격 수익률과 배당 재투자 수익률, 다우 비교' });
 });
 mx.ts('ch-schddiv', 'schd_divq', (el, rows) => mx.bars(el, mx.cut(rows, 'month'), { xKey: 'month', key: 'amount', label: '분기 배당', line: 'avg4', lineLabel: '4분기 평균', fmt: d3.format('.3f'), unit: '$', aria: 'SCHD 분기 배당금과 4분기 평균' }));
-mx.ts('ch-oil', 'risk', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'wti', label: 'WTI' }, { key: 'brent', label: '브렌트' }], { xKey: 'date', fmt: d3.format('.1f'), unit: '$', label: 'WTI와 브렌트 유가 일별' }));
-mx.ts('ch-dxy', 'risk', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'dxy', label: '달러 인덱스', color: 'var(--s6)' }], { xKey: 'date', fmt: d3.format('.1f'), area: true, label: '연준 광의 달러 인덱스 일별' }));
+mx.ts('ch-oil', 'risk', (el, rows) => mx.line(el, mx.cut(rows, 'date', 2), [{ key: 'wti', label: 'WTI' }, { key: 'brent', label: '브렌트' }], { xKey: 'date', fmt: d3.format('.1f'), unit: '$', label: 'WTI와 브렌트 유가 일별' }));
+mx.ts('ch-dxy', 'risk', (el, rows) => mx.line(el, mx.cut(rows, 'date', 1), [{ key: 'dxy', label: '달러 인덱스', color: 'var(--s6)' }], { xKey: 'date', fmt: d3.format('.1f'), area: true, label: '연준 광의 달러 인덱스 일별' }));
 mx.ts('ch-real', 'risk', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'real10', label: '실질금리', width: 2.2 }, { key: 'bei10', label: '기대인플레이션' }], { xKey: 'date', fmt: pct, unit: '%', refY: 0, label: '미국 10년 실질금리와 기대인플레이션' }));
 mx.ts('ch-hy', 'risk', (el, rows) => mx.line(el, mx.cut(rows.filter((r) => r.hy !== '' && r.hy !== null), 'date'), [{ key: 'hy', label: '하이일드 스프레드', color: 'var(--s4)' }], { xKey: 'date', fmt: pct, unit: '%p', area: true, label: '하이일드 회사채 신용 스프레드' }));
 mx.ts('ch-vix', 'risk', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'vix', label: 'VIX', color: 'var(--s5)' }], { xKey: 'date', fmt: d3.format('.1f'), refY: 20, area: true, label: 'VIX 변동성 지수 일별' }));
