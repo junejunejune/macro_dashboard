@@ -1,0 +1,43 @@
+name: 데이터 갱신
+
+on:
+  schedule:
+    - cron: '0 22 * * *' # 매일 22:00 UTC = 한국 시간 오전 7시
+  workflow_dispatch: # Actions 탭에서 "Run workflow"로 바로 실행
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 데이터 받기
+        env:
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+        run: node scripts/fetch-data.mjs
+
+      - name: 바뀐 데이터 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          # meta.json(확인 시각)이 매번 바뀌므로 거의 매일 커밋됩니다.
+          # 저장소에 60일간 활동이 없으면 GitHub가 예약 실행을 멈추는데, 이 커밋이 그걸 막아줍니다.
+          if git diff --cached --quiet; then
+            echo "변경 없음. 커밋하지 않습니다."
+          else
+            git commit -m "데이터 갱신 $(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M')"
+            git push
+          fi

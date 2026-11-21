@@ -83,14 +83,18 @@ async function fd(path, params) {
   return rows;
 }
 
-// ---------- Yahoo (금 선물, 일별 → 월평균) ----------
-async function yahooMonthlyAvg(sym) {
-  const j = await get(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?period1=${Date.parse(START) / 1000}&period2=${Math.floor(Date.now() / 1000)}&interval=1d`, 'json');
+// ---------- Yahoo (지수·종목·금 선물) ----------
+// 일별 종가. 날짜는 거래소 현지 날짜(뉴욕)로 맞춤
+async function yahooDaily(sym, from = START) {
+  const j = await get(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?period1=${Date.parse(from) / 1000}&period2=${Math.floor(Date.now() / 1000)}&interval=1d`, 'json');
   const r = j.chart.result[0];
+  const off = (r.meta.gmtoffset || 0) * 1000;
   const m = new Map();
-  r.timestamp.forEach((t, i) => { const c = r.indicators.quote[0].close[i]; if (c != null) m.set(new Date(t * 1000).toISOString().slice(0, 10), c); });
-  return monthAvg(m);
+  r.timestamp.forEach((t, i) => { const c = r.indicators.quote[0].close[i]; if (c != null) m.set(new Date(t * 1000 + off).toISOString().slice(0, 10), c); });
+  if (!m.size) throw new Error(`Yahoo ${sym}: 값 없음`);
+  return m;
 }
+const yahooMonthlyAvg = async (sym) => monthAvg(await yahooDaily(sym));
 
 // ---------- 데이터 묶음 ----------
 const jobs = {
@@ -135,6 +139,38 @@ const jobs = {
     for (const [k, id] of Object.entries(ids)) us[k] = await fred(id, '2019-01-01');
     const days = [...us.t10y.keys()].sort(); // 국채 거래일 기준
     save('us_rates.csv', days.map((d) => ({ date: d, ...Object.fromEntries(Object.keys(ids).map((k) => [k, us[k].get(d) ?? null])) })), ['date', ...Object.keys(ids)]);
+  },
+
+  // 미국 물가·고용(월별). 전년비 계산을 위해 2014년부터 받음
+  async us_macro() {
+    const ids = {
+      cpi: 'CPIAUCSL', // 소비자물가지수(CPI), 계절조정
+      core_cpi: 'CPILFESL', // 근원 CPI(식품·에너지 제외)
+      pce: 'PCEPI', // PCE 물가지수
+      core_pce: 'PCEPILFE', // 근원 PCE (연준 2% 목표의 기준)
+      payems: 'PAYEMS', // 비농업 고용자 수(천 명)
+      unrate: 'UNRATE', // 실업률(%)
+      ahe: 'CES0500000003', // 민간 평균 시간당 임금(달러)
+    };
+    const m = {};
+    for (const [k, id] of Object.entries(ids)) m[k] = monthEnd(await fred(id, '2014-01-01'));
+    save('us_macro.csv', months(...Object.values(m)).map((mo) => ({ month: mo, ...Object.fromEntries(Object.keys(ids).map((k) => [k, m[k].get(mo) ?? null])) })),
+      ['month', ...Object.keys(ids)]);
+  },
+
+  // 미국 신규 실업수당 청구(주간, 2019~, 명)
+  async us_claims() {
+    const c = await fred('ICSA', '2019-01-01');
+    save('us_claims.csv', [...c].sort((a, b) => a[0].localeCompare(b[0])).map(([date, v]) => ({ date, claims: v })), ['date', 'claims']);
+  },
+
+  // 미국 증시·금(일별 종가, 2019~). 지수는 포인트, 종목은 달러(액면분할 반영), 금은 달러/온스
+  async markets() {
+    const syms = { dji: '^DJI', ixic: '^IXIC', gold: 'GC=F', aapl: 'AAPL', msft: 'MSFT', googl: 'GOOGL', amzn: 'AMZN', meta: 'META', nvda: 'NVDA', tsla: 'TSLA' };
+    const data = {};
+    for (const [k, sym] of Object.entries(syms)) data[k] = await yahooDaily(sym, '2019-01-01');
+    const days = [...data.ixic.keys()].sort(); // 나스닥 거래일 기준
+    save('markets.csv', days.map((d) => ({ date: d, ...Object.fromEntries(Object.keys(syms).map((k) => [k, round(data[k].get(d), 2)])) })), ['date', ...Object.keys(syms)]);
   },
 
   // 미국 연방 총부채(일별 → 월말, 조 달러)

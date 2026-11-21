@@ -1,7 +1,7 @@
 {
   "datasets": {
     "krw_value": {
-      "updated": "2026-11-20T10:48:39.588Z",
+      "updated": "2026-11-21T05:07:01.903Z",
       "error": null
     },
     "money_supply": {
@@ -27,7 +27,19 @@
     "treasury_issuance": {
       "updated": "2026-11-20T10:48:39.588Z",
       "error": null
+    },
+    "us_macro": {
+      "updated": "2026-11-21T04:59:18.031Z",
+      "error": null
+    },
+    "us_claims": {
+      "updated": "2026-11-21T04:59:18.031Z",
+      "error": null
+    },
+    "markets": {
+      "updated": "2026-11-21T05:07:01.903Z",
+      "error": null
     }
   },
-  "checked": "2026-11-20T10:48:39.588Z"
+  "checked": "2026-11-21T05:07:01.903Z"
 }
