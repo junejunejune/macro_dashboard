@@ -261,7 +261,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
         <p class="mx-trend" data-draw="t-krgov"></p>
         <details class="mx-how"><summary>이 차트 읽는 법</summary><ul><li>기준금리는 한국은행이 정하고, 국고채 금리는 시장이 정합니다. 국고채 3년물이 기준금리보다 낮으면 시장이 금리 인하를, 높으면 동결·인상을 예상한다는 뜻입니다.</li><li>10년물과 3년물의 차이가 좁아지거나 역전되면 경기 둔화 우려가 커졌다고 봅니다.</li><li>금리가 내리면 채권 가격이 오릅니다. 만기가 긴 채권일수록 가격 변화가 큽니다.</li></ul></details>
       </div>
-      <div class="mx-card" id="card-krbank"><h3>은행 자금조달·대출 금리</h3><p>은행채(산금채 1년)와 CD 91일물은 변동금리 대출의 기준이 되는 시장금리입니다.</p><div class="mx-chart" data-draw="ch-krbank" data-source="kr_rates"></div>
+      <div class="mx-card" id="card-krbank"><h3>은행 자금조달·대출 금리</h3><p>은행채(산금채 1년)와 CD 91일물은 변동금리 대출의 기준이 되는 시장금리입니다. 월평균, 기간 버튼과 관계없이 최근 1년을 보여줍니다.</p><div class="mx-chart" data-draw="ch-krbank" data-source="kr_rates"></div>
         <p class="mx-trend" data-draw="t-krbank"></p>
         <details class="mx-how"><summary>이 차트 읽는 법</summary><ul><li>은행채·CD 금리는 은행이 돈을 빌리는 비용입니다. 오르면 보통 1~2달 뒤 코픽스와 변동형 주담대 금리가 따라 오릅니다.</li><li>주담대 금리와 은행채 금리의 차이는 은행의 가산금리(마진)를 대략 보여줍니다.</li><li>회사채 AA-와 국고채의 금리차(신용 스프레드)가 벌어지면 기업이 돈 빌리기 어려워지고 있다는 신호입니다.</li></ul></details>
       </div>
@@ -584,10 +584,11 @@ mx.range = 5;
 mx.pm = d3.utcParse('%Y-%m');
 mx.pd = d3.utcParse('%Y-%m-%d');
 mx.px = (s) => (s.length === 7 ? mx.pm(s) : mx.pd(s));
-mx.cut = (rows, key) => {
-  if (!rows.length || mx.range >= 99) return rows;
+// years를 주면 기간 버튼과 상관없이 그 기간만 자름
+mx.cut = (rows, key, years = mx.range) => {
+  if (!rows.length || years >= 99) return rows;
   const last = mx.px(rows[rows.length - 1][key]);
-  const c = new Date(last); c.setUTCFullYear(c.getUTCFullYear() - mx.range);
+  const c = new Date(last); c.setUTCFullYear(c.getUTCFullYear() - years);
   return rows.filter((r) => mx.px(r[key]) >= c);
 };
 mx.msg = (el, st) => {
@@ -643,6 +644,7 @@ mx.line = (el, rows, series, o) => {
       svg.append('path').datum(data).attr('d', ar).style('fill', colors[i]).style('opacity', 0.12);
     }
     svg.append('path').datum(data).attr('d', gen).style('fill', 'none').style('stroke', colors[i]).style('stroke-width', s.width || 1.8).style('stroke-dasharray', s.dash || null);
+    if (o.dots) svg.append('g').selectAll('circle').data(data.filter((d) => val(d, s.key) !== null)).join('circle').attr('cx', (d) => x(d.x)).attr('cy', (d) => y(val(d, s.key))).attr('r', 2.2).style('fill', colors[i]); // 점이 적은 차트용
     const last = [...data].reverse().find((d) => val(d, s.key) !== null);
     if (last) svg.append('circle').attr('cx', x(last.x)).attr('cy', y(val(last, s.key))).attr('r', 3).style('fill', colors[i]);
   });
@@ -760,7 +762,7 @@ mx.ts('ch-krwidx', 'krw_idx', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [
 mx.ts('ch-goldkrw', 'krw_idx', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'gold_krw_g', label: '금 1g' }], { xKey: 'month', fmt: d3.format(','), unit: '원', tick: d3.format('~s'), area: true, label: '금 1그램 원화 가격 추이' }));
 mx.ts('ch-m2', 'm2_yoy', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'kr_yoy', label: '한국 M2' }, { key: 'us_yoy', label: '미국 M2' }], { xKey: 'month', fmt: d3.format('.1f'), unit: '%', refY: 0, label: '한국과 미국 M2 전년비 증가율' }));
 mx.ts('ch-krgov', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'base', label: '기준금리', step: true, width: 2.4 }, { key: 'ktb3y', label: '국고채 3년' }, { key: 'ktb10y', label: '국고채 10년' }, { key: 'ktb30y', label: '국고채 30년', dash: '4 3' }], { xKey: 'month', fmt: pct, unit: '%', label: '한국 기준금리와 국고채 수익률' }));
-mx.ts('ch-krbank', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'mortgage', label: '주담대(신규)', width: 2.4 }, { key: 'kdb1y', label: '은행채(산금채 1년)' }, { key: 'cd91', label: 'CD 91일' }, { key: 'corp_aa', label: '회사채 AA-', dash: '4 3' }], { xKey: 'month', fmt: pct, unit: '%', label: '한국 은행채, CD, 주담대, 회사채 금리' }));
+mx.ts('ch-krbank', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows, 'month', 1), [{ key: 'mortgage', label: '주담대(신규)', width: 2.4 }, { key: 'kdb1y', label: '은행채(산금채 1년)' }, { key: 'cd91', label: 'CD 91일' }, { key: 'corp_aa', label: '회사채 AA-', dash: '4 3' }], { xKey: 'month', fmt: pct, unit: '%', dots: true, label: '한국 은행채, CD, 주담대, 회사채 금리, 최근 1년' }));
 mx.ts('ch-fed', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'fed_upper', label: '연준 상단', step: true, width: 2.4 }, { key: 'effr', label: '실효금리' }, { key: 't3m', label: '3개월' }, { key: 't1y', label: '1년' }, { key: 't2y', label: '2년' }], { xKey: 'date', fmt: pct, unit: '%', label: '연준 기준금리와 미국 단기 국채 수익률' }));
 mx.ts('ch-uslong', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 't10y', label: '10년' }, { key: 't20y', label: '20년' }, { key: 't30y', label: '30년' }], { xKey: 'date', fmt: pct, unit: '%', label: '미국 장기 국채 수익률' }));
 mx.ts('ch-spread', 'spread', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 't10y_2y', label: '10년−2년' }], { xKey: 'date', fmt: d3.format('+.2f'), unit: '%p', refY: 0, area: true, label: '미 국채 10년물과 2년물 금리차' }));
