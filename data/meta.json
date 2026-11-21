@@ -76,7 +76,15 @@
     "schd": {
       "updated": "2026-11-21T16:23:45.847Z",
       "error": null
+    },
+    "china_gold": {
+      "updated": "2026-11-21T16:46:53.088Z",
+      "error": null
+    },
+    "wgc_cb": {
+      "updated": "2026-11-21T16:46:53.088Z",
+      "error": null
     }
   },
-  "checked": "2026-11-21T16:23:45.847Z"
+  "checked": "2026-11-21T16:46:53.088Z"
 }

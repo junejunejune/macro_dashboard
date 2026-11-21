@@ -83,6 +83,21 @@ async function fd(path, params) {
   return rows;
 }
 
+// ---------- 엑셀(xlsx) 첫 시트 읽기: unzip 사용(macOS·GitHub 러너 기본 포함) ----------
+async function xlsxRows(url) {
+  const { mkdtempSync, writeFileSync: wf, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const dir = mkdtempSync(tmpdir() + '/xl-');
+  try {
+    await run('curl', ['-sfL', '-m', '60', '-A', 'Mozilla/5.0', '-o', dir + '/f.xlsx', url]);
+    const rd = async (p) => (await run('unzip', ['-p', dir + '/f.xlsx', p], { maxBuffer: 1 << 26 })).stdout;
+    const ssXml = await rd('xl/sharedStrings.xml').catch(() => '');
+    const ss = (ssXml.match(/<si>[\s\S]*?<\/si>/g) || []).map((x) => x.replace(/<[^>]+>/g, ''));
+    const sh = await rd('xl/worksheets/sheet1.xml');
+    return [...sh.matchAll(/<row[^>]*>([\s\S]*?)<\/row>/g)].map((m) => [...m[1].matchAll(/<c r="[A-Z]+\d+"([^>]*?)(?:\/>|>(?:<f>[^<]*<\/f>)?(?:<v>([^<]*)<\/v>)?[\s\S]*?<\/c>)/g)].map((c) => (/t="s"/.test(c[1]) ? ss[+c[2]] : c[2] ?? '')));
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+}
+
 // ---------- Yahoo (지수·종목·금 선물) ----------
 // 일별 종가. 날짜는 거래소 현지 날짜(뉴욕)로 맞춤
 async function yahooDaily(sym, from = START) {
@@ -219,6 +234,67 @@ const jobs = {
     save('schd.csv', px, ['date', 'price', 'tr']);
     const divs = Object.values(r.events?.dividends || {}).sort((x, y) => x.date - y.date).map((d) => ({ date: day(d.date), amount: round(d.amount, 4) }));
     save('schd_div.csv', divs, ['date', 'amount']);
+  },
+
+  // 중국 인민은행 금 보유량(월말, 만 온스 → 톤). 2025년 중반까지는 IMF(DBnomics), 그 뒤는 중국 외환관리국(SAFE) 엑셀
+  async china_gold() {
+    const OZ_T = 31.1035 / 1e6; // 1온스 = 31.1035g → 톤
+    const m = new Map(); // 'YYYY-MM' → 만 온스
+    const imf = await get('https://api.db.nomics.world/v22/series/IMF/IFS/M.CN.RAFAGOLDV_OZT?observations=1', 'json');
+    const d = imf.series.docs[0];
+    d.period.forEach((p, i) => { const v = d.value[i]; if (v !== 'NA' && v != null && p >= '2015-01') m.set(p, +v * 100); }); // 백만 온스 → 만 온스
+    // SAFE: 올해·작년 "官方储备资产（YYYY年）" 페이지의 마지막 xlsx
+    const idx = await get('https://www.safe.gov.cn/safe/whcb/index.html');
+    const y = new Date().getUTCFullYear();
+    for (const yr of [y - 1, y]) {
+      const link = idx.match(new RegExp(`href="([^"]+)"[^>]*title="官方储备资产（${yr}年）"`));
+      if (!link) continue;
+      const page = await get('https://www.safe.gov.cn' + link[1]);
+      const xs = [...page.matchAll(/href="([^"]+\.xlsx)"/g)].map((x) => x[1]);
+      if (!xs.length) continue;
+      const rows = await xlsxRows('https://www.safe.gov.cn' + xs[xs.length - 1]);
+      const head = rows.find((r) => r.some((c) => /^\s*\d{4}\.\d{2}\s*$/.test(c)));
+      const oz = rows.find((r) => r.some((c) => /万盎司/.test(c)));
+      if (!head || !oz) continue;
+      head.forEach((c, i) => { const mm = c.trim().match(/^(\d{4})\.(\d{2})$/); const v = (oz[i] || '').match(/([\d.]+)\s*万盎司/); if (mm && v) m.set(`${mm[1]}-${mm[2]}`, +v[1]); });
+    }
+    const keys = [...m.keys()].sort();
+    save('china_gold.csv', keys.map((k, i) => ({ month: k, oz_10k: m.get(k), tonnes: round(m.get(k) * 1e4 * OZ_T, 1), chg_t: i ? round((m.get(k) - m.get(keys[i - 1])) * 1e4 * OZ_T, 1) : null })), ['month', 'oz_10k', 'tonnes', 'chg_t']);
+  },
+
+  // 세계 중앙은행 금 순매입(분기, 톤): 세계금협회(WGC) Gold Demand Trends 공개 페이지.
+  // 각 보고서 표의 "1년 전 같은 분기(수정치)"와 "이번 분기"를 모으고, 늦게 나온 보고서 값을 우선.
+  // 4분기는 연간 합계(수정치) − 1~3분기로 계산. 본문의 "Qn's revised estimate of Nt"도 반영.
+  // data/wgc_cb_manual.csv(quarter,tonnes)가 있으면 그 값으로 덮어씀(손으로 고칠 때).
+  async wgc_cb() {
+    const clean = (raw) => raw.replace(/<script[\s\S]*?<\/script>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/&#x27;|&#39;|&rsquo;|&lsquo;|[’‘ʼ`´]/g, "'").replace(/\s+/g, ' ');
+    const q = {}, qr = {}, a = {}, ar = {};
+    const put = (o, r, k, v, rank) => { if (!r[k] || r[k] <= rank) { o[k] = v; r[k] = rank; } };
+    const num = (x) => +x.replace(/,/g, '');
+    const now = new Date();
+    for (let y = 2020; y <= now.getUTCFullYear(); y++) {
+      for (let n = 1; n <= 4; n++) {
+        const slug = n === 4 ? `gold-demand-trends-full-year-${y}` : `gold-demand-trends-q${n}-${y}`;
+        let raw;
+        try { raw = await get(`https://www.gold.org/goldhub/research/gold-demand-trends/${slug}/central-banks`); } catch { continue; } // 아직 안 나온 분기
+        const t = clean(raw), rank = y * 10 + n;
+        const m1 = t.match(/Tonnes\s+Q([1-4])'\s?(\d{2})\s+Q([1-4])'\s?(\d{2})[^0-9]*?Central [Bb]anks?\s*(?:&|and)\s*[Oo]thers?(?: [Ii]nstitutions)?\s+(-?[\d,.]+)\s+(-?[\d,.]+)/);
+        if (m1) { put(q, qr, `20${m1[2]}-Q${m1[1]}`, num(m1[5]), rank); put(q, qr, `20${m1[4]}-Q${m1[3]}`, num(m1[6]), rank); }
+        const m2 = t.match(/Tonnes\s+(20\d\d)\s+(20\d\d)[^0-9]*?Central [Bb]anks?\s*(?:&|and)\s*[Oo]thers?(?: [Ii]nstitutions)?\s+(-?[\d,.]+)\s+(-?[\d,.]+)/);
+        if (m2) { put(a, ar, m2[1], num(m2[3]), rank); put(a, ar, m2[2], num(m2[4]), rank); }
+        for (const r of t.matchAll(/Q([1-4])'s revised estimate of (-?[\d,.]+)\s?t/g)) put(q, qr, `${y}-Q${r[1]}`, num(r[2]), rank + 0.5);
+      }
+    }
+    for (const [yr, tot] of Object.entries(a)) {
+      const k = [1, 2, 3].map((n) => q[`${yr}-Q${n}`]);
+      if (k.every((v) => v !== undefined)) put(q, qr, `${yr}-Q4`, round(tot - k[0] - k[1] - k[2], 1), ar[yr] + 0.1);
+    }
+    try { // 손으로 고친 값
+      const man = readFileSync(new URL('wgc_cb_manual.csv', OUT), 'utf8').trim().split('\n').slice(1);
+      for (const l of man) { const [k, v] = l.split(','); if (/^\d{4}-Q[1-4]$/.test(k) && v !== '') q[k] = +v; }
+    } catch { /* 없으면 그대로 */ }
+    const keys = Object.keys(q).filter((k) => k >= '2020-Q1').sort();
+    save('wgc_cb.csv', keys.map((k) => ({ quarter: k, month: `${k.slice(0, 4)}-${String((+k.slice(6) - 1) * 3 + 1).padStart(2, '0')}`, tonnes: q[k] })), ['quarter', 'month', 'tonnes'], 8);
   },
 
   // 유가·달러·위험 지표(일별, 2019~)
