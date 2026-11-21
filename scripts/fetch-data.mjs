@@ -209,6 +209,18 @@ const jobs = {
     save('demog.csv', years.map((y) => ({ year: y, ...Object.fromEntries(Object.keys(ids).map((k) => [k, d[k].has(y) ? round(d[k].get(y), 3) : null])) })), ['year', ...Object.keys(ids)]);
   },
 
+  // SCHD(미국 배당 성장 ETF): 일별 가격, 배당 재투자 가격(총수익), 분기 배당금. 2024년 10월 3:1 분할 반영
+  async schd() {
+    const j = await get(`https://query1.finance.yahoo.com/v8/finance/chart/SCHD?period1=${Date.parse('2019-01-01') / 1000}&period2=${Math.floor(Date.now() / 1000)}&interval=1d&events=div%7Csplit`, 'json');
+    const r = j.chart.result[0], off = (r.meta.gmtoffset || 0) * 1000;
+    const q = r.indicators.quote[0].close, a = r.indicators.adjclose?.[0]?.adjclose || [];
+    const day = (t) => new Date(t * 1000 + off).toISOString().slice(0, 10);
+    const px = r.timestamp.map((t, i) => ({ date: day(t), price: round(q[i], 3), tr: round(a[i], 3) })).filter((x) => x.price != null);
+    save('schd.csv', px, ['date', 'price', 'tr']);
+    const divs = Object.values(r.events?.dividends || {}).sort((x, y) => x.date - y.date).map((d) => ({ date: day(d.date), amount: round(d.amount, 4) }));
+    save('schd_div.csv', divs, ['date', 'amount']);
+  },
+
   // 유가·달러·위험 지표(일별, 2019~)
   async risk() {
     const ids = {

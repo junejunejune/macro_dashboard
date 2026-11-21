@@ -48,6 +48,8 @@
 
 - 미 10년물 5% 강조: `window.mxFive(us_rates)`가 지금 위/아래, 연속 거래일, 최근 1년 중 5% 이상 일수를 계산. 장기 국채 차트는 `mx.line`의 `alert: {y: 5, label}` 옵션(경계선 + 위쪽 옅은 색), 요약 카드는 `f-t10y` 배지(`.mx-flag`, 비어 있으면 CSS로 숨김. `hidden` 속성을 쓰면 다시 그려지지 않으니 쓰지 말 것), 요약·동향 문장에도 언급.
 
+- SCHD(시장 → 증시·금 탭): `schd.csv`(Yahoo 일별 가격 `price`, 배당 재투자 가격 `tr`=adjclose), `schd_div.csv`(배당락일별 1주당 배당, 분할 반영). `schd_divq` 계산 = 4분기 평균·합계, 그날 가격 기준 배당수익률, 전년 동기 대비. 요약 카드 `schd`(가격), `schd_yield`(지금 가격 기준 12개월 배당수익률).
+
 ## 지표 추가하는 법
 
 1. `scripts/fetch-data.mjs`의 `jobs`에 묶음을 추가하거나 기존 묶음에 열을 추가한다.
