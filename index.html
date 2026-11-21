@@ -16,7 +16,7 @@
 // data/*.csv 를 읽고, 아래 페이지 스크립트가 쓰는 dash.calc / dash.data / dash.draw 를 제공합니다.
 // 새 CSV를 추가하면 FILES에 이름을 넣으세요.
 window.dash = (() => {
-  const FILES = ['krw_value', 'money_supply', 'kr_rates', 'us_rates', 'us_macro', 'us_claims', 'markets', 'events', 'us_debt', 'treasury_composition', 'treasury_issuance'];
+  const FILES = ['krw_value', 'money_supply', 'kr_rates', 'us_rates', 'us_macro', 'us_claims', 'markets', 'risk', 'events', 'us_debt', 'treasury_composition', 'treasury_issuance'];
   const raw = {}, calcs = {}, cache = {}, draws = [];
   let status = 'loading';
   const runOne = (name, fn) => document.querySelectorAll(`[data-draw="${name}"]`).forEach((el) => {
@@ -193,6 +193,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       <button class="mx-tab" role="tab" data-tab="us-rates" aria-selected="false">미국 금리</button>
       <button class="mx-tab" role="tab" data-tab="us-macro" aria-selected="false">미국 물가·고용</button>
       <button class="mx-tab" role="tab" data-tab="markets" aria-selected="false">미국 증시·금</button>
+      <button class="mx-tab" role="tab" data-tab="risk" aria-selected="false">유가·달러·위험</button>
       <button class="mx-tab" role="tab" data-tab="us-debt" aria-selected="false">미국 부채·국채</button>
     </div>
     <div class="mx-ranges" role="group" aria-label="차트 기간">
@@ -252,6 +253,15 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       </div>
     </div>
     <div class="mx-group">
+      <h3>유가·달러·위험</h3>
+      <div class="mx-tiles">
+        <div class="mx-tile" id="tile-wti"><span>WTI 유가 (달러/배럴)</span><b data-draw="v-wti" data-source="latest" data-field="value" data-where="metric=wti">—</b><small data-draw="c-wti" data-source="latest" data-field="change" data-where="metric=wti">—</small></div>
+        <div class="mx-tile" id="tile-dxy"><span>달러 인덱스</span><b data-draw="v-dxy" data-source="latest" data-field="value" data-where="metric=dxy">—</b><small data-draw="c-dxy" data-source="latest" data-field="change" data-where="metric=dxy">—</small></div>
+        <div class="mx-tile" id="tile-real"><span>미 10년 실질금리</span><b data-draw="v-real" data-source="latest" data-field="value" data-where="metric=real10">—</b><small data-draw="c-real" data-source="latest" data-field="change" data-where="metric=real10">—</small></div>
+        <div class="mx-tile" id="tile-vix"><span>VIX 공포 지수</span><b data-draw="v-vix" data-source="latest" data-field="value" data-where="metric=vix">—</b><small data-draw="c-vix" data-source="latest" data-field="change" data-where="metric=vix">—</small></div>
+      </div>
+    </div>
+    <div class="mx-group">
       <h3>미국 부채·국채</h3>
       <div class="mx-tiles">
         <div class="mx-tile" id="tile-debt"><span>연방 총부채</span><b data-draw="v-debt" data-source="latest" data-field="value" data-where="metric=debt_total">—</b><small data-draw="c-debt" data-source="latest" data-field="change" data-where="metric=debt_total">—</small></div>
@@ -307,12 +317,12 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <section class="mx-sec" id="us-rates" data-sec="us-rates" hidden>
     <h2>미국 금리</h2>
     <div class="mx-grid">
-      <div class="mx-card" id="card-fed"><h3>연준 기준금리와 단기 국채 (2년 이하)</h3><p>연준 목표범위 상단, 실효 연방기금금리, 3개월·1년·2년물. 2년물은 시장이 예상하는 앞으로의 기준금리를 반영합니다.</p><div class="mx-chart" data-draw="ch-fed" data-source="us_rates"></div>
+      <div class="mx-card" id="card-fed"><h3>연준 기준금리와 단기 국채 (2년 이하)</h3><p>연준 목표범위 상단, 실효 연방기금금리, 3개월·1년·2년물. 2년물은 시장이 예상하는 앞으로의 기준금리를 반영합니다. 처음에는 최근 2년을 보여줍니다.</p><div class="mx-chart" data-draw="ch-fed" data-source="us_rates"></div>
         <ol class="mx-events" data-draw="e-fed" data-kind="fed" aria-label="최근 발표·결정"></ol>
         <p class="mx-trend" data-draw="t-fed"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>2년물이 연준 기준금리보다 낮으면 시장은 앞으로 금리 인하를, 높으면 동결이나 인상을 예상한다는 뜻입니다.</li><li>3개월물은 다음 몇 번의 연준 회의 결정에 대한 기대를 가장 빨리 반영합니다.</li><li>연준 금리가 높게 유지되면 달러 강세·원/달러 상승 압력이 생기고, 한국은행이 금리를 내릴 여지도 좁아집니다.</li></ul></details>
       </div>
-      <div class="mx-card" id="card-uslong"><h3>장기 국채 (10·20·30년)</h3><p>주택담보대출, 회사채 등 장기 자금 비용의 기준입니다.</p><div class="mx-chart" data-draw="ch-uslong" data-source="us_rates"></div>
+      <div class="mx-card" id="card-uslong"><h3>장기 국채 (10·20·30년)</h3><p>주택담보대출, 회사채 등 장기 자금 비용의 기준입니다. 처음에는 최근 2년을 보여줍니다.</p><div class="mx-chart" data-draw="ch-uslong" data-source="us_rates"></div>
         <p class="mx-trend" data-draw="t-uslong"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>장기 금리 = 앞으로의 단기 금리 기대 + 기간 프리미엄(오래 빌려주는 대가)입니다. 재정적자와 국채 발행이 늘면 기간 프리미엄이 커지는 경향이 있습니다.</li><li>10년물은 미국 주택담보대출과 주식 가치 평가의 기준이라, 오르면 특히 성장주 가격에 부담입니다.</li><li>30년물이 10년물보다 크게 높아지면 장기 재정·물가 우려가 반영된 것으로 봅니다.</li></ul></details>
       </div>
@@ -377,6 +387,33 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       <div class="mx-card" id="card-gold"><h3>국제 금 가격 (달러/온스)</h3><p>COMEX 금 선물 일별 종가. 1온스 = 31.1g.</p><div class="mx-chart" data-draw="ch-gold" data-source="markets"></div>
         <p class="mx-trend" data-draw="t-gold"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>국제 금 선물(COMEX) 가격으로, 달러/트로이온스(31.1g) 단위입니다.</li><li>실질금리가 내릴 때, 달러가 약할 때, 지정학 위험이 커질 때 오르는 경향이 있습니다. 각국 중앙은행의 금 매입도 큰 수요입니다.</li><li>원화로 산 금의 수익률은 ‘원화 가치’ 탭의 금 1g 원화 가격에서 확인하세요.</li></ul></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 유가·달러·위험 -->
+  <section class="mx-sec" id="risk" data-sec="risk" hidden>
+    <h2>유가·달러·위험</h2>
+    <div class="mx-grid">
+      <div class="mx-card" id="card-oil"><h3>국제 유가 (달러/배럴)</h3><p>WTI와 브렌트 원유 일별 가격.</p><div class="mx-chart" data-draw="ch-oil" data-source="risk"></div>
+        <p class="mx-trend" data-draw="t-oil"></p>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>WTI는 미국, 브렌트는 유럽·중동 원유 가격의 기준입니다. 한국이 주로 들여오는 두바이유는 브렌트와 비슷하게 움직입니다.</li><li>유가가 오르면 몇 달 시차를 두고 휘발유·운송비를 통해 물가(헤드라인 CPI)가 오르고, 금리 인하가 늦어질 수 있습니다.</li><li>한국은 원유를 거의 전량 수입해서, 유가 상승은 무역수지를 나쁘게 하고 원화 약세 요인이 됩니다.</li></ul></details>
+      </div>
+      <div class="mx-card" id="card-dxy"><h3>달러 인덱스</h3><p>주요 교역국 통화 대비 달러 가치. 오르면 달러 강세.</p><div class="mx-chart" data-draw="ch-dxy" data-source="risk"></div>
+        <p class="mx-trend" data-draw="t-dxy"></p>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>주요 교역국 통화 대비 달러 가치(연준 광의 달러 인덱스, 2006년 1월 = 100)입니다. 오르면 달러 강세입니다.</li><li>달러가 강하면 원/달러 환율도 오르는(원화 약세) 경향이 있고, 달러로 값이 매겨지는 금·원자재 가격에는 부담입니다.</li><li>미국 금리가 다른 나라보다 높거나 세계 경제가 불안할 때 달러가 강해지는 경향이 있습니다.</li></ul></details>
+      </div>
+      <div class="mx-card" id="card-real"><h3>10년 실질금리와 기대인플레이션</h3><p>10년 물가연동국채(TIPS) 금리 = 실질금리, 10년 국채와 TIPS의 금리차 = 시장이 예상하는 연평균 물가 상승률.</p><div class="mx-chart" data-draw="ch-real" data-source="risk"></div>
+        <p class="mx-trend" data-draw="t-real"></p>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>명목 10년 금리 = 실질금리 + 기대인플레이션입니다. 둘로 나눠 보면 금리가 왜 움직였는지 알 수 있습니다.</li><li>실질금리가 오르면 이자가 없는 금과 미래 이익 비중이 큰 성장주에 부담입니다. 금 가격과 반대로 움직이는 경향이 강합니다.</li><li>기대인플레이션이 2~2.5% 범위를 벗어나 크게 오르면, 시장이 연준의 물가 관리를 의심하기 시작했다는 신호로 봅니다.</li></ul></details>
+      </div>
+      <div class="mx-card" id="card-hy"><h3>하이일드 신용 스프레드 (%p)</h3><p>신용등급 낮은 회사채 금리 − 국채 금리. 최근 3년.</p><div class="mx-chart" data-draw="ch-hy" data-source="risk"></div>
+        <p class="mx-trend" data-draw="t-hy"></p>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>신용등급이 낮은 회사채 금리가 국채보다 얼마나 높은지(%p)입니다. 시장이 느끼는 부도 위험의 온도계입니다.</li><li>대체로 3%p대 이하는 낙관, 5%p를 넘으면 신용 불안, 8%p 이상은 위기 국면으로 봅니다.</li><li>주가가 오르는데 스프레드가 벌어지기 시작하면 상승세가 약해질 수 있다는 경고로 읽기도 합니다. FRED가 최근 3년치만 제공합니다.</li></ul></details>
+      </div>
+      <div class="mx-card" id="card-vix"><h3>VIX 변동성 지수</h3><p>미국 주식시장의 "공포 지수". 점선은 20.</p><div class="mx-chart" data-draw="ch-vix" data-source="risk"></div>
+        <p class="mx-trend" data-draw="t-vix"></p>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>앞으로 30일 동안 미국 주가(S&P 500)가 얼마나 출렁일지 옵션 가격으로 계산한 "공포 지수"입니다.</li><li>15 이하는 안심, 20 안팎은 보통, 30 이상은 공포 국면으로 봅니다. 점선은 20입니다.</li><li>VIX가 급등한 시기는 주가가 급락한 시기와 겹치는 경우가 많고, 극단적으로 높았던 때가 나중에 보면 매수 기회였던 경우도 있습니다.</li></ul></details>
       </div>
     </div>
   </section>
@@ -603,10 +640,10 @@ dash.calc('m7', {
 });
 
 dash.calc('latest', {
-  inputs: ['krw_value', 'kr_rates', 'us_rates', 'us_debt', 'money_supply', 'treasury_composition', 'treasury_issuance', 'us_macro', 'markets', 'm7'],
+  inputs: ['krw_value', 'kr_rates', 'us_rates', 'us_debt', 'money_supply', 'treasury_composition', 'treasury_issuance', 'us_macro', 'markets', 'm7', 'risk'],
   title: '최신 값과 1년 전 대비 변화',
   description: '각 지표의 가장 최근 값과, 그 시점에서 1년 전 값 대비 변화',
-  fn: (krw, kr, us, debt, ms, tc, ti, macro, mk, m7) => {
+  fn: (krw, kr, us, debt, ms, tc, ti, macro, mk, m7, rk) => {
     const out = [];
     const ok = (v) => v !== null && v !== undefined && v !== '';
     // 시계열에서 마지막 값과 약 1년 전 값
@@ -656,6 +693,11 @@ dash.calc('latest', {
     add('ixic', pick(mk, 'date', 'ixic', false), 'pct', 0);
     add('m7', pick(m7, 'date', 'm7', false), 'pct', 0);
     add('gold_usd', pick(mk, 'date', 'gold', false), 'pct', 0);
+    // 유가·달러·위험
+    add('wti', pick(rk, 'date', 'wti', false), 'pct', 1);
+    add('dxy', pick(rk, 'date', 'dxy', false), 'pct', 1);
+    add('real10', pick(rk, 'date', 'real10', false), 'pp', 2);
+    add('vix', pick(rk, 'date', 'vix', false), 'pt', 1);
     // 최근 12개월 발행액(조 달러)과 그 1년 전 12개월
     const tot = ti.map((r) => ({ month: r.month, t: +r.bills + +r.notes + +r.bonds + +r.tips + +r.frn }));
     if (tot.length >= 24) {
@@ -987,9 +1029,9 @@ mx.ts = (name, source, fn) => dash.draw(name, (el) => {
 (() => {
   const fmtV = {
     usdkrw: (v) => d3.format(',.1f')(v) + '원', gold_krw_g: (v) => d3.format(',')(v) + '원',
-    debt_total: (v) => '$' + d3.format(',.2f')(v) + '조', payems_3m: (v) => d3.format('+.1f')(v) + '만 명', dji: d3.format(',.0f'), ixic: d3.format(',.0f'), m7: d3.format(',.0f'), gold_usd: (v) => '$' + d3.format(',.0f')(v), unrate: (v) => d3.format('.1f')(v) + '%', spread_10_2: (v) => d3.format('+.2f')(v) + '%p', issuance_12m: (v) => '$' + d3.format(',.1f')(v) + '조',
+    debt_total: (v) => '$' + d3.format(',.2f')(v) + '조', payems_3m: (v) => d3.format('+.1f')(v) + '만 명', dji: d3.format(',.0f'), wti: (v) => '$' + d3.format('.1f')(v), dxy: d3.format('.1f'), vix: d3.format('.1f'), ixic: d3.format(',.0f'), m7: d3.format(',.0f'), gold_usd: (v) => '$' + d3.format(',.0f')(v), unrate: (v) => d3.format('.1f')(v) + '%', spread_10_2: (v) => d3.format('+.2f')(v) + '%p', issuance_12m: (v) => '$' + d3.format(',.1f')(v) + '조',
   };
-  const tiles = { usdkrw: 'usdkrw', gold: 'gold_krw_g', krm2: 'kr_m2_yoy', usm2: 'us_m2_yoy', krbase: 'kr_base', ktb10y: 'ktb10y', kdb: 'kdb1y', mort: 'mortgage', fed: 'fed_upper', t2y: 't2y', t10y: 't10y', t30y: 't30y', debt: 'debt_total', bills: 'bills_share', spread: 'spread_10_2', iss: 'issuance_12m', cpi: 'cpi_yoy', corepce: 'core_pce_yoy', unrate: 'unrate', payems: 'payems_3m', dji: 'dji', ixic: 'ixic', m7: 'm7', goldusd: 'gold_usd' };
+  const tiles = { usdkrw: 'usdkrw', gold: 'gold_krw_g', krm2: 'kr_m2_yoy', usm2: 'us_m2_yoy', krbase: 'kr_base', ktb10y: 'ktb10y', kdb: 'kdb1y', mort: 'mortgage', fed: 'fed_upper', t2y: 't2y', t10y: 't10y', t30y: 't30y', debt: 'debt_total', bills: 'bills_share', spread: 'spread_10_2', iss: 'issuance_12m', cpi: 'cpi_yoy', corepce: 'core_pce_yoy', unrate: 'unrate', payems: 'payems_3m', dji: 'dji', ixic: 'ixic', m7: 'm7', goldusd: 'gold_usd', wti: 'wti', dxy: 'dxy', real: 'real10', vix: 'vix' };
   const row = (metric) => { const d = dash.data('latest'); return d.status === 'ok' && Array.isArray(d.data) ? d.data.find((r) => r.metric === metric) : null; };
   for (const [t, metric] of Object.entries(tiles)) {
     dash.draw('v-' + t, (el) => { const r = row(metric); el.classList.toggle('dash-skeleton', !r && dash.data('latest').status === 'loading'); el.textContent = r ? (fmtV[metric] ? fmtV[metric](r.value) : d3.format('.2f')(r.value) + '%') : '—'; });
@@ -1013,8 +1055,8 @@ mx.ts('ch-goldkrw', 'krw_idx', (el, rows) => mx.line(el, mx.cut(rows, 'month'), 
 mx.ts('ch-m2', 'm2_yoy', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'kr_yoy', label: '한국 M2' }, { key: 'us_yoy', label: '미국 M2' }], { xKey: 'month', fmt: d3.format('.1f'), unit: '%', refY: 0, label: '한국과 미국 M2 전년비 증가율' }));
 mx.ts('ch-krgov', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'base', label: '기준금리', step: true, width: 2.4 }, { key: 'ktb3y', label: '국고채 3년' }, { key: 'ktb10y', label: '국고채 10년' }, { key: 'ktb30y', label: '국고채 30년', dash: '4 3' }], { xKey: 'month', fmt: pct, unit: '%', events: mx.ev('bok', { monthly: true }), label: '한국 기준금리와 국고채 수익률' }));
 mx.ts('ch-krbank', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows, 'month', 1), [{ key: 'mortgage', label: '주담대(신규)', width: 2.4 }, { key: 'kdb1y', label: '은행채(산금채 1년)' }, { key: 'cd91', label: 'CD 91일' }, { key: 'corp_aa', label: '회사채 AA-', dash: '4 3' }], { xKey: 'month', fmt: pct, unit: '%', dots: true, label: '한국 은행채, CD, 주담대, 회사채 금리, 최근 1년' }));
-mx.ts('ch-fed', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'fed_upper', label: '연준 상단', step: true, width: 2.4 }, { key: 'effr', label: '실효금리' }, { key: 't3m', label: '3개월' }, { key: 't1y', label: '1년' }, { key: 't2y', label: '2년' }], { xKey: 'date', fmt: pct, unit: '%', events: mx.ev('fed'), label: '연준 기준금리와 미국 단기 국채 수익률' }));
-mx.ts('ch-uslong', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 't10y', label: '10년' }, { key: 't20y', label: '20년' }, { key: 't30y', label: '30년' }], { xKey: 'date', fmt: pct, unit: '%', label: '미국 장기 국채 수익률' }));
+mx.ts('ch-fed', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date', 2), [{ key: 'fed_upper', label: '연준 상단', step: true, width: 2.4 }, { key: 'effr', label: '실효금리' }, { key: 't3m', label: '3개월' }, { key: 't1y', label: '1년' }, { key: 't2y', label: '2년' }], { xKey: 'date', fmt: pct, unit: '%', events: mx.ev('fed'), label: '연준 기준금리와 미국 단기 국채 수익률' }));
+mx.ts('ch-uslong', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date', 2), [{ key: 't10y', label: '10년' }, { key: 't20y', label: '20년' }, { key: 't30y', label: '30년' }], { xKey: 'date', fmt: pct, unit: '%', label: '미국 장기 국채 수익률' }));
 mx.ts('ch-spread', 'spread', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 't10y_2y', label: '10년−2년' }], { xKey: 'date', fmt: d3.format('+.2f'), unit: '%p', refY: 0, area: true, label: '미 국채 10년물과 2년물 금리차' }));
 mx.ts('ch-debt', 'us_debt', (el, rows) => mx.stack(el, mx.cut(rows, 'date'), [{ key: 'intragov_tril', label: '정부 내부 보유' }, { key: 'public_tril', label: '민간 보유' }], { xKey: 'date', fmt: d3.format('.1f'), unit: '조$', total: true, label: '미국 연방 총부채, 민간과 정부 내부 보유' }));
 mx.ts('ch-comp', 'comp_share', (el, rows) => mx.stack(el, mx.cut(rows, 'date'), [{ key: 'bills', label: 'T-bill' }, { key: 'notes', label: 'Note' }, { key: 'bonds', label: 'Bond' }, { key: 'tips', label: 'TIPS' }, { key: 'frn', label: 'FRN' }], { xKey: 'date', fmt: d3.format('.0f'), unit: '%', max: 100, label: '시장성 국채 종류별 잔액 비중' }));
@@ -1089,6 +1131,11 @@ mx.ts('ch-m7', 'markets', (el, rows) => {
     { xKey: 'date', fmt: d3.format(',.0f'), tick: d3.format('~s'), refY: 100, height: 260, label: 'M7 종목별 기간 수익률' });
 });
 mx.ts('ch-gold', 'markets', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'gold', label: '금', color: 'var(--s7)' }], { xKey: 'date', fmt: d3.format(',.0f'), unit: '$', area: true, label: '국제 금 가격 일별 종가' }));
+mx.ts('ch-oil', 'risk', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'wti', label: 'WTI' }, { key: 'brent', label: '브렌트' }], { xKey: 'date', fmt: d3.format('.1f'), unit: '$', label: 'WTI와 브렌트 유가 일별' }));
+mx.ts('ch-dxy', 'risk', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'dxy', label: '달러 인덱스', color: 'var(--s6)' }], { xKey: 'date', fmt: d3.format('.1f'), area: true, label: '연준 광의 달러 인덱스 일별' }));
+mx.ts('ch-real', 'risk', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'real10', label: '실질금리', width: 2.2 }, { key: 'bei10', label: '기대인플레이션' }], { xKey: 'date', fmt: pct, unit: '%', refY: 0, label: '미국 10년 실질금리와 기대인플레이션' }));
+mx.ts('ch-hy', 'risk', (el, rows) => mx.line(el, mx.cut(rows.filter((r) => r.hy !== '' && r.hy !== null), 'date'), [{ key: 'hy', label: '하이일드 스프레드', color: 'var(--s4)' }], { xKey: 'date', fmt: pct, unit: '%p', area: true, label: '하이일드 회사채 신용 스프레드' }));
+mx.ts('ch-vix', 'risk', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'vix', label: 'VIX', color: 'var(--s5)' }], { xKey: 'date', fmt: d3.format('.1f'), refY: 20, area: true, label: 'VIX 변동성 지수 일별' }));
 
 // 수익률 곡선
 dash.draw('ch-curve', (el) => {
@@ -1128,7 +1175,7 @@ dash.draw('ch-curve', (el) => {
 
 // ---------- 탭과 기간 ----------
 (() => {
-  const ids = ['summary', 'krw', 'kr-rates', 'us-rates', 'us-macro', 'markets', 'us-debt'];
+  const ids = ['summary', 'krw', 'kr-rates', 'us-rates', 'us-macro', 'markets', 'risk', 'us-debt'];
   const open = (id) => {
     if (!ids.includes(id)) id = 'summary';
     document.querySelectorAll('.mx-sec').forEach((s) => { s.hidden = s.dataset.sec !== id; });
@@ -1140,10 +1187,11 @@ dash.draw('ch-curve', (el) => {
     mx.range = +b.dataset.range;
     mx.view = {};
     document.querySelectorAll('.mx-rng').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-    ['ch-usdkrw', 'ch-krwidx', 'ch-goldkrw', 'ch-m2', 'ch-krgov', 'ch-krbank', 'ch-fed', 'ch-uslong', 'ch-spread', 'ch-debt', 'ch-comp', 'ch-iss', 'ch-issshare', 'ch-infl', 'ch-jobs', 'ch-unrate', 'ch-claims', 'ch-dji', 'ch-ixic', 'ch-idx', 'ch-m7', 'ch-gold'].forEach((n) => dash.draw(n));
+    ['ch-usdkrw', 'ch-krwidx', 'ch-goldkrw', 'ch-m2', 'ch-krgov', 'ch-krbank', 'ch-fed', 'ch-uslong', 'ch-spread', 'ch-debt', 'ch-comp', 'ch-iss', 'ch-issshare', 'ch-infl', 'ch-jobs', 'ch-unrate', 'ch-claims', 'ch-dji', 'ch-ixic', 'ch-idx', 'ch-m7', 'ch-gold', 'ch-oil', 'ch-dxy', 'ch-real', 'ch-hy', 'ch-vix'].forEach((n) => dash.draw(n));
   }));
   const h = (location.hash || '').slice(1);
   if (h) open(h);
+  window.addEventListener('hashchange', () => { const x = (location.hash || '').slice(1); if (x) open(x); });
   let was = null;
   window.addEventListener('beforeprint', () => { if (was === null) { was = [...document.querySelectorAll('.mx-sec')].map((s) => s.hidden); document.querySelectorAll('.mx-sec').forEach((s) => { s.hidden = false; }); } });
   window.addEventListener('afterprint', () => { if (was) { document.querySelectorAll('.mx-sec').forEach((s, i) => { s.hidden = was[i]; }); was = null; } });
@@ -1334,6 +1382,35 @@ dash.draw('ch-curve', (el) => {
     const hi = d3.max(win, (r) => +r.gold), lo = d3.min(win, (r) => +r.gold);
     return `금값은 ${day(prev.date)} 온스당 ${won(+prev.gold)}달러에서 ${day(last.date)} ${won(+last.gold)}달러로 ${f1(Math.abs(p))}% ${p >= 0 ? '올랐습니다' : '내렸습니다'}.
       한 달 범위는 ${won(lo)}~${won(hi)}달러입니다.`;
+  });
+
+  // 유가·달러·위험
+  const chg = (rows, k) => { const { prev, last, win } = ago(rows, 'date', k); return { prev, last, a: +prev[k], b: +last[k], hi: d3.max(win, (r) => (ok(r[k]) ? +r[k] : null)), lo: d3.min(win, (r) => (ok(r[k]) ? +r[k] : null)) }; };
+  say('t-oil', ['risk'], (rows) => {
+    const w = chg(rows, 'wti'), br = chg(rows, 'brent'), p = (w.b / w.a - 1) * 100;
+    return `WTI는 ${day(w.prev.date)} ${f1(w.a)}달러에서 ${day(w.last.date)} ${f1(w.b)}달러로 ${f1(Math.abs(p))}% ${p >= 0 ? '올랐고' : '내렸고'}, 브렌트는 ${f1(br.b)}달러입니다. 한 달 범위는 WTI ${f1(w.lo)}~${f1(w.hi)}달러입니다.
+      ${p > 10 ? '유가가 크게 올라 몇 달 뒤 물가(CPI)를 밀어올리고 원화에도 부담이 될 수 있습니다.' : p < -10 ? '유가가 크게 내려 물가 부담과 한국의 수입 비용이 줄어드는 방향입니다.' : ''}`;
+  });
+  say('t-dxy', ['risk'], (rows) => {
+    const c = chg(rows, 'dxy'), p = (c.b / c.a - 1) * 100;
+    return `달러 인덱스는 ${f1(c.a)}에서 ${f1(c.b)}로 ${f1(Math.abs(p))}% ${p >= 0 ? '올라 달러가 강해졌습니다' : '내려 달러가 약해졌습니다'}.
+      ${Math.abs(p) >= 2 ? (p > 0 ? '달러 강세 폭이 커서 원/달러 환율과 금·원자재 가격에 영향을 줄 수 있습니다.' : '달러 약세 폭이 커서 원화와 금 가격에는 우호적인 환경입니다.') : ''}`;
+  });
+  say('t-real', ['risk'], (rows) => {
+    const r = chg(rows, 'real10'), e = chg(rows, 'bei10'), dr = r.b - r.a, de = e.b - e.a;
+    return `10년 실질금리는 ${f2(r.a)}%에서 ${f2(r.b)}%로(${sg(dr)}), 기대인플레이션은 ${f2(e.a)}%에서 ${f2(e.b)}%로(${sg(de)}) 움직였습니다.
+      ${Math.abs(dr) < 0.05 && Math.abs(de) < 0.05 ? '' : Math.abs(dr) >= Math.abs(de) ? `명목금리 변화는 주로 실질금리 때문입니다.${dr > 0 ? ' 실질금리 상승은 금과 성장주에 부담입니다.' : ' 실질금리 하락은 금과 성장주에 우호적입니다.'}` : `명목금리 변화는 주로 기대인플레이션 때문입니다.${de > 0 ? ' 시장이 물가 상승을 더 걱정하고 있습니다.' : ' 물가 걱정이 줄었습니다.'}`}`;
+  });
+  say('t-hy', ['risk'], (rows) => {
+    const c = chg(rows, 'hy'), d = c.b - c.a;
+    return `하이일드 스프레드는 ${f2(c.a)}%p에서 ${f2(c.b)}%p로 ${sg(d)}입니다.
+      ${c.b >= 8 ? '위기 수준의 신용 불안입니다.' : c.b >= 5 ? '신용 불안이 커진 상태입니다.' : c.b < 4 ? '시장이 부도 위험을 낮게 보는 낙관적인 상태입니다.' : '보통 수준입니다.'}
+      ${d > 0.5 ? '한 달 새 크게 벌어져 위험 회피 심리가 강해지고 있습니다.' : ''}`;
+  });
+  say('t-vix', ['risk'], (rows) => {
+    const c = chg(rows, 'vix'), d = c.b - c.a;
+    return `VIX는 ${f1(c.a)}에서 ${f1(c.b)}로 ${d >= 0 ? '올랐습니다' : '내렸습니다'}(한 달 최고 ${f1(c.hi)}).
+      ${c.b >= 30 ? '공포 국면입니다. 주가 변동이 매우 큰 시기입니다.' : c.b >= 20 ? '평소보다 불안한 상태입니다.' : c.b <= 15 ? '시장이 안심하고 있는 상태입니다.' : '보통 수준입니다.'}`;
   });
 
   // 미국 부채·국채

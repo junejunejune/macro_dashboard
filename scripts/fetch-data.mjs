@@ -173,6 +173,23 @@ const jobs = {
     save('markets.csv', days.map((d) => ({ date: d, ...Object.fromEntries(Object.keys(syms).map((k) => [k, round(data[k].get(d), 2)])) })), ['date', ...Object.keys(syms)]);
   },
 
+  // 유가·달러·위험 지표(일별, 2019~)
+  async risk() {
+    const ids = {
+      wti: 'DCOILWTICO', // WTI 원유(달러/배럴)
+      brent: 'DCOILBRENTEU', // 브렌트 원유(달러/배럴)
+      dxy: 'DTWEXBGS', // 연준 달러 인덱스(광의, 2006년 1월=100)
+      real10: 'DFII10', // 10년 물가연동국채(TIPS) 실질금리(%)
+      bei10: 'T10YIE', // 10년 기대인플레이션(손익분기 인플레이션, %)
+      hy: 'BAMLH0A0HYM2', // 하이일드 회사채 스프레드(%p, FRED 제공 기간이 최근 3년뿐)
+      vix: 'VIXCLS', // VIX 변동성 지수
+    };
+    const d = {};
+    for (const [k, id] of Object.entries(ids)) d[k] = await fred(id, '2019-01-01');
+    const days = [...new Set(Object.values(d).flatMap((m) => [...m.keys()]))].sort();
+    save('risk.csv', days.map((day) => ({ date: day, ...Object.fromEntries(Object.keys(ids).map((k) => [k, d[k].get(day) ?? null])) })), ['date', ...Object.keys(ids)]);
+  },
+
   // 최근 이벤트(각 종류 직전 3개): 연준·한국은행 기준금리 변경, 미국 고용·CPI 발표
   // 고용·CPI는 ALFRED(FRED 과거 발표 기록)에서 실제 발표일과 그날 처음 발표된 값을 가져옴
   async events() {
