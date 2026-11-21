@@ -20,7 +20,7 @@ try { const t = localStorage.getItem('mx-theme'); if (t === 'light' || t === 'da
 // data/*.csv 를 읽고, 아래 페이지 스크립트가 쓰는 dash.calc / dash.data / dash.draw 를 제공합니다.
 // 새 CSV를 추가하면 FILES에 이름을 넣으세요.
 window.dash = (() => {
-  const FILES = ['krw_value', 'money_supply', 'kr_rates', 'us_rates', 'us_macro', 'us_claims', 'markets', 'schd', 'schd_div', 'china_gold', 'wgc_cb', 'risk', 'events', 'fiscal', 'demog', 'auctions', 'tga', 'deficit', 'avgrate', 'us_debt', 'treasury_composition', 'treasury_issuance'];
+  const FILES = ['krw_value', 'money_supply', 'kr_rates', 'us_rates', 'us_macro', 'us_claims', 'markets', 'schd', 'schd_div', 'china_gold', 'wgc_cb', 'termprem', 'risk', 'events', 'fiscal', 'demog', 'auctions', 'tga', 'deficit', 'avgrate', 'us_debt', 'treasury_composition', 'treasury_issuance'];
   const raw = {}, calcs = {}, cache = {}, draws = [];
   let status = 'loading';
   const runOne = (name, fn) => document.querySelectorAll(`[data-draw="${name}"]`).forEach((el) => {
@@ -221,6 +221,13 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .mx-swatch { display: inline-block; width: 12px; height: 10px; border-radius: 2px; vertical-align: -1px; }
 .mx-sw-up { background: color-mix(in srgb, var(--s4) 30%, transparent); }
 .mx-sw-down { background: color-mix(in srgb, var(--s1) 30%, transparent); }
+.mx-how-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; line-height: 1.65; }
+.mx-how-list b { font-weight: var(--cds-font-weight-medium); }
+.mx-ladder { display: flex; flex-direction: column; gap: 6px; }
+.mx-ladder-row { display: grid; grid-template-columns: 44px 1fr 40px; align-items: center; gap: 8px; font-size: 13px; }
+.mx-ladder-row em { display: block; height: 12px; background: var(--color-bg); border-radius: 6px; overflow: hidden; }
+.mx-ladder-row i { display: block; height: 100%; background: var(--s1); border-radius: 6px; }
+.mx-ladder-row b { text-align: right; font-weight: var(--cds-font-weight-medium); font-variant-numeric: tabular-nums; }
 .mx-hint { margin: 2px 0 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
 .mx-plot text { fill: var(--cds-text-secondary); font-size: 11px; font-family: var(--font-anthropic-sans); }
 .mx-plot .grid line { stroke: var(--cds-chart-grid); }
@@ -443,15 +450,43 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <section class="mx-sec" id="us-rates" data-sec="us-rates" hidden>
     <h2>미국 금리</h2>
     <ul class="mx-brief" data-draw="b-us-rates" aria-label="미국 금리 최근 동향 요약"></ul>
+    <div class="mx-card mx-guide" id="rate-guide">
+      <h3>금리는 누가 정하나: 연준의 확성기와 시장의 바로미터</h3>
+      <div class="mx-flow" aria-label="금리가 정해지는 흐름">
+        <span>연준<br><small>하루짜리 돈값(기준금리)과 앞으로의 정책 신호</small></span><i>→</i><span>2년 이하 단기 금리<br><small>연준이 앞으로 금리를 어떻게 움직일지 시장 예상</small></span><i>→</i><span>10·30년 장기 금리<br><small>+ 미래 물가, 국채 공급, 오래 돈을 묶는 위험</small></span>
+      </div>
+      <ul class="mx-how-list">
+        <li><b>기준금리</b>는 은행끼리 하루 빌려주는 돈의 값입니다. 연준이 회의에서 정합니다.</li>
+        <li><b>2년물 이하 단기 금리는 연준의 확성기</b>입니다. 시장이 예상하는 앞으로 1~2년 연준 금리를 거의 그대로 비춥니다.</li>
+        <li><b>10년물은 시장의 바로미터</b>입니다. 채권을 사고파는 사람들의 수요·공급으로 정해지고, 앞으로의 단기 금리 예상에 미래 물가·성장·국채 공급·오래 돈을 묶는 위험(기간 프리미엄)이 더해집니다.</li>
+      </ul>
+      <h4>데이터로 확인: 연준 금리와 얼마나 붙어 다니나</h4>
+      <p class="mx-sub">실효 연방기금금리와 각 만기 국채 금리의 상관계수(2019년~, 1에 가까울수록 같이 움직임). 만기가 길수록 연준보다 시장의 판단이 더 많이 섞입니다.</p>
+      <div class="mx-ladder" data-draw="rate-ladder" data-source="us_rates"></div>
+      <p class="mx-trend" data-draw="rate-example"></p>
+      <details class="mx-how">
+        <summary>조금 더 정확히 하면</summary>
+        <ul>
+          <li>연준은 하나의 숫자가 아니라 <b>목표 범위</b>(예: 3.75~4.00%)를 정하고, 실제 하루짜리 금리(실효 연방기금금리)가 그 안에 머물도록 관리합니다.</li>
+          <li>연준은 기대만이 아니라 국채를 직접 사고파는 것(양적완화·양적긴축)으로도 장기 금리에 영향을 줍니다.</li>
+          <li>"미국 정부에 돈을 빌려주는 위험"은 떼일 위험이라기보다, 물가가 예상보다 오르거나 국채가 너무 많이 풀려 값이 떨어질 위험에 가깝습니다. 이것이 아래 "10년물 금리 분해" 차트의 기간 프리미엄입니다.</li>
+          <li>세계 경제가 불안할 땐 안전자산으로 돈이 몰려, 전망이 나빠도 10년물이 오히려 내려가기도 합니다.</li>
+        </ul>
+      </details>
+    </div>
     <div class="mx-grid">
       <div class="mx-card" id="card-fed"><h3>연준 기준금리와 단기 국채 (2년 이하)</h3><p>연준 목표범위 상단, 실효 연방기금금리, 3개월·1년·2년물. 2년물은 시장이 예상하는 앞으로의 기준금리를 반영합니다. 처음에는 최근 2년을 보여줍니다.</p><div class="mx-chart" data-draw="ch-fed" data-source="us_rates"></div>
         <ol class="mx-events" data-draw="e-fed" data-kind="fed" aria-label="최근 발표·결정"></ol>
         <p class="mx-trend" data-draw="t-fed"></p>
-        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>2년물이 연준 기준금리보다 낮으면 시장은 앞으로 금리 인하를, 높으면 동결이나 인상을 예상한다는 뜻입니다.</li><li>3개월물은 다음 몇 번의 연준 회의 결정에 대한 기대를 가장 빨리 반영합니다.</li><li>연준 금리가 높게 유지되면 달러 강세·원/달러 상승 압력이 생기고, 한국은행이 금리를 내릴 여지도 좁아집니다.</li></ul></details>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li><b>연준의 확성기</b>: 2년 이하 금리는 시장이 예상하는 앞으로 1~2년 연준 금리를 거의 그대로 비춥니다. 연준 발표를 기다리지 않아도 2년물을 보면 시장이 무엇을 예상하는지 알 수 있습니다.</li><li>2년물이 연준 기준금리보다 낮으면 시장은 앞으로 금리 인하를, 높으면 동결이나 인상을 예상한다는 뜻입니다.</li><li>3개월물은 다음 몇 번의 연준 회의 결정에 대한 기대를 가장 빨리 반영합니다.</li><li>연준 금리가 높게 유지되면 달러 강세·원/달러 상승 압력이 생기고, 한국은행이 금리를 내릴 여지도 좁아집니다.</li></ul></details>
       </div>
       <div class="mx-card" id="card-uslong"><h3>장기 국채 (10·20·30년)</h3><p>주택담보대출, 회사채 등 장기 자금 비용의 기준입니다. 주황 점선은 시장이 민감하게 보는 10년물 5% 선. 처음에는 최근 2년을 보여줍니다.</p><div class="mx-chart" data-draw="ch-uslong" data-source="us_rates"></div>
         <p class="mx-trend" data-draw="t-uslong"></p>
-        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li><b>왜 5%인가</b>: 10년물 5%는 2007년 이후 거의 넘지 못하던 수준이라 시장이 심리적 경계선으로 봅니다. 넘으면 미국 주택담보대출 금리가 7%대 이상으로 오르고, 주식(특히 성장주) 가치 평가에 부담이 커지며, 달러 강세·원화 약세 압력이 생기기 쉽습니다. 넘은 날보다 그 위에 얼마나 오래 머무는지가 더 중요합니다.</li><li>장기 금리 = 앞으로의 단기 금리 기대 + 기간 프리미엄(오래 빌려주는 대가)입니다. 재정적자와 국채 발행이 늘면 기간 프리미엄이 커지는 경향이 있습니다.</li><li>10년물은 미국 주택담보대출과 주식 가치 평가의 기준이라, 오르면 특히 성장주 가격에 부담입니다.</li><li>30년물이 10년물보다 크게 높아지면 장기 재정·물가 우려가 반영된 것으로 봅니다.</li></ul></details>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li><b>시장의 바로미터</b>: 10년물에는 앞으로의 연준 금리 예상에 미래 물가·성장·국채 공급·오래 돈을 묶는 위험이 더해져 있습니다. 둘을 나눠 보려면 바로 아래 "10년물 금리 분해" 차트를 보세요.</li><li><b>왜 5%인가</b>: 10년물 5%는 2007년 이후 거의 넘지 못하던 수준이라 시장이 심리적 경계선으로 봅니다. 넘으면 미국 주택담보대출 금리가 7%대 이상으로 오르고, 주식(특히 성장주) 가치 평가에 부담이 커지며, 달러 강세·원화 약세 압력이 생기기 쉽습니다. 넘은 날보다 그 위에 얼마나 오래 머무는지가 더 중요합니다.</li><li>장기 금리 = 앞으로의 단기 금리 기대 + 기간 프리미엄(오래 빌려주는 대가)입니다. 재정적자와 국채 발행이 늘면 기간 프리미엄이 커지는 경향이 있습니다.</li><li>10년물은 미국 주택담보대출과 주식 가치 평가의 기준이라, 오르면 특히 성장주 가격에 부담입니다.</li><li>30년물이 10년물보다 크게 높아지면 장기 재정·물가 우려가 반영된 것으로 봅니다.</li></ul></details>
+      </div>
+      <div class="mx-card" id="card-tp"><h3>10년물 금리 분해: 단기 금리 예상 + 기간 프리미엄</h3><p>위 칸: 모형 10년 금리와 그중 앞으로 단기 금리 예상 부분. 아래 칸: 기간 프리미엄(오래 돈을 묶는 대가). 연준 Kim-Wright 모형, 주간 갱신.</p><div class="mx-chart" data-draw="ch-tp" data-source="termprem"></div>
+        <p class="mx-trend" data-draw="t-tp"></p>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>연준 경제학자들의 모형(Kim-Wright)으로 10년물 금리를 두 부분으로 나눈 것입니다. <b>단기 금리 예상</b>은 앞으로 10년 동안 하루짜리 금리가 평균 얼마일지에 대한 시장 예상(연준의 확성기 부분), <b>기간 프리미엄</b>은 그 위에 10년 동안 돈을 묶는 대가로 더 받는 금리(시장의 바로미터 부분)입니다.</li><li>기간 프리미엄이 오르면 투자자들이 물가 불확실성, 늘어나는 국채 공급, 재정 부담 같은 위험을 더 크게 본다는 뜻입니다. 2020~2021년처럼 마이너스였던 때는 연준의 대규모 국채 매입과 안전자산 수요로 위험 대가가 사라졌던 시기입니다.</li><li>연준이 금리를 내리는데 10년물이 오르면, 아래 칸의 기간 프리미엄이 올랐는지 보세요. 2024년 9월 인하 이후 10년물 상승의 상당 부분이 기간 프리미엄 상승이었습니다.</li><li>모형으로 추정한 값이라 실제 10년물 금리와 조금 다르고, 연준이 매주 갱신합니다.</li></ul></details>
       </div>
       <div class="mx-card" id="card-spread"><h3>10년물 − 2년물 금리차</h3><p>0 아래(역전)는 과거 경기침체에 앞서 나타났습니다.</p><div class="mx-chart" data-draw="ch-spread" data-source="spread"></div>
         <p class="mx-trend" data-draw="t-spread"></p>
@@ -1518,6 +1553,13 @@ mx.ts('ch-fixgap', 'kr_rates', (el, rows) => {
   });
 });
 mx.ts('ch-fed', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date', 2), [{ key: 'fed_upper', label: '연준 상단', step: true, width: 2.4 }, { key: 'effr', label: '실효금리' }, { key: 't3m', label: '3개월' }, { key: 't1y', label: '1년' }, { key: 't2y', label: '2년' }], { xKey: 'date', fmt: pct, unit: '%', events: mx.ev('fed'), label: '연준 기준금리와 미국 단기 국채 수익률' }));
+mx.ts('ch-tp', 'termprem', (el, rows) => mx.split(el, mx.cut(rows, 'date'), {
+  xKey: 'date',
+  top: [{ key: 'y10', label: '10년 금리(모형)', width: 2.4 }, { key: 'expected', label: '단기 금리 예상', dash: '4 3', color: 'var(--s6)' }],
+  bottom: [{ key: 'tp', label: '기간 프리미엄', width: 2.4, color: 'var(--s4)' }],
+  topFmt: d3.format('.2f'), topTick: d3.format('.1f'), topUnit: '%', bottomFmt: d3.format('+.2f'), bottomTick: (v) => (Math.abs(v) < 1e-9 ? '0' : d3.format('+.1f')(v)), bottomUnit: '%p', bottomRef: 0, bottomTitle: '기간 프리미엄 (%p)',
+  events: mx.ev('fed'), label: '미국 10년물 금리를 단기 금리 예상과 기간 프리미엄으로 나눈 차트',
+}));
 mx.ts('ch-uslong', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date', 2), [{ key: 't10y', label: '10년', width: 2.6 }, { key: 't20y', label: '20년' }, { key: 't30y', label: '30년' }], { xKey: 'date', fmt: pct, unit: '%', alert: { y: 5, label: '10년물 5% 경계선' }, label: '미국 장기 국채 수익률, 5% 경계선 표시' }));
 mx.ts('ch-spread', 'spread', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 't10y_2y', label: '10년−2년' }], { xKey: 'date', fmt: d3.format('+.2f'), unit: '%p', refY: 0, area: true, label: '미 국채 10년물과 2년물 금리차' }));
 mx.ts('ch-debt', 'us_debt', (el, rows) => mx.stack(el, mx.cut(rows, 'date'), [{ key: 'intragov_tril', label: '정부 내부 보유' }, { key: 'public_tril', label: '민간 보유' }], { xKey: 'date', fmt: d3.format('.1f'), unit: '조$', total: true, label: '미국 연방 총부채, 민간과 정부 내부 보유' }));
@@ -1714,7 +1756,7 @@ dash.draw('f-t10y', (el) => {
     mx.range = +b.dataset.range;
     mx.view = {};
     document.querySelectorAll('.mx-rng').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-    ['ch-usdkrw', 'ch-krwidx', 'ch-goldkrw', 'ch-m2', 'ch-krgov', 'ch-krbank', 'ch-fed', 'ch-uslong', 'ch-spread', 'ch-debt', 'ch-comp', 'ch-iss', 'ch-issshare', 'ch-infl', 'ch-jobs', 'ch-unrate', 'ch-claims', 'ch-dji', 'ch-ixic', 'ch-idx', 'ch-m7', 'ch-gold', 'ch-oil', 'ch-dxy', 'ch-real', 'ch-hy', 'ch-vix', 'ch-med', 'ch-spend', 'ch-tfr', 'ch-old', 'ch-agekr', 'ch-ageus', 'ch-deficit', 'ch-avgrate', 'ch-auction', 'ch-tga', 'ch-fixvar', 'ch-fixgap', 'ch-schd', 'ch-schddiv', 'ch-fixrel', 'ch-goldreal', 'ch-cbworld', 'ch-cbchina'].forEach((n) => dash.draw(n));
+    ['ch-usdkrw', 'ch-krwidx', 'ch-goldkrw', 'ch-m2', 'ch-krgov', 'ch-krbank', 'ch-fed', 'ch-uslong', 'ch-spread', 'ch-debt', 'ch-comp', 'ch-iss', 'ch-issshare', 'ch-infl', 'ch-jobs', 'ch-unrate', 'ch-claims', 'ch-dji', 'ch-ixic', 'ch-idx', 'ch-m7', 'ch-gold', 'ch-oil', 'ch-dxy', 'ch-real', 'ch-hy', 'ch-vix', 'ch-med', 'ch-spend', 'ch-tfr', 'ch-old', 'ch-agekr', 'ch-ageus', 'ch-deficit', 'ch-avgrate', 'ch-auction', 'ch-tga', 'ch-fixvar', 'ch-fixgap', 'ch-schd', 'ch-schddiv', 'ch-fixrel', 'ch-goldreal', 'ch-cbworld', 'ch-cbchina', 'ch-tp'].forEach((n) => dash.draw(n));
   }));
   const h = (location.hash || '').slice(1);
   open(h || 'summary'); // 주소의 #탭이 있으면 그 탭, 없으면 요약
@@ -1869,6 +1911,14 @@ dash.draw('f-t10y', (el) => {
         : `만기와 관계없이 비슷하게 움직여 곡선이 ${(d2 + d30) / 2 >= 0 ? '위로' : '아래로'} 평행 이동했습니다.`;
     return `3개월물 ${sg(d('t3m'))}, 2년물 ${sg(d2)}, 10년물 ${sg(d('t10y'))}, 30년물 ${sg(d30)}. ${shape}`;
   });
+
+  say('t-tp', ['termprem'], (rows) => {
+    const { last } = ago(rows, 'date', 'tp');
+    const y = (() => { const t = new Date(last.date); t.setUTCFullYear(t.getUTCFullYear() - 1); const iso = t.toISOString().slice(0, 10); let p = rows[0]; for (const r of rows) if (r.date <= iso) p = r; return p; })();
+    const dy = +last.y10 - +y.y10, de = +last.expected - +y.expected, dt = +last.tp - +y.tp;
+    return `${day(last.date)} 기준 10년 금리 ${f2(+last.y10)}% = 단기 금리 예상 ${f2(+last.expected)}% + 기간 프리미엄 ${s2(+last.tp)}%p입니다.
+      1년 동안 10년 금리 ${sg(dy)} 중 단기 금리 예상이 ${sg(de)}, 기간 프리미엄이 ${sg(dt)}를 차지해, ${Math.abs(dt) > Math.abs(de) ? '연준 예상보다 시장이 요구하는 위험 대가가 더 크게 움직였습니다' : '시장의 연준 금리 예상이 더 크게 움직였습니다'}.`;
+  }, '최근 1년');
 
   // 미국 물가·고용
   say('t-infl', ['inflation'], (rows) => {
@@ -2465,6 +2515,38 @@ dash.draw('debt-check', (el) => {
   });
   ['mc-amt', 'mc-yrs', 'mc-fix', 'mc-var'].forEach((id) => { const i = $(id); if (!i) return; i.addEventListener('input', () => { if (id === 'mc-fix' || id === 'mc-var') i.dataset.touched = '1'; dash.draw('mort-calc'); }); });
   $('mort-calc')?.addEventListener('submit', (e) => e.preventDefault());
+})();
+</script>
+<script>
+// ---------- 금리는 누가 정하나: 만기별 연준 금리와의 상관, 사례 ----------
+(() => {
+  const ok = (v) => v !== '' && v !== null && v !== undefined;
+  const corr = (rows, a, b) => { const p = rows.filter((r) => ok(r[a]) && ok(r[b])).map((r) => ({ x: +r[a], y: +r[b] })); return window.mxReg(p).r; };
+  dash.draw('rate-ladder', (el) => {
+    const d = dash.data('us_rates'); if (d.status !== 'ok') { el.replaceChildren(); return; }
+    const items = [['t3m', '3개월'], ['t1y', '1년'], ['t2y', '2년'], ['t5y', '5년'], ['t10y', '10년'], ['t30y', '30년']].map(([k, n]) => [n, corr(d.data, 'effr', k)]);
+    const lo = Math.min(...items.map((x) => x[1])) - 0.05;
+    el.replaceChildren(...items.map(([n, r]) => {
+      const row = document.createElement('div'); row.className = 'mx-ladder-row';
+      const lab = document.createElement('span'); lab.textContent = n;
+      const bar = document.createElement('i'); bar.style.width = `${Math.max(4, (r - lo) / (1 - lo) * 100)}%`;
+      const v = document.createElement('b'); v.textContent = d3.format('.2f')(r);
+      const track = document.createElement('em'); track.appendChild(bar);
+      row.append(lab, track, v); return row;
+    }));
+  });
+  dash.draw('rate-example', (el) => {
+    const d = dash.data('us_rates'); if (d.status !== 'ok') { el.replaceChildren(); return; }
+    const at = (day, k) => { let v = null; for (const r of d.data) { if (r.date > day) break; if (ok(r[k])) v = +r[k]; } return v; };
+    const a = '2024-09-17', b = '2025-01-15', f2 = d3.format('.2f');
+    const df = at(b, 'fed_upper') - at(a, 'fed_upper'), d2 = at(b, 't2y') - at(a, 't2y'), d10 = at(b, 't10y') - at(a, 't10y');
+    const sg = (v) => `${v >= 0 ? '+' : '−'}${f2(Math.abs(v))}%p`;
+    const tp = dash.data('termprem');
+    let tpTxt = '';
+    if (tp.status === 'ok') { const t = (day) => { let v = null; for (const r of tp.data) { if (r.date > day) break; v = +r.tp; } return v; }; tpTxt = ` 같은 기간 기간 프리미엄은 ${sg(t(b) - t(a))}였습니다.`; }
+    const strong = document.createElement('b'); strong.textContent = '실제 사례';
+    el.replaceChildren(strong, document.createTextNode(` 2024년 9월 17일~2025년 1월 15일, 연준은 기준금리를 ${f2(Math.abs(df))}%p 내렸지만 2년물은 ${sg(d2)}, 10년물은 ${sg(d10)} 움직였습니다. 시장이 앞으로의 물가·재정·국채 공급을 더 걱정하면서 장기 금리가 연준과 반대로 간 것입니다.${tpTxt}`));
+  });
 })();
 </script>
 <script>

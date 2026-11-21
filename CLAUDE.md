@@ -56,6 +56,8 @@
 
 - 금과 중앙은행(증시·금 탭): `gold_real` 계산(월평균 금값·실질금리, 2019~2021 상관 −0.97 → 2022~ +0.51). `china_gold.csv`(중국 인민은행 월말 금 보유량: 2025년 중반까지 DBnomics의 IMF IFS `M.CN.RAFAGOLDV_OZT`, 그 뒤 중국 외환관리국 SAFE 연도별 xlsx를 `xlsxRows`(unzip)로 읽음). `wgc_cb.csv`(세계금협회 Gold Demand Trends 공개 페이지의 중앙은행 표를 파싱, 늦게 나온 보고서의 수정치 우선, 4분기 = 연간 − 1~3분기, 본문의 "revised estimate" 반영). 값을 손으로 고칠 땐 `data/wgc_cb_manual.csv`(quarter,tonnes)를 만들면 덮어씀. IMF 세계 합계는 신고분만 잡혀(2022년 −25톤) 쓰지 않음.
 
+- 미국 금리 탭 맨 위 `#rate-guide`: "연준의 확성기(2년 이하)와 시장의 바로미터(10년)" 설명, `rate-ladder`(실효 연방기금금리와 만기별 상관계수 막대), `rate-example`(2024-09-17~2025-01-15 연준 −1.00%p 인하 중 10년물 +1.01%p, 기간 프리미엄 +0.70%p). `termprem.csv`(FRED Kim-Wright: THREEFY10 모형 10년 금리, THREEFYTP10 기간 프리미엄, expected = 둘의 차이), `ch-tp` 두 칸 차트.
+
 ## 지표 추가하는 법
 
 1. `scripts/fetch-data.mjs`의 `jobs`에 묶음을 추가하거나 기존 묶음에 열을 추가한다.

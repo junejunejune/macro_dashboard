@@ -297,6 +297,13 @@ const jobs = {
     save('wgc_cb.csv', keys.map((k) => ({ quarter: k, month: `${k.slice(0, 4)}-${String((+k.slice(6) - 1) * 3 + 1).padStart(2, '0')}`, tonnes: q[k] })), ['quarter', 'month', 'tonnes'], 8);
   },
 
+  // 10년물 금리 분해(연준 Kim-Wright 모형, 일별): 모형 10년 금리 = 앞으로 10년 단기 금리 예상 평균 + 기간 프리미엄
+  async termprem() {
+    const fit = await fred('THREEFY10', '2015-01-01'), tp = await fred('THREEFYTP10', '2015-01-01');
+    const days = [...fit.keys()].filter((d) => tp.has(d)).sort();
+    save('termprem.csv', days.map((d) => ({ date: d, y10: round(fit.get(d), 3), expected: round(fit.get(d) - tp.get(d), 3), tp: round(tp.get(d), 3) })), ['date', 'y10', 'expected', 'tp']);
+  },
+
   // 유가·달러·위험 지표(일별, 2019~)
   async risk() {
     const ids = {
