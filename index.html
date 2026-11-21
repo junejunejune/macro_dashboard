@@ -295,6 +295,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <!-- 미국 물가·고용 -->
   <section class="mx-sec" id="us-macro" data-sec="us-macro" hidden>
     <h2>미국 물가·고용</h2>
+    <p class="mx-note">이 탭의 차트는 기간 버튼과 관계없이 최근 2년을 보여줍니다.</p>
     <div class="mx-grid">
       <div class="mx-card" id="card-infl"><h3>물가 상승률, 전년 동월 대비</h3><p>소비자물가(CPI)와 개인소비지출 물가(PCE), 각각 식품·에너지를 뺀 근원 지표. 점선은 연준 목표 2%. 2025년 10월 CPI는 미 정부 셧다운으로 발표되지 않아, 1년 뒤 상승률 계산에는 앞뒤 달 평균을 썼습니다.</p><div class="mx-chart" data-draw="ch-infl" data-source="inflation"></div>
         <p class="mx-trend" data-draw="t-infl"></p>
@@ -812,10 +813,10 @@ mx.bars = (el, rows, o) => {
     tip.style('left', `${Math.max(0, Math.min(bw - tw, c + 10 + tw > bw ? c - tw - 10 : c + 10))}px`).style('top', '4px');
   }).on('pointerleave', () => { guide.style('opacity', 0); tip.attr('hidden', true); });
 };
-mx.ts('ch-infl', 'inflation', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'cpi_yoy', label: 'CPI' }, { key: 'core_cpi_yoy', label: '근원 CPI' }, { key: 'pce_yoy', label: 'PCE', dash: '4 3' }, { key: 'core_pce_yoy', label: '근원 PCE', width: 2.4 }], { xKey: 'month', fmt: pct, unit: '%', refY: 2, label: '미국 CPI와 PCE 물가 상승률' }));
-mx.ts('ch-jobs', 'jobs', (el, rows) => mx.bars(el, mx.cut(rows, 'month'), { xKey: 'month', key: 'payems_chg', label: '월 증감', line: 'payems_3m', lineLabel: '3개월 평균', fmt: d3.format(',.1f'), unit: '만 명', aria: '미국 비농업 고용 월별 증감과 3개월 평균' }));
-mx.ts('ch-unrate', 'jobs', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'unrate', label: '실업률', width: 2.4 }, { key: 'ahe_yoy', label: '임금 상승률' }], { xKey: 'month', fmt: d3.format('.1f'), unit: '%', label: '미국 실업률과 시간당 임금 상승률' }));
-mx.ts('ch-claims', 'claims', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'claims', label: '주간', width: 1 }, { key: 'claims_4w', label: '4주 평균', width: 2.4 }], { xKey: 'date', fmt: d3.format('.1f'), unit: '만', label: '미국 신규 실업수당 청구 건수' }));
+mx.ts('ch-infl', 'inflation', (el, rows) => mx.line(el, mx.cut(rows, 'month', 2), [{ key: 'cpi_yoy', label: 'CPI' }, { key: 'core_cpi_yoy', label: '근원 CPI' }, { key: 'pce_yoy', label: 'PCE', dash: '4 3' }, { key: 'core_pce_yoy', label: '근원 PCE', width: 2.4 }], { xKey: 'month', fmt: pct, unit: '%', refY: 2, dots: true, label: '미국 CPI와 PCE 물가 상승률, 최근 2년' }));
+mx.ts('ch-jobs', 'jobs', (el, rows) => mx.bars(el, mx.cut(rows, 'month', 2), { xKey: 'month', key: 'payems_chg', label: '월 증감', line: 'payems_3m', lineLabel: '3개월 평균', fmt: d3.format(',.1f'), unit: '만 명', aria: '미국 비농업 고용 월별 증감과 3개월 평균' }));
+mx.ts('ch-unrate', 'jobs', (el, rows) => mx.line(el, mx.cut(rows, 'month', 2), [{ key: 'unrate', label: '실업률', width: 2.4 }, { key: 'ahe_yoy', label: '임금 상승률' }], { xKey: 'month', fmt: d3.format('.1f'), unit: '%', dots: true, label: '미국 실업률과 시간당 임금 상승률, 최근 2년' }));
+mx.ts('ch-claims', 'claims', (el, rows) => mx.line(el, mx.cut(rows, 'date', 2), [{ key: 'claims', label: '주간', width: 1 }, { key: 'claims_4w', label: '4주 평균', width: 2.4 }], { xKey: 'date', fmt: d3.format('.1f'), unit: '만', label: '미국 신규 실업수당 청구 건수' }));
 // 기간 첫날 = 100으로 맞추기
 mx.rebase = (rows, keys) => {
   const base = Object.fromEntries(keys.map((k) => { const r = rows.find((x) => x[k] !== '' && x[k] !== null && x[k] !== undefined); return [k, r ? +r[k] : null]; }));
