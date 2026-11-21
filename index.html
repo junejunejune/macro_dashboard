@@ -126,6 +126,13 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .mx-key b { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
 .mx-plot { position: relative; }
 .mx-plot svg { display: block; overflow: visible; touch-action: pan-y; }
+@media (hover: hover) { .mx-plot svg { cursor: grab; } .mx-grabbing .mx-plot svg { cursor: grabbing; } }
+.mx-zoom { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.mx-zoom span { margin-right: auto; font-variant-numeric: tabular-nums; }
+.mx-zoom button { font: inherit; font-size: 13px; min-width: 30px; height: 28px; padding: 0 9px; border: 1px solid var(--color-border-line); border-radius: 7px; background: var(--color-bg); color: var(--color-fg); cursor: pointer; }
+.mx-zoom button:disabled { opacity: .4; cursor: default; }
+.mx-zoom button:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 1px; }
+.mx-hint { margin: 2px 0 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
 .mx-plot text { fill: var(--cds-text-secondary); font-size: 11px; font-family: var(--font-anthropic-sans); }
 .mx-plot .grid line { stroke: var(--cds-chart-grid); }
 .mx-plot .domain { display: none; }
@@ -150,6 +157,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     <h1>재테크 매크로 대시보드</h1>
     <p class="mx-lede">원/달러 <b data-draw="l-usdkrw" data-source="latest" data-field="value" data-where="metric=usdkrw">—</b>원, 미국 10년물 <b data-draw="l-t10y" data-source="latest" data-field="value" data-where="metric=t10y">—</b>%, 한국 10년물 <b data-draw="l-ktb10y" data-source="latest" data-field="value" data-where="metric=ktb10y">—</b>%. 미국과 한국의 10년물 금리 차는 <b data-draw="l-gap" data-source="latest" data-field="value" data-where="metric=us_kr_gap">—</b>%p입니다.</p>
     <p class="mx-updated">데이터 갱신 <b data-draw="updated">—</b></p>
+    <p class="mx-hint">차트 위에서 스크롤하거나 두 손가락으로 벌리면 기간이 좁아지고, 반대로 하면 넓어집니다. 컴퓨터에서는 끌어서 기간을 옮길 수 있고, 차트 아래 −·+ 버튼도 쓸 수 있어요.</p>
   </header>
 
   <div class="mx-bar">
@@ -585,12 +593,109 @@ mx.range = 5;
 mx.pm = d3.utcParse('%Y-%m');
 mx.pd = d3.utcParse('%Y-%m-%d');
 mx.px = (s) => (s.length === 7 ? mx.pm(s) : mx.pd(s));
-// years를 주면 기간 버튼과 상관없이 그 기간만 자름
+// 보이는 기간만 자름. 기본은 기간 버튼(mx.range) 또는 years 인자,
+// 사용자가 확대·축소·이동한 차트는 mx.view[차트이름] = [시작ms, 끝ms]를 따름
+mx.view = {};
+mx.zinfo = {};
 mx.cut = (rows, key, years = mx.range) => {
-  if (!rows.length || years >= 99) return rows;
-  const last = mx.px(rows[rows.length - 1][key]);
-  const c = new Date(last); c.setUTCFullYear(c.getUTCFullYear() - years);
-  return rows.filter((r) => mx.px(r[key]) >= c);
+  if (!rows.length) return rows;
+  const t = (r) => mx.px(r[key]).getTime();
+  const full = [t(rows[0]), t(rows[rows.length - 1])];
+  let from = full[0], to = full[1];
+  if (years < 99) { const c = new Date(full[1]); c.setUTCFullYear(c.getUTCFullYear() - years); from = Math.max(full[0], c.getTime()); }
+  const name = mx._cur;
+  if (name) {
+    mx.zinfo[name] = { full, def: [from, to], step: (full[1] - full[0]) / Math.max(1, rows.length - 1) };
+    if (mx.view[name]) [from, to] = mx.view[name];
+  }
+  return rows.filter((r) => { const x = t(r); return x >= from && x <= to; });
+};
+
+// ---------- 확대·축소·이동 ----------
+mx.curView = (name) => mx.view[name] || mx.zinfo[name].def;
+mx.zoomTo = (name, from, to) => {
+  const z = mx.zinfo[name]; if (!z) return;
+  const fullSpan = z.full[1] - z.full[0];
+  const minSpan = Math.min(fullSpan, Math.max(z.step * 8, 14 * 864e5)); // 점 8개 또는 2주보다 좁게는 확대하지 않음
+  let span = Math.min(fullSpan, Math.max(minSpan, to - from));
+  let a = from + ((to - from) - span) / 2;
+  a = Math.min(Math.max(a, z.full[0]), z.full[1] - span);
+  const d = z.def;
+  mx.view[name] = Math.abs(a - d[0]) < z.step / 2 && Math.abs(a + span - d[1]) < z.step / 2 ? undefined : [a, a + span];
+  if (!mx.view[name]) delete mx.view[name];
+  if (!mx._raf) mx._raf = {};
+  // 다음 프레임에 한 번만 다시 그림(화면이 가려져 프레임이 멈춰도 50ms 뒤엔 그림)
+  if (!mx._raf[name]) { mx._raf[name] = 1; const run = () => { if (!mx._raf[name]) return; mx._raf[name] = 0; dash.draw(name); }; requestAnimationFrame(run); setTimeout(run, 50); }
+};
+// 화면 x좌표 → 그림 영역 안 비율(0~1)
+mx.frac = (el, clientX) => {
+  const p = el.__plot, svg = el.querySelector('.mx-plot svg');
+  if (!p || !svg) return 0.5;
+  const rect = svg.getBoundingClientRect();
+  const px = (clientX - rect.left) * (p.W / rect.width);
+  return Math.min(1, Math.max(0, (px - p.l) / (p.r - p.l)));
+};
+mx.zoomAround = (name, f, k, base) => {
+  const [a, b] = base || mx.curView(name);
+  const t = a + f * (b - a), span = (b - a) * k;
+  mx.zoomTo(name, t - f * span, t - f * span + span);
+};
+mx.bindZoom = (el, name) => {
+  if (el.__zb) return; el.__zb = true;
+  const inPlot = (ev) => { const svg = el.querySelector('.mx-plot svg'); return svg && svg.contains(ev.target); };
+  // 마우스 휠·트랙패드: 위아래 = 확대/축소, 좌우 = 이동
+  el.addEventListener('wheel', (ev) => {
+    if (!inPlot(ev) || !mx.zinfo[name]) return;
+    ev.preventDefault();
+    if (Math.abs(ev.deltaX) > Math.abs(ev.deltaY)) {
+      const [a, b] = mx.curView(name), r = el.__plot, w = el.querySelector('.mx-plot svg').getBoundingClientRect().width * (r.r - r.l) / r.W;
+      const sh = ev.deltaX / w * (b - a); mx.zoomTo(name, a + sh, b + sh);
+    } else mx.zoomAround(name, mx.frac(el, ev.clientX), Math.exp(ev.deltaY * 0.002));
+  }, { passive: false });
+  // 마우스로 끌기 = 이동, 두 손가락 = 확대/축소(+이동)
+  const pts = new Map(); let g = null;
+  const plotW = () => { const r = el.__plot, w = el.querySelector('.mx-plot svg').getBoundingClientRect().width; return w * (r.r - r.l) / r.W; };
+  el.addEventListener('pointerdown', (ev) => {
+    if (!inPlot(ev) || !mx.zinfo[name]) return;
+    if (ev.pointerType === 'mouse') { if (ev.button !== 0) return; g = { mode: 'drag', x: ev.clientX, view: mx.curView(name) }; el.classList.add('mx-grabbing'); return; }
+    pts.set(ev.pointerId, ev.clientX);
+    if (pts.size === 2) {
+      const [x1, x2] = [...pts.values()];
+      g = { mode: 'pinch', dist: Math.max(20, Math.abs(x1 - x2)), f: mx.frac(el, (x1 + x2) / 2), view: mx.curView(name) };
+    }
+  });
+  el.addEventListener('pointermove', (ev) => {
+    if (!g) return;
+    if (g.mode === 'drag' && ev.pointerType === 'mouse') {
+      const [a, b] = g.view, sh = -(ev.clientX - g.x) / plotW() * (b - a);
+      mx.zoomTo(name, a + sh, b + sh);
+    } else if (g.mode === 'pinch' && pts.has(ev.pointerId)) {
+      pts.set(ev.pointerId, ev.clientX);
+      const [x1, x2] = [...pts.values()];
+      const k = g.dist / Math.max(20, Math.abs(x1 - x2));
+      const [a, b] = g.view, t = a + g.f * (b - a), span = (b - a) * k, f2 = mx.frac(el, (x1 + x2) / 2);
+      mx.zoomTo(name, t - f2 * span, t - f2 * span + span);
+      ev.preventDefault();
+    }
+  });
+  const end = (ev) => { pts.delete(ev.pointerId); if (g && (g.mode === 'drag' || pts.size < 2)) { g = null; el.classList.remove('mx-grabbing'); } };
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => el.addEventListener(t, end));
+  // 두 손가락이 닿은 동안은 페이지 스크롤 대신 차트 확대
+  el.addEventListener('touchmove', (ev) => { if (ev.touches.length > 1 && inPlot(ev)) ev.preventDefault(); }, { passive: false });
+};
+// 차트 아래 확대 버튼과 현재 보이는 기간
+mx.zoomBar = (el, name) => {
+  const z = mx.zinfo[name]; if (!z) return;
+  const [a, b] = mx.curView(name);
+  const monthly = z.step > 20 * 864e5;
+  const f = d3.utcFormat(monthly ? '%Y.%m' : '%Y.%m.%d');
+  const bar = d3.select(el).append('div').attr('class', 'mx-zoom');
+  bar.append('span').text(`${f(new Date(a))} ~ ${f(new Date(b))}`);
+  const btn = (label, aria, fn, disabled) => bar.append('button').attr('type', 'button').attr('aria-label', aria).property('disabled', !!disabled).text(label).on('click', fn);
+  const full = b - a >= z.full[1] - z.full[0] - z.step;
+  btn('−', '기간 넓게 보기', () => mx.zoomAround(name, 0.5, 1.6), full);
+  btn('+', '기간 좁게 보기', () => mx.zoomAround(name, 0.5, 1 / 1.6));
+  if (mx.view[name]) btn('되돌리기', '처음 기간으로 되돌리기', () => { delete mx.view[name]; dash.draw(name); });
 };
 mx.msg = (el, st) => {
   el.replaceChildren();
@@ -630,6 +735,7 @@ mx.line = (el, rows, series, o) => {
   const wMax = d3.max(yTicks, (t) => { const n = meas.append('text').text(tf(t)).node(); return n.getComputedTextLength(); }) || 30;
   meas.remove();
   const m = { t: 6, r: 8, b: 22, l: Math.ceil(wMax) + 8 };
+  el.__plot = { l: m.l, r: W - m.r, W };
   const x = d3.scaleUtc().domain(d3.extent(data, (d) => d.x)).range([m.l, W - m.r]);
   y.range([H - m.b, m.t]);
   svg.append('g').attr('class', 'grid').selectAll('line').data(yTicks).join('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y).attr('y2', y);
@@ -689,6 +795,7 @@ mx.stack = (el, rows, series, o) => {
   const wMax = d3.max(yTicks, (t) => meas.append('text').text(fmt(t)).node().getComputedTextLength()) || 30;
   meas.remove();
   const m = { t: 6, r: 8, b: 22, l: Math.ceil(wMax) + 8 };
+  el.__plot = { l: m.l, r: W - m.r, W };
   y.range([H - m.b, m.t]);
   const xs = rows.map((r) => mx.px(r[o.xKey]));
   svg.append('g').attr('class', 'grid').selectAll('line').data(yTicks).join('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y).attr('y2', y);
@@ -729,7 +836,9 @@ mx.stack = (el, rows, series, o) => {
 mx.ts = (name, source, fn) => dash.draw(name, (el) => {
   const d = dash.data(source);
   if (d.status !== 'ok' || !Array.isArray(d.data) || !d.data.length) { mx.msg(el, d.status); return; }
-  fn(el, d.data);
+  mx._cur = name;
+  try { fn(el, d.data); } finally { mx._cur = null; }
+  if (mx.zinfo[name]) { mx.zoomBar(el, name); mx.bindZoom(el, name); }
 });
 </script>
 
@@ -788,6 +897,7 @@ mx.bars = (el, rows, o) => {
   const wMax = d3.max(ticks, (t) => meas.append('text').text(fmt(t)).node().getComputedTextLength()) || 30;
   meas.remove();
   const m = { t: 6, r: 8, b: 22, l: Math.ceil(wMax) + 8 };
+  el.__plot = { l: m.l, r: W - m.r, W };
   y.range([H - m.b, m.t]);
   const xb = d3.scaleBand().domain(rows.map((r) => r[o.xKey])).range([m.l, W - m.r]).padding(0.2);
   const cx = (r) => xb(r[o.xKey]) + xb.bandwidth() / 2;
@@ -886,6 +996,7 @@ dash.draw('ch-curve', (el) => {
   document.querySelectorAll('.mx-tab').forEach((b) => b.addEventListener('click', () => open(b.dataset.tab)));
   document.querySelectorAll('.mx-rng').forEach((b) => b.addEventListener('click', () => {
     mx.range = +b.dataset.range;
+    mx.view = {};
     document.querySelectorAll('.mx-rng').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     ['ch-usdkrw', 'ch-krwidx', 'ch-goldkrw', 'ch-m2', 'ch-krgov', 'ch-krbank', 'ch-fed', 'ch-uslong', 'ch-spread', 'ch-debt', 'ch-comp', 'ch-iss', 'ch-issshare', 'ch-infl', 'ch-jobs', 'ch-unrate', 'ch-claims', 'ch-dji', 'ch-ixic', 'ch-idx', 'ch-m7', 'ch-gold'].forEach((n) => dash.draw(n));
   }));
