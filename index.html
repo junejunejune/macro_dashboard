@@ -99,7 +99,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 <style>
 .mx { display: flex; flex-direction: column; gap: var(--cds-gap-lg); font-variant-numeric: tabular-nums; }
 .mx-head h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0 0 var(--cds-gap-xs); text-wrap: balance; }
-.mx-lede { margin: 0; color: var(--color-fg-muted); line-height: 1.6; max-width: 68ch; }
+.mx-lede { margin: 0; color: var(--color-fg-muted); line-height: 1.6; max-width: 68ch; font-size: 15px; }
 .mx-lede b { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
 .mx-bar { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); align-items: center; justify-content: space-between; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--color-bg); padding-block: var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); }
 .mx-bar { flex-direction: column; align-items: stretch; }
@@ -129,20 +129,23 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .mx-rng { padding: 3px 10px; font-size: var(--cds-font-size-caption); }
 .mx-rng[aria-pressed="true"] { background: var(--color-fg); color: var(--color-bg); }
 .mx-sec { display: flex; flex-direction: column; gap: var(--cds-gap-lg); }
-.mx-sec > h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0; }
+.mx-sec > h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .mx-group { display: flex; flex-direction: column; gap: var(--cds-gap-sm); }
-.mx-group h3 { margin: 0; font-size: var(--cds-font-size-caption); font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); letter-spacing: .04em; }
-.mx-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--cds-gap-sm); }
+.mx-group h3 { margin: 4px 0 0; font-size: 14px; font-weight: var(--cds-font-weight-medium); color: var(--color-fg); }
+.mx-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: var(--cds-gap-sm); }
 .mx-tile { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-md); display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.mx-tile span { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
-.mx-tile b { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: 1.6rem; line-height: 1.15; }
-.mx-tile small { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
-.mx-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--cds-gap-md); }
+.mx-tile > span { font-size: 12.5px; color: var(--color-fg-muted); line-height: 1.35; }
+.mx-tile b { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: 1.75rem; line-height: 1.15; letter-spacing: -0.01em; }
+.mx-tile small { font-size: 12.5px; color: var(--color-fg); display: flex; flex-direction: column; gap: 1px; }
+.mx-tile small .mx-asof { color: var(--color-fg-muted); font-size: 11.5px; }
+.mx-tile small .mx-up { color: var(--s4); }
+.mx-tile small .mx-down { color: var(--s1); }
+.mx-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; align-items: start; }
 .mx-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: flex; flex-direction: column; gap: var(--cds-gap-sm); min-width: 0; }
-.mx-card h3 { margin: 0; font-size: var(--cds-font-size-body); font-weight: var(--cds-font-weight-medium); }
-.mx-card p { margin: 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); line-height: 1.5; }
+.mx-card h3 { margin: 0; font-size: 15.5px; font-weight: var(--cds-font-weight-medium); line-height: 1.4; text-wrap: balance; }
+.mx-card p { margin: 0; font-size: 13px; color: var(--color-fg-muted); line-height: 1.55; }
 .mx-chart { min-height: 260px; position: relative; }
-.mx-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: var(--cds-font-size-caption); color: var(--cds-text-secondary); margin-bottom: 6px; }
+.mx-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--cds-text-secondary); margin-bottom: 6px; }
 .mx-key { display: inline-flex; align-items: center; gap: 5px; }
 .mx-key i { width: 10px; height: 3px; border-radius: 2px; display: inline-block; }
 .mx-key b { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
@@ -176,7 +179,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .mx-events li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
 .mx-events i { font-style: normal; flex: none; width: 16px; height: 16px; border-radius: 50%; background: var(--warn); color: var(--color-panel); font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; align-self: center; }
 .mx-events time { color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
-.mx-events b { font-weight: var(--cds-font-weight-medium); }
+.mx-events b { font-weight: var(--cds-font-weight-medium); flex-basis: 100%; padding-left: 24px; }
 .mx-events .mx-events-note { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); padding-left: 24px; }
 .mx-events:empty { display: none; }
 .mx-brief { list-style: none; margin: 0; padding: var(--cds-pad-md) var(--cds-pad-lg); background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.6; }
@@ -212,6 +215,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .mx-flag:empty { display: none; }
 .mx-tile.mx-tile-alert { border-color: var(--warn); }
 .mx-tile.mx-tile-alert b { color: var(--warn); }
+.mx-narrow { display: none; }
+@media (max-width: 480px) { .mx-wide { display: none; } .mx-narrow { display: inline; } .mx-lede { font-size: 14px; } }
 .mx-hint { margin: 2px 0 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
 .mx-plot text { fill: var(--cds-text-secondary); font-size: 11px; font-family: var(--font-anthropic-sans); }
 .mx-plot .grid line { stroke: var(--cds-chart-grid); }
@@ -220,10 +225,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .mx-tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); box-shadow: var(--cds-shadow-popover); border-radius: var(--cds-radius); padding: 6px 8px; font-size: var(--cds-font-size-caption); white-space: nowrap; z-index: 3; }
 .mx-tip div { display: flex; gap: 8px; justify-content: space-between; }
 .mx-tip em { font-style: normal; color: var(--cds-text-secondary); }
-.mx-card .mx-trend { margin: 0; font-size: 13px; line-height: 1.65; color: var(--color-fg); border-top: 1px solid var(--color-border-line); padding-top: var(--cds-pad-sm); }
+.mx-card .mx-trend { margin: 0; font-size: 14px; line-height: 1.7; color: var(--color-fg); border-top: 1px solid var(--color-border-line); padding-top: var(--cds-pad-sm); }
 .mx-card .mx-trend:empty { display: none; }
 .mx-trend b { font-weight: var(--cds-font-weight-medium); color: var(--s1); }
-.mx-how { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); line-height: 1.6; }
+.mx-how { font-size: 13px; color: var(--color-fg-muted); line-height: 1.65; }
 .mx-how summary { cursor: pointer; color: var(--color-fg); font-weight: 500; padding-block: 2px; }
 .mx-how ul { margin: 6px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
 .mx-msg { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); padding: var(--cds-pad-lg) 0; }
@@ -244,7 +249,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     </div>
     <p class="mx-lede">원/달러 <b data-draw="l-usdkrw" data-source="latest" data-field="value" data-where="metric=usdkrw">—</b>원, 미국 10년물 <b data-draw="l-t10y" data-source="latest" data-field="value" data-where="metric=t10y">—</b>%, 한국 10년물 <b data-draw="l-ktb10y" data-source="latest" data-field="value" data-where="metric=ktb10y">—</b>%. 미국과 한국의 10년물 금리 차는 <b data-draw="l-gap" data-source="latest" data-field="value" data-where="metric=us_kr_gap">—</b>%p입니다.</p>
     <p class="mx-updated">데이터 갱신 <b data-draw="updated">—</b></p>
-    <p class="mx-hint">차트 위에서 원하는 기간을 옆으로 끌어 선택하면 그 기간만 확대됩니다(휴대폰은 한 손가락으로 옆으로). 스크롤이나 두 손가락으로 벌리고 오므려도 확대·축소되고, 더블클릭 또는 차트 아래 '되돌리기'로 처음 기간으로 돌아갑니다.</p>
+    <p class="mx-hint"><span class="mx-wide">차트 사용법: 옆으로 끌어 기간 확대 · 스크롤이나 두 손가락으로 확대·축소 · 더블클릭이나 '되돌리기'로 원래대로</span><span class="mx-narrow">차트를 옆으로 끌거나 두 손가락으로 벌리면 확대돼요.</span></p>
   </header>
 
   <div class="mx-bar">
@@ -1100,7 +1105,7 @@ mx.line = (el, rows, series, o) => {
     k.append('b').text(last ? fmt(val(last, s.key)) + (o.unit || '') : '—');
   });
   const box = d3.select(el).append('div').attr('class', 'mx-plot');
-  const W = Math.max(260, el.clientWidth), H = o.height || 220;
+  const W = Math.max(260, el.clientWidth), H = o.height || (W > 520 ? 250 : 220);
   const svg = box.append('svg').attr('width', '100%').attr('height', H).attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', o.label || '');
   const all = data.flatMap((d) => series.map((s) => val(d, s.key))).filter((v) => v !== null);
   let [lo, hi] = d3.extent(all);
@@ -1173,7 +1178,7 @@ mx.stack = (el, rows, series, o) => {
   const legend = d3.select(el).append('div').attr('class', 'mx-legend');
   series.forEach((s, i) => { const k = legend.append('span').attr('class', 'mx-key'); k.append('i').style('background', colors[i]); k.append('span').text(s.label); k.append('b').text(last ? fmt(+last[s.key]) + (o.unit || '') : '—'); });
   const box = d3.select(el).append('div').attr('class', 'mx-plot');
-  const W = Math.max(260, el.clientWidth), H = o.height || 220;
+  const W = Math.max(260, el.clientWidth), H = o.height || (W > 520 ? 250 : 220);
   const svg = box.append('svg').attr('width', '100%').attr('height', H).attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', o.label || '');
   const st = d3.stack().keys(series.map((s) => s.key)).value((r, k) => +r[k] || 0)(rows);
   const hi = o.max || d3.max(st[st.length - 1], (d) => d[1]);
@@ -1245,7 +1250,12 @@ mx.ts = (name, source, fn) => dash.draw(name, (el) => {
       const r = row(metric);
       if (!r || r.change === null) { el.textContent = '—'; return; }
       const arrow = r.change > 0 ? '▲' : r.change < 0 ? '▼' : '';
-      el.textContent = `1년 전 대비 ${arrow}${d3.format('.2f')(Math.abs(r.change))}${r.change_kind} · ${r.asof}`;
+      // 1줄: 1년 새 변화(올랐으면 빨강, 내렸으면 파랑 — 좋고 나쁨이 아니라 방향만), 2줄: 기준일
+      const ch = document.createElement('span'); ch.textContent = '1년 새 ';
+      const v = document.createElement('span'); v.className = r.change > 0 ? 'mx-up' : r.change < 0 ? 'mx-down' : '';
+      v.textContent = `${arrow}${d3.format('.2f')(Math.abs(r.change))}${r.change_kind}`; ch.appendChild(v);
+      const at = document.createElement('span'); at.className = 'mx-asof'; at.textContent = r.asof.length === 7 ? `${r.asof.slice(0, 4)}년 ${+r.asof.slice(5, 7)}월 기준` : `${r.asof.replace(/-/g, '.')} 기준`;
+      el.replaceChildren(ch, at);
     });
   }
   const lede = { 'l-usdkrw': ['usdkrw', (v) => d3.format(',.1f')(v)], 'l-t10y': ['t10y', (v) => d3.format('.2f')(v)], 'l-ktb10y': ['ktb10y', (v) => d3.format('.2f')(v)], 'l-gap': ['us_kr_gap', (v) => d3.format('+.2f')(v)] };
@@ -1278,7 +1288,7 @@ mx.bars = (el, rows, o) => {
   const legend = d3.select(el).append('div').attr('class', 'mx-legend');
   [[o.key, o.label], [o.line, o.lineLabel]].forEach(([k, lab], i) => { const s = legend.append('span').attr('class', 'mx-key'); s.append('i').style('background', colors[i]); s.append('span').text(lab); s.append('b').text(last && last[k] !== null ? fmt(+last[k]) + (o.unit || '') : '—'); });
   const box = d3.select(el).append('div').attr('class', 'mx-plot');
-  const W = Math.max(260, el.clientWidth), H = o.height || 220;
+  const W = Math.max(260, el.clientWidth), H = o.height || (W > 520 ? 250 : 220);
   const svg = box.append('svg').attr('width', '100%').attr('height', H).attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', o.aria || '');
   const vals = rows.flatMap((r) => [r[o.key], r[o.line]]).filter((v) => v !== null).map(Number);
   const y = d3.scaleLinear().domain([Math.min(0, d3.min(vals)), Math.max(0, d3.max(vals))]).nice(5);
