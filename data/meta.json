@@ -39,7 +39,11 @@
     "markets": {
       "updated": "2026-11-21T05:07:01.903Z",
       "error": null
+    },
+    "events": {
+      "updated": "2026-11-21T05:41:17.989Z",
+      "error": null
     }
   },
-  "checked": "2026-11-21T05:07:01.903Z"
+  "checked": "2026-11-21T05:41:17.989Z"
 }

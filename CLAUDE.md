@@ -24,6 +24,9 @@
 
 - 부채·국채 탭 맨 위 `#debt-guide`: 쉬운 설명 카드. `debt-check` 드로잉이 데이터로 4개 신호(부채 증가 속도, T-bill 비중, 장기물 발행 비중, 10년물 반응)를 주의/보통/완화로 판단한다. 색 토큰 `--ok`, `--warn`, `--mid`(+`-bg`).
 
+- 최근 이벤트: `data/events.csv`(kind, date, ref, a, b, c). `fed`·`bok` = 기준금리 변경일(a=하단 또는 금리, b=상단, c=변화폭), `jobs`·`cpi` = ALFRED의 실제 발표일과 그날 처음 발표된 값(ref=해당 월). 각 종류 직전 3개. 차트에는 `events: mx.ev(kind)` 옵션으로 번호 마커(`mx.marks`), 카드에는 `<ol class="mx-events" data-kind>` 목록.
+- 터치: 한 손가락 옆으로 끌기 = 기간 선택, 위아래 = 페이지 스크롤, 두 손가락 = 핀치.
+
 ## 지표 추가하는 법
 
 1. `scripts/fetch-data.mjs`의 `jobs`에 묶음을 추가하거나 기존 묶음에 열을 추가한다.

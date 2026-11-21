@@ -31,8 +31,8 @@ const get = async (url, type = 'text', tries = 3) => {
   }
 };
 const csv = (rows, cols) => [cols.join(','), ...rows.map((r) => cols.map((c) => r[c] ?? '').join(','))].join('\n') + '\n';
-const save = (name, rows, cols) => {
-  if (rows.length < 10) throw new Error(`${name}: 행이 ${rows.length}개뿐이라 저장하지 않음`);
+const save = (name, rows, cols, min = 10) => {
+  if (rows.length < min) throw new Error(`${name}: 행이 ${rows.length}개뿐이라 저장하지 않음`);
   writeFileSync(new URL(name, OUT), csv(rows, cols));
   console.log(`✓ ${name}: ${rows.length}행, 마지막 ${JSON.stringify(rows.at(-1))}`);
 };
@@ -171,6 +171,72 @@ const jobs = {
     for (const [k, sym] of Object.entries(syms)) data[k] = await yahooDaily(sym, '2019-01-01');
     const days = [...data.ixic.keys()].sort(); // 나스닥 거래일 기준
     save('markets.csv', days.map((d) => ({ date: d, ...Object.fromEntries(Object.keys(syms).map((k) => [k, round(data[k].get(d), 2)])) })), ['date', ...Object.keys(syms)]);
+  },
+
+  // 최근 이벤트(각 종류 직전 3개): 연준·한국은행 기준금리 변경, 미국 고용·CPI 발표
+  // 고용·CPI는 ALFRED(FRED 과거 발표 기록)에서 실제 발표일과 그날 처음 발표된 값을 가져옴
+  async events() {
+    const rows = [];
+    const N = 3;
+    // 연준: 목표범위 상단·하단이 바뀐 날(시행일)
+    const up = await fred('DFEDTARU', '2015-01-01'), lo = await fred('DFEDTARL', '2015-01-01');
+    const ud = [...up.keys()].sort();
+    const fedCh = [];
+    for (let i = 1; i < ud.length; i++) { const a = up.get(ud[i - 1]), b = up.get(ud[i]); if (a !== b) fedCh.push({ kind: 'fed', date: ud[i], ref: '', a: lo.get(ud[i]), b, c: round(b - a, 2) }); }
+    rows.push(...fedCh.slice(-N));
+    // 한국은행: 월별 값이 바뀐 달 → 그 달 일별 값으로 정확한 날짜
+    const bm = await ecos('722Y001', '0101000');
+    const months = [...bm.keys()].sort();
+    const cand = [];
+    for (let i = months.length - 1; i > 0 && cand.length < N + 2; i--) if (bm.get(months[i]) !== bm.get(months[i - 1])) cand.push(months[i]);
+    const bok = [];
+    for (const m of cand) {
+      const ym2 = m.replace('-', '');
+      const prevM = months[months.indexOf(m) - 1].replace('-', '');
+      const url = (s) => `https://ecos.bok.or.kr/api/StatisticSearch/${ECOS_KEY}/json/kr/${s}/${s + ECOS_PAGE - 1}/722Y001/D/${prevM}25/${ym2}31/0101000`;
+      let all = [], s = 1, total = 1;
+      while (s <= total) { const j = await get(url(s), 'json'); total = j.StatisticSearch?.list_total_count ?? 0; all = all.concat(j.StatisticSearch?.row || []); s += ECOS_PAGE; }
+      all.sort((x, y) => x.TIME.localeCompare(y.TIME));
+      for (let i = 1; i < all.length; i++) if (all[i].DATA_VALUE !== all[i - 1].DATA_VALUE) {
+        const t = all[i].TIME;
+        bok.push({ kind: 'bok', date: `${t.slice(0, 4)}-${t.slice(4, 6)}-${t.slice(6, 8)}`, ref: '', a: +all[i].DATA_VALUE, b: '', c: round(+all[i].DATA_VALUE - +all[i - 1].DATA_VALUE, 2) });
+      }
+    }
+    rows.push(...[...new Map(bok.map((e) => [e.date, e])).values()].sort((x, y) => x.date.localeCompare(y.date)).slice(-N));
+    // ALFRED: 발표일 목록
+    const vintages = async (id) => {
+      const html = await get(`https://alfred.stlouisfed.org/series/downloaddata?seid=${id}`);
+      return [...new Set([...html.matchAll(/<option[^>]*value="(\d{4}-\d{2}-\d{2})"/g)].map((m) => m[1]))].sort();
+    };
+    // 그 발표일에 공개된 데이터(처음 발표 값)
+    const asOf = async (id, vd, from) => {
+      const t = await get(`https://alfred.stlouisfed.org/graph/alfredgraph.csv?id=${id}&cosd=${from}&vintage_date=${vd}`);
+      return t.trim().split('\n').slice(1).map((l) => l.split(',')).filter(([, v]) => v && v !== '.').map(([d, v]) => [d.slice(0, 7), +v]);
+    };
+    const back = (vd, months) => { const d = new Date(vd); d.setUTCMonth(d.getUTCMonth() - months); return d.toISOString().slice(0, 10); };
+    // 고용: 비농업 고용 증감(만 명, 첫 발표 기준)과 실업률
+    for (const vd of (await vintages('PAYEMS')).slice(-N)) {
+      const p = await asOf('PAYEMS', vd, back(vd, 6)), u = await asOf('UNRATE', vd, back(vd, 6));
+      const [m, v] = p[p.length - 1], prev = p[p.length - 2];
+      const ur = u.find(([mm]) => mm === m);
+      rows.push({ kind: 'jobs', date: vd, ref: m, a: round((v - prev[1]) / 10, 1), b: ur ? ur[1] : '', c: '' });
+    }
+    // CPI: 전년비(헤드라인·근원, 첫 발표 기준)
+    for (const vd of (await vintages('CPIAUCSL')).slice(-N)) {
+      const c = await asOf('CPIAUCSL', vd, back(vd, 16)), k = await asOf('CPILFESL', vd, back(vd, 16));
+      // 1년 전 달이 미발표(예: 2025년 10월)면 앞뒤 달 평균
+      const yoy = (arr) => {
+        const [m, v] = arr[arr.length - 1];
+        const k = (d) => d.toISOString().slice(0, 7), base = new Date(Date.UTC(+m.slice(0, 4) - 1, +m.slice(5, 7) - 1, 1));
+        const get1 = (mm) => arr.find(([x]) => x === mm)?.[1];
+        let p = get1(k(base));
+        if (p === undefined) { const a = get1(k(new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() - 1, 1)))), b = get1(k(new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + 1, 1)))); p = a !== undefined && b !== undefined ? (a + b) / 2 : undefined; }
+        return [m, p !== undefined ? round((v / p - 1) * 100, 2) : ''];
+      };
+      const [m, cy] = yoy(c), [, ky] = yoy(k);
+      rows.push({ kind: 'cpi', date: vd, ref: m, a: cy, b: ky, c: '' });
+    }
+    save('events.csv', rows, ['kind', 'date', 'ref', 'a', 'b', 'c'], 4);
   },
 
   // 미국 연방 총부채(일별 → 월말, 조 달러)

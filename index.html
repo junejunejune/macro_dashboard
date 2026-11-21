@@ -16,7 +16,7 @@
 // data/*.csv 를 읽고, 아래 페이지 스크립트가 쓰는 dash.calc / dash.data / dash.draw 를 제공합니다.
 // 새 CSV를 추가하면 FILES에 이름을 넣으세요.
 window.dash = (() => {
-  const FILES = ['krw_value', 'money_supply', 'kr_rates', 'us_rates', 'us_macro', 'us_claims', 'markets', 'us_debt', 'treasury_composition', 'treasury_issuance'];
+  const FILES = ['krw_value', 'money_supply', 'kr_rates', 'us_rates', 'us_macro', 'us_claims', 'markets', 'events', 'us_debt', 'treasury_composition', 'treasury_issuance'];
   const raw = {}, calcs = {}, cache = {}, draws = [];
   let status = 'loading';
   const runOne = (name, fn) => document.querySelectorAll(`[data-draw="${name}"]`).forEach((el) => {
@@ -150,6 +150,13 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .mx-chip.mx-warn { color: var(--warn); background: var(--warn-bg); }
 .mx-chip.mx-ok { color: var(--ok); background: var(--ok-bg); }
 .mx-chip.mx-mid { color: var(--mid); background: var(--mid-bg); }
+.mx-events { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.mx-events li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.mx-events i { font-style: normal; flex: none; width: 16px; height: 16px; border-radius: 50%; background: var(--warn); color: var(--color-panel); font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; align-self: center; }
+.mx-events time { color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
+.mx-events b { font-weight: var(--cds-font-weight-medium); }
+.mx-events .mx-events-note { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); padding-left: 24px; }
+.mx-events:empty { display: none; }
 .mx-hint { margin: 2px 0 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
 .mx-plot text { fill: var(--cds-text-secondary); font-size: 11px; font-family: var(--font-anthropic-sans); }
 .mx-plot .grid line { stroke: var(--cds-chart-grid); }
@@ -175,7 +182,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     <h1>재테크 매크로 대시보드</h1>
     <p class="mx-lede">원/달러 <b data-draw="l-usdkrw" data-source="latest" data-field="value" data-where="metric=usdkrw">—</b>원, 미국 10년물 <b data-draw="l-t10y" data-source="latest" data-field="value" data-where="metric=t10y">—</b>%, 한국 10년물 <b data-draw="l-ktb10y" data-source="latest" data-field="value" data-where="metric=ktb10y">—</b>%. 미국과 한국의 10년물 금리 차는 <b data-draw="l-gap" data-source="latest" data-field="value" data-where="metric=us_kr_gap">—</b>%p입니다.</p>
     <p class="mx-updated">데이터 갱신 <b data-draw="updated">—</b></p>
-    <p class="mx-hint">차트 위에서 스크롤하거나 두 손가락으로 벌리면 기간이 좁아지고, 반대로 하면 넓어집니다. 컴퓨터에서는 마우스로 원하는 기간을 끌어서 선택하면 그 기간이 확대되고, 더블클릭하면 처음 기간으로 돌아갑니다. 차트 아래 −·+ 버튼도 쓸 수 있어요.</p>
+    <p class="mx-hint">차트 위에서 원하는 기간을 옆으로 끌어 선택하면 그 기간만 확대됩니다(휴대폰은 한 손가락으로 옆으로). 스크롤이나 두 손가락으로 벌리고 오므려도 확대·축소되고, 더블클릭 또는 차트 아래 '되돌리기'로 처음 기간으로 돌아갑니다.</p>
   </header>
 
   <div class="mx-bar">
@@ -284,6 +291,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     <h2>한국 금리</h2>
     <div class="mx-grid">
       <div class="mx-card" id="card-krgov"><h3>기준금리와 국고채</h3><p>월평균 수익률. 장단기 금리차가 좁아지면 경기 둔화 신호로 읽힙니다.</p><div class="mx-chart" data-draw="ch-krgov" data-source="kr_rates"></div>
+        <ol class="mx-events" data-draw="e-krgov" data-kind="bok" aria-label="최근 발표·결정"></ol>
         <p class="mx-trend" data-draw="t-krgov"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>기준금리는 한국은행이 정하고, 국고채 금리는 시장이 정합니다. 국고채 3년물이 기준금리보다 낮으면 시장이 금리 인하를, 높으면 동결·인상을 예상한다는 뜻입니다.</li><li>10년물과 3년물의 차이가 좁아지거나 역전되면 경기 둔화 우려가 커졌다고 봅니다.</li><li>금리가 내리면 채권 가격이 오릅니다. 만기가 긴 채권일수록 가격 변화가 큽니다.</li></ul></details>
       </div>
@@ -300,6 +308,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     <h2>미국 금리</h2>
     <div class="mx-grid">
       <div class="mx-card" id="card-fed"><h3>연준 기준금리와 단기 국채 (2년 이하)</h3><p>연준 목표범위 상단, 실효 연방기금금리, 3개월·1년·2년물. 2년물은 시장이 예상하는 앞으로의 기준금리를 반영합니다.</p><div class="mx-chart" data-draw="ch-fed" data-source="us_rates"></div>
+        <ol class="mx-events" data-draw="e-fed" data-kind="fed" aria-label="최근 발표·결정"></ol>
         <p class="mx-trend" data-draw="t-fed"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>2년물이 연준 기준금리보다 낮으면 시장은 앞으로 금리 인하를, 높으면 동결이나 인상을 예상한다는 뜻입니다.</li><li>3개월물은 다음 몇 번의 연준 회의 결정에 대한 기대를 가장 빨리 반영합니다.</li><li>연준 금리가 높게 유지되면 달러 강세·원/달러 상승 압력이 생기고, 한국은행이 금리를 내릴 여지도 좁아집니다.</li></ul></details>
       </div>
@@ -324,14 +333,17 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     <p class="mx-note">이 탭의 차트는 기간 버튼과 관계없이 최근 2년을 보여줍니다.</p>
     <div class="mx-grid">
       <div class="mx-card" id="card-infl"><h3>물가 상승률, 전년 동월 대비</h3><p>소비자물가(CPI)와 개인소비지출 물가(PCE), 각각 식품·에너지를 뺀 근원 지표. 점선은 연준 목표 2%. 2025년 10월 CPI는 미 정부 셧다운으로 발표되지 않아, 1년 뒤 상승률 계산에는 앞뒤 달 평균을 썼습니다.</p><div class="mx-chart" data-draw="ch-infl" data-source="inflation"></div>
+        <ol class="mx-events" data-draw="e-infl" data-kind="cpi" aria-label="최근 발표·결정"></ol>
         <p class="mx-trend" data-draw="t-infl"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>연준의 목표는 근원 PCE 기준 2%입니다. 2%보다 높을수록 금리 인하가 늦어지고, 2%에 가까워질수록 인하 여지가 생깁니다.</li><li>근원 지표는 변동이 큰 식품·에너지를 뺀 추세 물가입니다. 헤드라인(CPI·PCE)과 차이가 크면 주로 유가 때문입니다.</li><li>물가 상승률이 예금 금리보다 높으면 현금의 실질 가치가 줄어듭니다.</li></ul></details>
       </div>
       <div class="mx-card" id="card-jobs"><h3>비농업 고용 증감 (만 명)</h3><p>전달 대비 늘어난 일자리 수. 막대는 매달 값, 선은 3개월 평균.</p><div class="mx-chart" data-draw="ch-jobs" data-source="jobs"></div>
+        <ol class="mx-events" data-draw="e-jobs" data-kind="jobs" aria-label="최근 발표·결정"></ol>
         <p class="mx-trend" data-draw="t-jobs"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>월 10만~15만 명 증가면 인구 증가를 흡수하는 무난한 수준으로 봅니다. 이민이 줄면 이 기준이 더 낮아진다는 시각도 있습니다.</li><li>증가 폭이 계속 줄거나 마이너스가 되면 경기 둔화 신호로, 금리 인하 기대가 커집니다.</li><li>발표 후 1~2달 동안 크게 수정되는 경우가 많아 한 달 값보다 3개월 평균이 믿을 만합니다.</li></ul></details>
       </div>
       <div class="mx-card" id="card-unrate"><h3>실업률과 임금 상승률</h3><p>실업률(%)과 민간 평균 시간당 임금의 전년비 상승률(%).</p><div class="mx-chart" data-draw="ch-unrate" data-source="jobs"></div>
+        <ol class="mx-events" data-draw="e-unrate" data-kind="jobs" aria-label="최근 발표·결정"></ol>
         <p class="mx-trend" data-draw="t-unrate"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>실업률이 최근 12개월 최저점보다 0.5%p 이상 오르면 과거 경기침체 초기와 비슷한 패턴입니다(삼 법칙, Sahm rule).</li><li>임금 상승률이 3.5% 안팎이면 2% 물가 목표와 대체로 맞는 수준으로 봅니다. 그보다 높으면 서비스 물가가 쉽게 내려가지 않습니다.</li><li>실업률은 낮은데 임금 상승률이 꺾이면 고용 시장이 서서히 식고 있다는 뜻입니다.</li></ul></details>
       </div>
@@ -750,13 +762,23 @@ mx.bindZoom = (el, name) => {
       return;
     }
     pts.set(ev.pointerId, ev.clientX);
-    if (pts.size === 2) {
+    if (pts.size === 1) {
+      // 한 손가락: 옆으로 끌면 기간 선택(위아래로 밀면 페이지 스크롤)
+      g = { mode: 'tpending', id: ev.pointerId, x: ev.clientX, y: ev.clientY, view: mx.curView(name) };
+    } else if (pts.size === 2) {
+      el.querySelector('.mx-brush')?.remove();
       const [x1, x2] = [...pts.values()];
       g = { mode: 'pinch', dist: Math.max(20, Math.abs(x1 - x2)), f: mx.frac(el, (x1 + x2) / 2), view: mx.curView(name) };
     }
   });
   el.addEventListener('pointermove', (ev) => {
     if (!g) return;
+    if ((g.mode === 'tpending' || g.mode === 'tbrush') && ev.pointerId === g.id) {
+      const dx = ev.clientX - g.x, dy = ev.clientY - g.y;
+      if (g.mode === 'tpending' && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) g.mode = 'tbrush';
+      if (g.mode === 'tbrush') { brush(g.x, ev.clientX); ev.preventDefault(); }
+      return;
+    }
     if (g.mode === 'pinch' && pts.has(ev.pointerId)) {
       pts.set(ev.pointerId, ev.clientX);
       const [x1, x2] = [...pts.values()];
@@ -766,7 +788,18 @@ mx.bindZoom = (el, name) => {
       ev.preventDefault();
     }
   });
-  const end = (ev) => { if (ev.pointerType === 'mouse') return; pts.delete(ev.pointerId); if (g && g.mode === 'pinch' && pts.size < 2) g = null; };
+  const end = (ev) => {
+    if (ev.pointerType === 'mouse') return;
+    pts.delete(ev.pointerId);
+    if (g && g.mode === 'tbrush' && ev.pointerId === g.id) {
+      el.querySelector('.mx-brush')?.remove();
+      const gg = g; g = null;
+      if (ev.type === 'pointerup') { const [a, b] = gg.view, f0 = mx.frac(el, gg.x), f1 = mx.frac(el, ev.clientX); mx.zoomTo(name, a + Math.min(f0, f1) * (b - a), a + Math.max(f0, f1) * (b - a)); }
+      return;
+    }
+    if (g && g.mode === 'tpending' && ev.pointerId === g.id) g = null;
+    if (g && g.mode === 'pinch' && pts.size < 2) g = null;
+  };
   ['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => el.addEventListener(t, end));
   // 두 손가락이 닿은 동안은 페이지 스크롤 대신 차트 확대
   el.addEventListener('touchmove', (ev) => { if (ev.touches.length > 1 && inPlot(ev)) ev.preventDefault(); }, { passive: false });
@@ -792,6 +825,23 @@ mx.msg = (el, st) => {
   el.appendChild(p);
 };
 mx.fmtDate = (d, monthly) => (monthly ? d3.utcFormat('%Y년 %-m월')(d) : d3.utcFormat('%Y-%m-%d')(d));
+
+// 이벤트 표시: 세로 점선 + 번호. evs = [{x: 날짜 문자열, n: 번호}], xpos = 날짜 → 그림 x좌표
+mx.marks = (svg, evs, xpos, m, W, H) => {
+  (evs || []).forEach((e, i) => {
+    const xv = xpos(e.x);
+    if (xv === undefined || Number.isNaN(xv) || xv < m.l - 0.5 || xv > W - m.r + 0.5) return;
+    const cy = m.t - 10 + (i % 2) * 0; // 번호는 그림 위쪽 여백에
+    svg.append('line').attr('x1', xv).attr('x2', xv).attr('y1', cy + 7).attr('y2', H - m.b).style('stroke', 'var(--warn)').style('stroke-dasharray', '2 3').style('opacity', 0.85);
+    svg.append('circle').attr('cx', xv).attr('cy', cy).attr('r', 7).style('fill', 'var(--warn)');
+    svg.append('text').attr('x', xv).attr('y', cy).attr('dy', '0.35em').attr('text-anchor', 'middle').style('fill', 'var(--color-panel)').style('font-size', '9px').style('font-weight', '700').text(e.n);
+  });
+};
+// 그 종류의 최근 이벤트(오래된 것부터 1, 2, 3). monthly면 x를 YYYY-MM으로, useRef면 발표일 대신 해당 월
+mx.ev = (kind, { monthly = false, useRef = false } = {}) => {
+  const d = dash.data('events'); if (d.status !== 'ok') return [];
+  return d.data.filter((r) => r.kind === kind).map((r, i) => ({ x: useRef ? r.ref : monthly ? r.date.slice(0, 7) : r.date, n: i + 1 }));
+};
 
 // 선 차트. series: [{key,label}], o: {xKey, fmt, unit, zero, refY, label, step, area}
 mx.line = (el, rows, series, o) => {
@@ -823,6 +873,7 @@ mx.line = (el, rows, series, o) => {
   const wMax = d3.max(yTicks, (t) => { const n = meas.append('text').text(tf(t)).node(); return n.getComputedTextLength(); }) || 30;
   meas.remove();
   const m = { t: 6, r: 8, b: 22, l: Math.ceil(wMax) + 8 };
+  if (o.events && o.events.length) m.t = 24;
   el.__plot = { l: m.l, r: W - m.r, W };
   const x = d3.scaleUtc().domain(d3.extent(data, (d) => d.x)).range([m.l, W - m.r]);
   y.range([H - m.b, m.t]);
@@ -843,6 +894,7 @@ mx.line = (el, rows, series, o) => {
     const last = [...data].reverse().find((d) => val(d, s.key) !== null);
     if (last) svg.append('circle').attr('cx', x(last.x)).attr('cy', y(val(last, s.key))).attr('r', 3).style('fill', colors[i]);
   });
+  mx.marks(svg, o.events, (v) => x(mx.px(v)), m, W, H);
   // 툴팁
   const guide = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).style('stroke', 'var(--cds-chart-axis)').style('opacity', 0);
   const dots = svg.append('g');
@@ -959,9 +1011,9 @@ mx.ts('ch-usdkrw', 'krw_value', (el, rows) => mx.line(el, mx.cut(rows, 'month'),
 mx.ts('ch-krwidx', 'krw_idx', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'krw_vs_usd', label: '달러 대비' }, { key: 'krw_vs_gold', label: '금 대비' }], { xKey: 'month', fmt: d3.format('.1f'), refY: 100, label: '원화 구매력 지수, 달러와 금 대비' }));
 mx.ts('ch-goldkrw', 'krw_idx', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'gold_krw_g', label: '금 1g' }], { xKey: 'month', fmt: d3.format(','), unit: '원', tick: d3.format('~s'), area: true, label: '금 1그램 원화 가격 추이' }));
 mx.ts('ch-m2', 'm2_yoy', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'kr_yoy', label: '한국 M2' }, { key: 'us_yoy', label: '미국 M2' }], { xKey: 'month', fmt: d3.format('.1f'), unit: '%', refY: 0, label: '한국과 미국 M2 전년비 증가율' }));
-mx.ts('ch-krgov', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'base', label: '기준금리', step: true, width: 2.4 }, { key: 'ktb3y', label: '국고채 3년' }, { key: 'ktb10y', label: '국고채 10년' }, { key: 'ktb30y', label: '국고채 30년', dash: '4 3' }], { xKey: 'month', fmt: pct, unit: '%', label: '한국 기준금리와 국고채 수익률' }));
+mx.ts('ch-krgov', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'base', label: '기준금리', step: true, width: 2.4 }, { key: 'ktb3y', label: '국고채 3년' }, { key: 'ktb10y', label: '국고채 10년' }, { key: 'ktb30y', label: '국고채 30년', dash: '4 3' }], { xKey: 'month', fmt: pct, unit: '%', events: mx.ev('bok', { monthly: true }), label: '한국 기준금리와 국고채 수익률' }));
 mx.ts('ch-krbank', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows, 'month', 1), [{ key: 'mortgage', label: '주담대(신규)', width: 2.4 }, { key: 'kdb1y', label: '은행채(산금채 1년)' }, { key: 'cd91', label: 'CD 91일' }, { key: 'corp_aa', label: '회사채 AA-', dash: '4 3' }], { xKey: 'month', fmt: pct, unit: '%', dots: true, label: '한국 은행채, CD, 주담대, 회사채 금리, 최근 1년' }));
-mx.ts('ch-fed', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'fed_upper', label: '연준 상단', step: true, width: 2.4 }, { key: 'effr', label: '실효금리' }, { key: 't3m', label: '3개월' }, { key: 't1y', label: '1년' }, { key: 't2y', label: '2년' }], { xKey: 'date', fmt: pct, unit: '%', label: '연준 기준금리와 미국 단기 국채 수익률' }));
+mx.ts('ch-fed', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'fed_upper', label: '연준 상단', step: true, width: 2.4 }, { key: 'effr', label: '실효금리' }, { key: 't3m', label: '3개월' }, { key: 't1y', label: '1년' }, { key: 't2y', label: '2년' }], { xKey: 'date', fmt: pct, unit: '%', events: mx.ev('fed'), label: '연준 기준금리와 미국 단기 국채 수익률' }));
 mx.ts('ch-uslong', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 't10y', label: '10년' }, { key: 't20y', label: '20년' }, { key: 't30y', label: '30년' }], { xKey: 'date', fmt: pct, unit: '%', label: '미국 장기 국채 수익률' }));
 mx.ts('ch-spread', 'spread', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 't10y_2y', label: '10년−2년' }], { xKey: 'date', fmt: d3.format('+.2f'), unit: '%p', refY: 0, area: true, label: '미 국채 10년물과 2년물 금리차' }));
 mx.ts('ch-debt', 'us_debt', (el, rows) => mx.stack(el, mx.cut(rows, 'date'), [{ key: 'intragov_tril', label: '정부 내부 보유' }, { key: 'public_tril', label: '민간 보유' }], { xKey: 'date', fmt: d3.format('.1f'), unit: '조$', total: true, label: '미국 연방 총부채, 민간과 정부 내부 보유' }));
@@ -985,6 +1037,7 @@ mx.bars = (el, rows, o) => {
   const wMax = d3.max(ticks, (t) => meas.append('text').text(fmt(t)).node().getComputedTextLength()) || 30;
   meas.remove();
   const m = { t: 6, r: 8, b: 22, l: Math.ceil(wMax) + 8 };
+  if (o.events && o.events.length) m.t = 24;
   el.__plot = { l: m.l, r: W - m.r, W };
   y.range([H - m.b, m.t]);
   const xb = d3.scaleBand().domain(rows.map((r) => r[o.xKey])).range([m.l, W - m.r]).padding(0.2);
@@ -999,6 +1052,7 @@ mx.bars = (el, rows, o) => {
   const xs = rows.map((r) => mx.px(r[o.xKey]));
   const xt = d3.scaleUtc().domain(d3.extent(xs)).range([cx(rows[0]), cx(last)]);
   svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(xt).ticks(Math.max(2, Math.floor((W - m.l) / 80))).tickSizeOuter(0).tickFormat((d) => (rows.length > 40 ? d3.utcFormat('%Y')(d) : d3.utcFormat('%y.%m')(d))));
+  mx.marks(svg, o.events, (v) => (xb(v) === undefined ? undefined : xb(v) + xb.bandwidth() / 2), m, W, H);
   const guide = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).style('stroke', 'var(--cds-chart-axis)').style('opacity', 0);
   const tip = box.append('div').attr('class', 'mx-tip').attr('hidden', true);
   svg.on('pointermove pointerdown', (ev) => {
@@ -1011,9 +1065,9 @@ mx.bars = (el, rows, o) => {
     tip.style('left', `${Math.max(0, Math.min(bw - tw, c + 10 + tw > bw ? c - tw - 10 : c + 10))}px`).style('top', '4px');
   }).on('pointerleave', () => { guide.style('opacity', 0); tip.attr('hidden', true); });
 };
-mx.ts('ch-infl', 'inflation', (el, rows) => mx.line(el, mx.cut(rows, 'month', 2), [{ key: 'cpi_yoy', label: 'CPI' }, { key: 'core_cpi_yoy', label: '근원 CPI' }, { key: 'pce_yoy', label: 'PCE', dash: '4 3' }, { key: 'core_pce_yoy', label: '근원 PCE', width: 2.4 }], { xKey: 'month', fmt: pct, unit: '%', refY: 2, dots: true, label: '미국 CPI와 PCE 물가 상승률, 최근 2년' }));
-mx.ts('ch-jobs', 'jobs', (el, rows) => mx.bars(el, mx.cut(rows, 'month', 2), { xKey: 'month', key: 'payems_chg', label: '월 증감', line: 'payems_3m', lineLabel: '3개월 평균', fmt: d3.format(',.1f'), unit: '만 명', aria: '미국 비농업 고용 월별 증감과 3개월 평균' }));
-mx.ts('ch-unrate', 'jobs', (el, rows) => mx.line(el, mx.cut(rows, 'month', 2), [{ key: 'unrate', label: '실업률', width: 2.4 }, { key: 'ahe_yoy', label: '임금 상승률' }], { xKey: 'month', fmt: d3.format('.1f'), unit: '%', dots: true, label: '미국 실업률과 시간당 임금 상승률, 최근 2년' }));
+mx.ts('ch-infl', 'inflation', (el, rows) => mx.line(el, mx.cut(rows, 'month', 2), [{ key: 'cpi_yoy', label: 'CPI' }, { key: 'core_cpi_yoy', label: '근원 CPI' }, { key: 'pce_yoy', label: 'PCE', dash: '4 3' }, { key: 'core_pce_yoy', label: '근원 PCE', width: 2.4 }], { xKey: 'month', fmt: pct, unit: '%', refY: 2, dots: true, events: mx.ev('cpi', { useRef: true }), label: '미국 CPI와 PCE 물가 상승률, 최근 2년' }));
+mx.ts('ch-jobs', 'jobs', (el, rows) => mx.bars(el, mx.cut(rows, 'month', 2), { xKey: 'month', key: 'payems_chg', label: '월 증감', line: 'payems_3m', lineLabel: '3개월 평균', fmt: d3.format(',.1f'), unit: '만 명', events: mx.ev('jobs', { useRef: true }), aria: '미국 비농업 고용 월별 증감과 3개월 평균' }));
+mx.ts('ch-unrate', 'jobs', (el, rows) => mx.line(el, mx.cut(rows, 'month', 2), [{ key: 'unrate', label: '실업률', width: 2.4 }, { key: 'ahe_yoy', label: '임금 상승률' }], { xKey: 'month', fmt: d3.format('.1f'), unit: '%', dots: true, events: mx.ev('jobs', { useRef: true }), label: '미국 실업률과 시간당 임금 상승률, 최근 2년' }));
 mx.ts('ch-claims', 'claims', (el, rows) => mx.line(el, mx.cut(rows, 'date', 2), [{ key: 'claims', label: '주간', width: 1 }, { key: 'claims_4w', label: '4주 평균', width: 2.4 }], { xKey: 'date', fmt: d3.format('.1f'), unit: '만', label: '미국 신규 실업수당 청구 건수' }));
 // 기간 첫날 = 100으로 맞추기
 mx.rebase = (rows, keys) => {
@@ -1391,6 +1445,41 @@ dash.draw('debt-check', (el) => {
 });
 </script>
 
+<script>
+// ---------- 최근 발표·결정 목록(직전 3개, 최신이 위) ----------
+(() => {
+  const df = (d) => `${d.slice(0, 4)}.${d.slice(5, 7)}.${d.slice(8, 10)}`;
+  const mon = (m) => `${+m.slice(5, 7)}월`;
+  const f2 = d3.format('.2f'), f1 = d3.format('.1f');
+  const move = (c) => (Math.abs(+c) < 1e-9 ? '동결' : `${f2(Math.abs(+c))}%p ${+c > 0 ? '인상' : '인하'}`);
+  const text = {
+    fed: (r) => [`연준 기준금리 ${move(r.c)}`, `${f2(+r.a)}~${f2(+r.b)}%`],
+    bok: (r) => [`한국은행 기준금리 ${move(r.c)}`, `${f2(+r.a)}%`],
+    jobs: (r) => [`${mon(r.ref)} 고용 발표`, `비농업 고용 ${+r.a >= 0 ? '+' : '−'}${f1(Math.abs(+r.a))}만 명, 실업률 ${f1(+r.b)}%`],
+    cpi: (r) => [`${mon(r.ref)} CPI 발표`, `CPI ${f2(+r.a)}%, 근원 ${f2(+r.b)}% (전년비)`],
+  };
+  const note = { jobs: '처음 발표된 값(이후 수정될 수 있음)', cpi: '처음 발표된 값' };
+  for (const el of document.querySelectorAll('ol.mx-events')) {
+    const name = el.dataset.draw, kind = el.dataset.kind;
+    dash.draw(name, (ol) => {
+      const d = dash.data('events');
+      if (d.status !== 'ok') { ol.replaceChildren(); return; }
+      const rows = d.data.filter((r) => r.kind === kind).map((r, i) => ({ ...r, n: i + 1 })).reverse();
+      ol.replaceChildren(...rows.map((r) => {
+        const li = document.createElement('li');
+        const n = document.createElement('i'); n.textContent = r.n;
+        const date = document.createElement('time'); date.dateTime = r.date; date.textContent = df(r.date);
+        const [what, val] = text[kind](r);
+        const w = document.createElement('span'); w.textContent = what;
+        const v = document.createElement('b'); v.textContent = val;
+        li.append(n, date, w, v);
+        return li;
+      }));
+      if (note[kind] && rows.length) { const li = document.createElement('li'); li.className = 'mx-events-note'; li.textContent = '값은 ' + note[kind]; ol.appendChild(li); }
+    });
+  }
+})();
+</script>
 <script>
 // ---------- 데이터 갱신 시각 ----------
 dash.draw("updated", (el) => {
