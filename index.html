@@ -199,6 +199,15 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .mx-table td.mx-bad { color: var(--warn); font-weight: 600; }
 .mx-table td.mx-good { color: var(--ok); font-weight: 600; }
 @media (max-width: 480px) { .mx-table { font-size: 11.5px; } .mx-table th, .mx-table td { padding: 4px 3px; } }
+.mx-verdict { margin: 0; font-size: 14.5px; line-height: 1.65; color: var(--color-fg); font-weight: 500; }
+.mx-chip.mx-fix { color: var(--color-bg); background: var(--s1); }
+.mx-chip.mx-var { color: var(--color-bg); background: var(--s2); }
+.mx-calc { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 125px), 1fr)); gap: 8px 12px; margin: 8px 0 4px; }
+.mx-calc label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--color-fg-muted); }
+.mx-calc label span { display: flex; align-items: center; gap: 6px; color: var(--color-fg); font-size: 13px; white-space: nowrap; }
+.mx-calc input { font: inherit; font-size: 15px; width: 100%; min-width: 0; padding: 6px 8px; border: 1px solid var(--color-border-line); border-radius: 8px; background: var(--color-bg); color: var(--color-fg); font-variant-numeric: tabular-nums; }
+.mx-calc input:focus-visible { outline: 2px solid var(--s1); outline-offset: 0; }
+.mx-calc-table td.mx-strong { font-weight: 600; }
 .mx-hint { margin: 2px 0 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
 .mx-plot text { fill: var(--cds-text-secondary); font-size: 11px; font-family: var(--font-anthropic-sans); }
 .mx-plot .grid line { stroke: var(--cds-chart-grid); }
@@ -361,15 +370,51 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <section class="mx-sec" id="kr-rates" data-sec="kr-rates" hidden>
     <h2>한국 금리</h2>
     <ul class="mx-brief" data-draw="b-kr-rates" aria-label="한국 금리 최근 동향 요약"></ul>
+    <div class="mx-card mx-guide" id="mort-guide">
+      <h3>주담대 고정형 vs 변동형, 지금은?</h3>
+      <p class="mx-sub">한국은행 통계(예금은행이 그달 새로 내준 주담대 평균)로 판단합니다. 실제 금리는 은행과 신용도, 상품에 따라 다르니 방향을 가늠하는 참고용으로 보세요.</p>
+      <p class="mx-verdict" data-draw="mort-verdict"></p>
+      <ul class="mx-check" data-draw="mort-check"></ul>
+      <details class="mx-how" open>
+        <summary>월 상환액 비교 계산기</summary>
+        <form class="mx-calc" id="mort-calc" novalidate>
+          <label for="mc-amt">대출 금액 <span><input id="mc-amt" type="number" inputmode="decimal" min="0.1" step="0.1" value="3"> 억 원</span></label>
+          <label for="mc-yrs">상환 기간 <span><input id="mc-yrs" type="number" inputmode="numeric" min="1" max="50" step="1" value="30"> 년</span></label>
+          <label for="mc-fix">고정형 금리 <span><input id="mc-fix" type="number" inputmode="decimal" min="0" step="0.01"> %</span></label>
+          <label for="mc-var">변동형 금리 <span><input id="mc-var" type="number" inputmode="decimal" min="0" step="0.01"> %</span></label>
+        </form>
+        <p class="mx-sub">금리는 최근 통계 평균으로 채워 두었어요. 은행에서 안내받은 금리로 바꿔 보세요. 원리금 균등 상환 기준이며, 입력값은 저장되지 않습니다.</p>
+        <div class="mx-tablewrap"><table class="mx-table mx-calc-table" aria-label="고정형과 변동형 상환액 비교"><thead><tr><th>경우</th><th>금리</th><th>월 상환액</th><th>5년간 이자</th></tr></thead><tbody data-draw="mort-calc"></tbody></table></div>
+        <p class="mx-trend" data-draw="mort-breakeven"></p>
+      </details>
+      <details class="mx-how">
+        <summary>고를 때 함께 볼 것</summary>
+        <ul>
+          <li><b>대출 기간과 여유</b>: 오래 갚아야 하고 금리가 올랐을 때 버틸 여유가 적다면, 금리차가 조금 있어도 고정형(금리 상승 보험)이 마음 편합니다.</li>
+          <li><b>갚거나 갈아탈 계획</b>: 2~3년 안에 갚거나 갈아탈 계획이면 변동형이 유리한 경우가 많습니다. 중도상환수수료(보통 3년 이내)를 꼭 확인하세요.</li>
+          <li><b>고정형의 실제 모습</b>: 국내 고정형은 대부분 처음 5년만 고정되는 혼합형이라, 5년 뒤에는 변동형으로 바뀝니다.</li>
+          <li><b>변동형이 따라가는 금리</b>: 변동형은 보통 6개월마다 코픽스(COFIX)나 은행채 금리에 맞춰 바뀝니다. 코픽스는 은행연합회가 매달 15일께 발표하고, 은행채 1년·CD 금리를 1~2달 늦게 따라갑니다(위 차트).</li>
+          <li><b>대출 한도</b>: 스트레스 DSR 같은 규제 때문에 변동형은 고정형보다 대출 한도가 적게 나올 수 있습니다.</li>
+        </ul>
+      </details>
+    </div>
     <div class="mx-grid">
       <div class="mx-card" id="card-krgov"><h3>기준금리와 국고채</h3><p>월평균 수익률. 장단기 금리차가 좁아지면 경기 둔화 신호로 읽힙니다.</p><div class="mx-chart" data-draw="ch-krgov" data-source="kr_rates"></div>
         <ol class="mx-events" data-draw="e-krgov" data-kind="bok" aria-label="최근 발표·결정"></ol>
         <p class="mx-trend" data-draw="t-krgov"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>기준금리는 한국은행이 정하고, 국고채 금리는 시장이 정합니다. 국고채 3년물이 기준금리보다 낮으면 시장이 금리 인하를, 높으면 동결·인상을 예상한다는 뜻입니다.</li><li>10년물과 3년물의 차이가 좁아지거나 역전되면 경기 둔화 우려가 커졌다고 봅니다.</li><li>금리가 내리면 채권 가격이 오릅니다. 만기가 긴 채권일수록 가격 변화가 큽니다.</li></ul></details>
       </div>
-      <div class="mx-card" id="card-krbank"><h3>은행 자금조달·대출 금리</h3><p>은행채(산금채 1년)와 CD 91일물은 변동금리 대출의 기준이 되는 시장금리입니다. 월평균, 기간 버튼과 관계없이 최근 1년을 보여줍니다.</p><div class="mx-chart" data-draw="ch-krbank" data-source="kr_rates"></div>
+      <div class="mx-card" id="card-fixvar"><h3>주담대 금리: 고정형 vs 변동형</h3><p>예금은행 신규 주택담보대출 평균 금리(월). 번호는 한국은행 기준금리 변경.</p><div class="mx-chart" data-draw="ch-fixvar" data-source="kr_rates"></div>
+        <p class="mx-trend" data-draw="t-fixvar"></p>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>예금은행이 그달 새로 내준 주택담보대출의 평균 금리를 고정형·변동형으로 나눈 것입니다.</li><li>고정형(대부분 처음 5년 고정인 혼합형)은 5년 안팎 시장 금리(국고채·은행채 5년)를, 변동형은 코픽스·CD·은행채 단기 금리를 따라 움직입니다.</li><li>두 선이 함께 오르는 시기에는 고정형을 미리 잡아 둔 사람이 유리했고, 함께 내리는 시기에는 변동형이 유리했습니다.</li></ul></details>
+      </div>
+      <div class="mx-card" id="card-fixgap"><h3>고정형 − 변동형 금리차 (%p)</h3><p>고정형을 고를 때 더 내는 금리. 0보다 아래면 고정형이 더 쌉니다.</p><div class="mx-chart" data-draw="ch-fixgap" data-source="mort_gap"></div>
+        <p class="mx-trend" data-draw="t-fixgap"></p>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>고정형 금리에서 변동형 금리를 뺀 값입니다. 고정형을 고를 때 내는 "금리 상승 보험료"라고 생각하면 됩니다.</li><li>차이가 작을수록(0.2%p 이하) 적은 비용으로 금리 상승 위험을 막을 수 있어 고정형이 매력적이고, 클수록(0.6%p 이상) 변동형이 당장 이자를 아낍니다.</li><li>0보다 낮으면 고정형이 오히려 더 싸다는 뜻입니다. 시장이 앞으로 금리 하락을 예상할 때 나타나며, 이때 고정형은 지금 금리를 확정하는 효과가 있습니다.</li></ul></details>
+      </div>
+      <div class="mx-card" id="card-krbank"><h3>은행 자금조달·대출 금리</h3><p>점선 국고채 5년은 고정형(혼합형) 주담대, 은행채 1년·CD 91일은 변동형 주담대 금리의 바탕이 되는 시장 금리입니다. 월평균, 처음에는 최근 1년.</p><div class="mx-chart" data-draw="ch-krbank" data-source="kr_rates"></div>
         <p class="mx-trend" data-draw="t-krbank"></p>
-        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>은행채·CD 금리는 은행이 돈을 빌리는 비용입니다. 오르면 보통 1~2달 뒤 코픽스와 변동형 주담대 금리가 따라 오릅니다.</li><li>주담대 금리와 은행채 금리의 차이는 은행의 가산금리(마진)를 대략 보여줍니다.</li><li>회사채 AA-와 국고채의 금리차(신용 스프레드)가 벌어지면 기업이 돈 빌리기 어려워지고 있다는 신호입니다.</li></ul></details>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>은행채·CD 금리는 은행이 돈을 빌리는 비용입니다. 오르면 보통 1~2달 뒤 코픽스와 변동형 주담대 금리가 따라 오릅니다.</li><li>주담대 금리와 은행채 금리의 차이는 은행의 가산금리(마진)를 대략 보여줍니다.</li><li>국고채 5년(고정형의 바탕)과 은행채 1년·CD(변동형의 바탕)의 차이가 벌어질수록 고정형 주담대가 변동형보다 비싸집니다. 시장이 앞으로 금리 상승을 예상할수록 이 차이가 커집니다.</li></ul></details>
       </div>
     </div>
     <p class="mx-note">코픽스(COFIX)는 은행연합회만 공개하고 공개 API가 없어 자동으로 넣지 못했습니다. 코픽스를 따르는 주택담보대출 금리(예금은행 신규취급액 기준)와 그 바탕인 은행채·CD 금리를 대신 보여줍니다.</p>
@@ -762,6 +807,14 @@ dash.calc('auction_wide', {
   title: '장기 국채 입찰 응찰률(10년·30년)',
   description: '입찰일마다 10년물 또는 30년물 응찰률을 한 열에 놓은 표',
   fn: (a) => a.map((r) => ({ date: r.date, btc10: r.term === '10y' ? +r.btc : null, btc30: r.term === '30y' ? +r.btc : null })),
+});
+
+dash.calc('mort_gap', {
+  inputs: ['kr_rates'],
+  title: '주담대 고정형−변동형 금리차',
+  description: '신규 주담대 고정형 금리에서 변동형 금리를 뺀 값(%p)과 신규 주담대 중 고정형 비중(%)',
+  fn: (kr) => kr.filter((r) => r.fix_mort !== '' && r.var_mort !== '' && r.fix_mort !== null && r.var_mort !== null)
+    .map((r) => ({ month: r.month, gap: +(+r.fix_mort - +r.var_mort).toFixed(2), fix_share: r.fix_share === '' ? null : +r.fix_share })),
 });
 
 dash.calc('latest', {
@@ -1182,7 +1235,9 @@ mx.ts('ch-krwidx', 'krw_idx', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [
 mx.ts('ch-goldkrw', 'krw_idx', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'gold_krw_g', label: '금 1g' }], { xKey: 'month', fmt: d3.format(','), unit: '원', tick: d3.format('~s'), area: true, label: '금 1그램 원화 가격 추이' }));
 mx.ts('ch-m2', 'm2_yoy', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'kr_yoy', label: '한국 M2' }, { key: 'us_yoy', label: '미국 M2' }], { xKey: 'month', fmt: d3.format('.1f'), unit: '%', refY: 0, label: '한국과 미국 M2 전년비 증가율' }));
 mx.ts('ch-krgov', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'base', label: '기준금리', step: true, width: 2.4 }, { key: 'ktb3y', label: '국고채 3년' }, { key: 'ktb10y', label: '국고채 10년' }, { key: 'ktb30y', label: '국고채 30년', dash: '4 3' }], { xKey: 'month', fmt: pct, unit: '%', events: mx.ev('bok', { monthly: true }), label: '한국 기준금리와 국고채 수익률' }));
-mx.ts('ch-krbank', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows, 'month', 1), [{ key: 'mortgage', label: '주담대(신규)', width: 2.4 }, { key: 'kdb1y', label: '은행채(산금채 1년)' }, { key: 'cd91', label: 'CD 91일' }, { key: 'corp_aa', label: '회사채 AA-', dash: '4 3' }], { xKey: 'month', fmt: pct, unit: '%', dots: true, label: '한국 은행채, CD, 주담대, 회사채 금리, 최근 1년' }));
+mx.ts('ch-krbank', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows, 'month', 1), [{ key: 'mortgage', label: '주담대(신규 평균)', width: 2.4 }, { key: 'ktb5y', label: '국고채 5년', dash: '4 3' }, { key: 'kdb1y', label: '은행채(산금채 1년)' }, { key: 'cd91', label: 'CD 91일' }], { xKey: 'month', fmt: pct, unit: '%', dots: true, label: '한국 주담대 금리와 고정형·변동형의 기준 금리' }));
+mx.ts('ch-fixvar', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows.filter((r) => r.fix_mort !== ''), 'month'), [{ key: 'fix_mort', label: '고정형', width: 2.4 }, { key: 'var_mort', label: '변동형', width: 2.4 }, { key: 'base', label: '기준금리', step: true, color: 'var(--cds-chart-muted)' }], { xKey: 'month', fmt: pct, unit: '%', events: mx.ev('bok', { monthly: true }), label: '주택담보대출 고정형과 변동형 금리' }));
+mx.ts('ch-fixgap', 'mort_gap', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'gap', label: '고정−변동', width: 2.4, color: 'var(--s5)' }], { xKey: 'month', fmt: d3.format('+.2f'), unit: '%p', refY: 0, area: true, label: '주담대 고정형과 변동형 금리차' }));
 mx.ts('ch-fed', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date', 2), [{ key: 'fed_upper', label: '연준 상단', step: true, width: 2.4 }, { key: 'effr', label: '실효금리' }, { key: 't3m', label: '3개월' }, { key: 't1y', label: '1년' }, { key: 't2y', label: '2년' }], { xKey: 'date', fmt: pct, unit: '%', events: mx.ev('fed'), label: '연준 기준금리와 미국 단기 국채 수익률' }));
 mx.ts('ch-uslong', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date', 2), [{ key: 't10y', label: '10년' }, { key: 't20y', label: '20년' }, { key: 't30y', label: '30년' }], { xKey: 'date', fmt: pct, unit: '%', label: '미국 장기 국채 수익률' }));
 mx.ts('ch-spread', 'spread', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 't10y_2y', label: '10년−2년' }], { xKey: 'date', fmt: d3.format('+.2f'), unit: '%p', refY: 0, area: true, label: '미 국채 10년물과 2년물 금리차' }));
@@ -1352,7 +1407,7 @@ dash.draw('ch-curve', (el) => {
     mx.range = +b.dataset.range;
     mx.view = {};
     document.querySelectorAll('.mx-rng').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-    ['ch-usdkrw', 'ch-krwidx', 'ch-goldkrw', 'ch-m2', 'ch-krgov', 'ch-krbank', 'ch-fed', 'ch-uslong', 'ch-spread', 'ch-debt', 'ch-comp', 'ch-iss', 'ch-issshare', 'ch-infl', 'ch-jobs', 'ch-unrate', 'ch-claims', 'ch-dji', 'ch-ixic', 'ch-idx', 'ch-m7', 'ch-gold', 'ch-oil', 'ch-dxy', 'ch-real', 'ch-hy', 'ch-vix', 'ch-med', 'ch-spend', 'ch-tfr', 'ch-old', 'ch-agekr', 'ch-ageus', 'ch-deficit', 'ch-avgrate', 'ch-auction', 'ch-tga'].forEach((n) => dash.draw(n));
+    ['ch-usdkrw', 'ch-krwidx', 'ch-goldkrw', 'ch-m2', 'ch-krgov', 'ch-krbank', 'ch-fed', 'ch-uslong', 'ch-spread', 'ch-debt', 'ch-comp', 'ch-iss', 'ch-issshare', 'ch-infl', 'ch-jobs', 'ch-unrate', 'ch-claims', 'ch-dji', 'ch-ixic', 'ch-idx', 'ch-m7', 'ch-gold', 'ch-oil', 'ch-dxy', 'ch-real', 'ch-hy', 'ch-vix', 'ch-med', 'ch-spend', 'ch-tfr', 'ch-old', 'ch-agekr', 'ch-ageus', 'ch-deficit', 'ch-avgrate', 'ch-auction', 'ch-tga', 'ch-fixvar', 'ch-fixgap'].forEach((n) => dash.draw(n));
   }));
   const h = (location.hash || '').slice(1);
   open(h || 'summary'); // 주소의 #탭이 있으면 그 탭, 없으면 요약
@@ -1385,7 +1440,7 @@ dash.draw('ch-curve', (el) => {
   };
   const thisMonth = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 7); // 한국 시간 기준 이번 달
   const partial = (m) => (m === thisMonth ? '(이번 달은 아직 진행 중이라 지금까지의 평균입니다)' : '');
-  window.mxT = { ok, two, ago, sg, f1, f2, won, mon, day };
+  window.mxT = { ok, two, ago, sg, f1, f2, won, mon, day, s2 };
   const say = (name, sources, fn, label = '최근 1달') => dash.draw(name, (el) => {
     const ds = sources.map((s) => dash.data(s));
     if (ds.some((d) => d.status !== 'ok' || !Array.isArray(d.data) || !d.data.length)) { el.replaceChildren(); return; }
@@ -1443,6 +1498,17 @@ dash.draw('ch-curve', (el) => {
     return `${mon(kb.month)} 은행채(산금채 1년)는 ${f2(+kb.kdb1y)}%(${sg(dk)}), CD 91일물은 ${f2(+cb.cd91)}%(${sg(+cb.cd91 - +ca.cd91)})입니다.
       주담대 금리(신규, ${mon(mb.month)})는 ${f2(+mb.mortgage)}%로 전달보다 ${sg(+mb.mortgage - +ma.mortgage)}입니다.
       ${dk > 0.05 ? '은행 조달금리가 올라 1~2달 뒤 코픽스와 변동형 대출 금리에 상승 압력이 될 수 있습니다.' : dk < -0.05 ? '은행 조달금리가 내려 1~2달 뒤 코픽스와 변동형 대출 금리가 낮아질 수 있습니다.' : ''}`;
+  });
+
+  say('t-fixvar', ['kr_rates'], (rows) => {
+    const [fa, fb] = two(rows, 'fix_mort'), [va, vb] = two(rows, 'var_mort');
+    return `${mon(fb.month)} 새로 나간 주담대 금리는 고정형 ${f2(+fb.fix_mort)}%(${sg(+fb.fix_mort - +fa.fix_mort)}), 변동형 ${f2(+vb.var_mort)}%(${sg(+vb.var_mort - +va.var_mort)})입니다(전달 대비).`;
+  });
+  say('t-fixgap', ['mort_gap'], (rows) => {
+    const [a, b] = two(rows, 'gap'), y = rows.find((r) => r.month === `${+b.month.slice(0, 4) - 1}${b.month.slice(4)}`);
+    const sh = two(rows, 'fix_share');
+    return `${mon(b.month)} 고정형이 변동형보다 ${f2(Math.abs(+b.gap))}%p ${+b.gap >= 0 ? '비쌉니다' : '쌉니다'}(전달 ${s2(+a.gap)}%p${y ? `, 1년 전 ${s2(+y.gap)}%p` : ''}).
+      ${sh ? `새로 받은 주담대 중 고정형 비중은 ${f1(+sh[1].fix_share)}%입니다.` : ''}`;
   });
 
   // 미국 금리
@@ -1860,7 +1926,7 @@ dash.draw('debt-check', (el) => {
     return [
       `한국은행 기준금리는 ${f2(+b.base)}%입니다${bok ? `(${day(bok.date)} ${f2(Math.abs(+bok.c))}%p ${+bok.c > 0 ? '인상' : '인하'})` : ''}. 국고채 3년 ${f2(+tb.ktb3y)}%(${sg(+tb.ktb3y - +ta.ktb3y)}), 10년 ${f2(+lb.ktb10y)}%(${sg(+lb.ktb10y - +la.ktb10y)})입니다(${mon(lb.month)} 평균, 전달 대비).`,
       `${+tb.ktb3y > +b.base + 0.25 ? '3년물이 기준금리보다 꽤 높아, 시장은 추가 인하보다 동결·인상 쪽을 보고 있습니다.' : +tb.ktb3y < +b.base - 0.1 ? '3년물이 기준금리보다 낮아, 시장은 금리 인하를 예상하고 있습니다.' : '3년물이 기준금리 근처라 당분간 동결 예상이 우세합니다.'}`,
-      `은행채(산금채 1년)는 ${f2(+kb.kdb1y)}%(${sg(+kb.kdb1y - +ka.kdb1y)}), 주담대 금리는 ${mon(mb.month)} ${f2(+mb.mortgage)}%(${sg(+mb.mortgage - +ma.mortgage)})입니다.`,
+      `주담대(${mon(mb.month)} 신규)는 평균 ${f2(+mb.mortgage)}%(${sg(+mb.mortgage - +ma.mortgage)}), 고정형 ${f2(+two(kr, 'fix_mort')[1].fix_mort)}%·변동형 ${f2(+two(kr, 'var_mort')[1].var_mort)}%입니다. 은행채 1년은 ${f2(+kb.kdb1y)}%(${sg(+kb.kdb1y - +ka.kdb1y)})입니다.`,
     ];
   });
 
@@ -1946,6 +2012,89 @@ dash.draw('debt-check', (el) => {
   };
   apply(root.dataset.theme || 'auto');
   document.querySelectorAll('[data-theme-set]').forEach((b) => b.addEventListener('click', () => apply(b.dataset.themeSet === 'auto' ? null : b.dataset.themeSet)));
+})();
+</script>
+<script>
+// ---------- 주담대 고정형 vs 변동형 판단 도우미 ----------
+(() => {
+  const { ok, two, f1, f2, day, s2 } = window.mxT;
+  const signals = () => {
+    const kr = dash.data('kr_rates'), ev = dash.data('events');
+    if (kr.status !== 'ok' || ev.status !== 'ok') return null;
+    const rows = kr.data, out = [];
+    // 1. 금리차
+    const g = rows.filter((r) => ok(r.fix_mort) && ok(r.var_mort)).at(-1), gap = +g.fix_mort - +g.var_mort;
+    out.push({ side: gap <= 0.2 ? 'fix' : gap >= 0.6 ? 'var' : 'mid', title: '고정형 − 변동형 금리차',
+      text: `${+g.month.slice(5, 7)}월 신규 기준 고정형 ${f2(+g.fix_mort)}%, 변동형 ${f2(+g.var_mort)}%로 차이는 ${s2(gap)}%p입니다. ${gap <= 0.2 ? '고정형을 고를 때 더 내는 금리(보험료)가 작습니다.' : gap >= 0.6 ? '고정형이 꽤 비싸서 변동형이 당장 이자를 많이 아낍니다.' : '보통 수준의 차이입니다.'}` });
+    // 2. 시장의 금리 전망: 국고채 3년 − 기준금리
+    const t = rows.filter((r) => ok(r.ktb3y) && ok(r.base)).at(-1), sp = +t.ktb3y - +t.base;
+    out.push({ side: sp > 0.25 ? 'fix' : sp < -0.1 ? 'var' : 'mid', title: '시장의 금리 전망',
+      text: `국고채 3년(${f2(+t.ktb3y)}%)이 기준금리(${f2(+t.base)}%)보다 ${f2(Math.abs(sp))}%p ${sp >= 0 ? '높습니다' : '낮습니다'}. ${sp > 0.25 ? '시장은 금리가 내려가기보다 유지되거나 오를 것으로 봅니다.' : sp < -0.1 ? '시장은 앞으로 금리 인하를 예상합니다.' : '시장은 당분간 동결을 예상합니다.'}` });
+    // 3. 한국은행 최근 결정(1년 안)
+    const b = ev.data.filter((r) => r.kind === 'bok').at(-1);
+    const recent = b && (Date.now() - Date.parse(b.date)) / 864e5 < 365;
+    out.push({ side: !recent ? 'mid' : +b.c > 0 ? 'fix' : 'var', title: '한국은행 최근 결정',
+      text: recent ? `${day(b.date)}에 기준금리를 ${f2(Math.abs(+b.c))}%p ${+b.c > 0 ? '올렸습니다. 인상 흐름에서는 변동형 금리가 따라 오를 수 있습니다.' : '내렸습니다. 인하 흐름에서는 변동형 금리가 따라 내려갈 수 있습니다.'}` : '최근 1년 동안 기준금리 변경이 없었습니다.' });
+    // 4. 변동형의 바탕(은행채 1년) 3개월 추세
+    const k = rows.filter((r) => ok(r.kdb1y)), kd = +k.at(-1).kdb1y - +k.at(-4).kdb1y;
+    out.push({ side: kd > 0.15 ? 'fix' : kd < -0.15 ? 'var' : 'mid', title: '변동형 금리의 바탕(은행채 1년)',
+      text: `최근 3개월 동안 ${f2(+k.at(-4).kdb1y)}%에서 ${f2(+k.at(-1).kdb1y)}%로 ${s2(kd)}%p 움직였습니다. ${kd > 0.15 ? '1~2달 뒤 코픽스와 변동형 금리가 오를 가능성이 큽니다.' : kd < -0.15 ? '1~2달 뒤 코픽스와 변동형 금리가 내려갈 가능성이 큽니다.' : '변동형 금리에 큰 변화 압력은 없습니다.'}` });
+    return { out, share: two(rows, 'fix_share') };
+  };
+  const label = { fix: '고정형 쪽', var: '변동형 쪽', mid: '중립' };
+  dash.draw('mort-check', (el) => {
+    const r = signals(); if (!r) { el.replaceChildren(); return; }
+    el.replaceChildren(...r.out.map((it) => {
+      const li = document.createElement('li'), head = document.createElement('div');
+      const chip = document.createElement('span'); chip.className = 'mx-chip mx-' + it.side; chip.textContent = label[it.side];
+      const b = document.createElement('b'); b.textContent = it.title;
+      const p = document.createElement('p'); p.textContent = it.text;
+      head.append(chip, b); li.append(head, p); return li;
+    }));
+  });
+  dash.draw('mort-verdict', (el) => {
+    const r = signals(); if (!r) { el.textContent = ''; return; }
+    const nf = r.out.filter((x) => x.side === 'fix').length, nv = r.out.filter((x) => x.side === 'var').length;
+    const sh = r.share ? ` 참고로 ${+r.share[1].month.slice(5, 7)}월에 새로 나간 주담대 중 고정형은 ${f1(+r.share[1].fix_share)}%였습니다.` : '';
+    el.textContent = (nf > nv ? `지금 데이터로는 고정형(혼합형) 쪽 신호가 ${nf}개로 더 많습니다. 금리가 더 오를 위험을 막는 쪽이 상대적으로 유리해 보입니다.`
+      : nv > nf ? `지금 데이터로는 변동형 쪽 신호가 ${nv}개로 더 많습니다. 당장 이자를 아끼고 금리 하락 혜택을 받는 쪽이 상대적으로 유리해 보입니다.`
+        : '지금 데이터로는 어느 한쪽이 뚜렷하지 않습니다. 대출 기간과 상환 계획(아래 "고를 때 함께 볼 것")에 맞춰 고르세요.') + sh;
+  });
+
+  // 계산기: 원리금 균등 상환
+  const $ = (id) => document.getElementById(id);
+  const pay = (P, rate, n) => { const r = rate / 1200; return r === 0 ? P / n : P * r / (1 - Math.pow(1 + r, -n)); };
+  const interest5 = (P, rate, n) => { const r = rate / 1200, m = pay(P, rate, n); let bal = P, sum = 0; for (let i = 0; i < Math.min(60, n); i++) { const it = bal * r; sum += it; bal -= m - it; } return sum; };
+  const won = (v) => d3.format(',.0f')(v) + '원';
+  const man = (v) => d3.format(',.0f')(v / 1e4) + '만 원';
+  dash.draw('mort-calc', (tb) => {
+    const kr = dash.data('kr_rates');
+    if (kr.status === 'ok') {
+      const g = kr.data.filter((r) => ok(r.fix_mort) && ok(r.var_mort)).at(-1);
+      if ($('mc-fix') && !$('mc-fix').dataset.touched) $('mc-fix').value = (+g.fix_mort).toFixed(2);
+      if ($('mc-var') && !$('mc-var').dataset.touched) $('mc-var').value = (+g.var_mort).toFixed(2);
+    }
+    const P = +$('mc-amt').value * 1e8, n = Math.round(+$('mc-yrs').value * 12), F = +$('mc-fix').value, V = +$('mc-var').value;
+    if (!(P > 0 && n > 0 && F >= 0 && V >= 0 && $('mc-fix').value !== '' && $('mc-var').value !== '')) { tb.replaceChildren(); return; }
+    const rowsOut = [['고정형', F], ['변동형 · 지금 금리 유지', V], ['변동형 · 1%p 오르면', V + 1], ['변동형 · 0.5%p 내리면', Math.max(0, V - 0.5)]];
+    tb.replaceChildren(...rowsOut.map(([name, rate], i) => {
+      const tr = document.createElement('tr');
+      [name, d3.format('.2f')(rate) + '%', won(pay(P, rate, n)), man(interest5(P, rate, n))].forEach((c, j) => { const td = document.createElement('td'); td.textContent = c; if (i === 0 && j > 0) td.className = 'mx-strong'; tr.appendChild(td); });
+      return tr;
+    }));
+    dash.draw('mort-breakeven');
+  });
+  dash.draw('mort-breakeven', (el) => {
+    const P = +$('mc-amt').value * 1e8, n = Math.round(+$('mc-yrs').value * 12), F = +$('mc-fix').value, V = +$('mc-var').value;
+    if (!(P > 0 && n > 0) || $('mc-fix').value === '' || $('mc-var').value === '') { el.replaceChildren(); return; }
+    const d = pay(P, F, n) - pay(P, V, n), gap = F - V;
+    const b = document.createElement('b'); b.textContent = '한 줄 정리';
+    el.replaceChildren(b, document.createTextNode(' ' + (gap > 0
+      ? `지금은 변동형이 매달 ${d3.format(',.0f')(Math.abs(d))}원 덜 냅니다. 변동형 금리가 앞으로 평균 ${d3.format('.2f')(gap)}%p 넘게 오르면 고정형이 더 유리해집니다.`
+      : `지금은 고정형이 매달 ${d3.format(',.0f')(Math.abs(d))}원 덜 냅니다. 변동형 금리가 평균 ${d3.format('.2f')(-gap)}%p 넘게 내려야 변동형이 유리해집니다.`)));
+  });
+  ['mc-amt', 'mc-yrs', 'mc-fix', 'mc-var'].forEach((id) => { const i = $(id); if (!i) return; i.addEventListener('input', () => { if (id === 'mc-fix' || id === 'mc-var') i.dataset.touched = '1'; dash.draw('mort-calc'); }); });
+  $('mort-calc')?.addEventListener('submit', (e) => e.preventDefault());
 })();
 </script>
 <script>

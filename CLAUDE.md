@@ -43,6 +43,9 @@
 - 재무부 국채 보충(부채·국채 탭): `auctions.csv`(10·30년물 입찰, TIPS 제외: 응찰률 btc, 낙찰 금리, 간접·직접·딜러 낙찰 비중 %), `tga.csv`(WDTGAL 주간, 조 달러), `deficit.csv`(MTS 세입·세출 12개월 합계와 적자, 조 달러), `avgrate.csv`(Fiscal Data 평균 이자율: 전체·T-bill·Note·Bond). 입찰은 `auction_wide` 계산으로 10·30년을 두 열로 펼치고 `connect: true`로 점끼리 잇는다. 최근 6건 표는 `tb-auction`. 상태 체크에 입찰 수요·TGA 항목 추가(총 6개).
 - Fiscal Data 필터 값에 공백이 있으면 `%20`으로 써야 한다(curl이 공백 URL을 거부).
 
+- 주담대 고정형 vs 변동형(한국 금리 탭): `kr_rates.csv`의 `fix_mort`·`var_mort`(ECOS 121Y006 BECBLA030201/030202), `fix_share`(121Y010 LN10000, 신규 주담대 중 고정 비중), `ktb5y`(국고채 5년, 고정형 기준 대용). `mort_gap` 계산 = 고정−변동. 탭 맨 위 `#mort-guide`: `mort-check`(신호 4개: 금리차, 국고채 3년−기준금리, 한은 최근 결정, 은행채 1년 3개월 추세 → 고정형 쪽/변동형 쪽/중립), `mort-verdict`(종합), 계산기(`#mc-amt` 등 입력, `mort-calc` 표, `mort-breakeven`). 계산기 금리는 최신 통계로 채우고, 사용자가 고치면(`data-touched`) 그대로 둔다. 입력값은 저장하지 않는다.
+- 은행 자금조달·대출 금리 차트에서 회사채는 뺐다(데이터의 `corp_aa` 열은 남아 있음).
+
 ## 지표 추가하는 법
 
 1. `scripts/fetch-data.mjs`의 `jobs`에 묶음을 추가하거나 기존 묶음에 열을 추가한다.
