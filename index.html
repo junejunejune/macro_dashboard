@@ -208,6 +208,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .mx-calc input { font: inherit; font-size: 15px; width: 100%; min-width: 0; padding: 6px 8px; border: 1px solid var(--color-border-line); border-radius: 8px; background: var(--color-bg); color: var(--color-fg); font-variant-numeric: tabular-nums; }
 .mx-calc input:focus-visible { outline: 2px solid var(--s1); outline-offset: 0; }
 .mx-calc-table td.mx-strong { font-weight: 600; }
+.mx-flag { font-style: normal; font-size: 10.5px; font-weight: 700; color: var(--warn); background: var(--warn-bg); padding: 1px 6px; border-radius: 999px; margin-left: 4px; white-space: nowrap; }
+.mx-flag:empty { display: none; }
+.mx-tile.mx-tile-alert { border-color: var(--warn); }
+.mx-tile.mx-tile-alert b { color: var(--warn); }
 .mx-hint { margin: 2px 0 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
 .mx-plot text { fill: var(--cds-text-secondary); font-size: 11px; font-family: var(--font-anthropic-sans); }
 .mx-plot .grid line { stroke: var(--cds-chart-grid); }
@@ -299,7 +303,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       <div class="mx-tiles">
         <div class="mx-tile" id="tile-fed"><span>연준 기준금리 (상단)</span><b data-draw="v-fed" data-source="latest" data-field="value" data-where="metric=fed_upper">—</b><small data-draw="c-fed" data-source="latest" data-field="change" data-where="metric=fed_upper">—</small></div>
         <div class="mx-tile" id="tile-t2y"><span>미 국채 2년</span><b data-draw="v-t2y" data-source="latest" data-field="value" data-where="metric=t2y">—</b><small data-draw="c-t2y" data-source="latest" data-field="change" data-where="metric=t2y">—</small></div>
-        <div class="mx-tile" id="tile-t10y"><span>미 국채 10년</span><b data-draw="v-t10y" data-source="latest" data-field="value" data-where="metric=t10y">—</b><small data-draw="c-t10y" data-source="latest" data-field="change" data-where="metric=t10y">—</small></div>
+        <div class="mx-tile" id="tile-t10y"><span>미 국채 10년 <em class="mx-flag" data-draw="f-t10y" data-source="us_rates"></em></span><b data-draw="v-t10y" data-source="latest" data-field="value" data-where="metric=t10y">—</b><small data-draw="c-t10y" data-source="latest" data-field="change" data-where="metric=t10y">—</small></div>
         <div class="mx-tile" id="tile-t30y"><span>미 국채 30년</span><b data-draw="v-t30y" data-source="latest" data-field="value" data-where="metric=t30y">—</b><small data-draw="c-t30y" data-source="latest" data-field="change" data-where="metric=t30y">—</small></div>
       </div>
     </div>
@@ -430,9 +434,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
         <p class="mx-trend" data-draw="t-fed"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>2년물이 연준 기준금리보다 낮으면 시장은 앞으로 금리 인하를, 높으면 동결이나 인상을 예상한다는 뜻입니다.</li><li>3개월물은 다음 몇 번의 연준 회의 결정에 대한 기대를 가장 빨리 반영합니다.</li><li>연준 금리가 높게 유지되면 달러 강세·원/달러 상승 압력이 생기고, 한국은행이 금리를 내릴 여지도 좁아집니다.</li></ul></details>
       </div>
-      <div class="mx-card" id="card-uslong"><h3>장기 국채 (10·20·30년)</h3><p>주택담보대출, 회사채 등 장기 자금 비용의 기준입니다. 처음에는 최근 2년을 보여줍니다.</p><div class="mx-chart" data-draw="ch-uslong" data-source="us_rates"></div>
+      <div class="mx-card" id="card-uslong"><h3>장기 국채 (10·20·30년)</h3><p>주택담보대출, 회사채 등 장기 자금 비용의 기준입니다. 주황 점선은 시장이 민감하게 보는 10년물 5% 선. 처음에는 최근 2년을 보여줍니다.</p><div class="mx-chart" data-draw="ch-uslong" data-source="us_rates"></div>
         <p class="mx-trend" data-draw="t-uslong"></p>
-        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>장기 금리 = 앞으로의 단기 금리 기대 + 기간 프리미엄(오래 빌려주는 대가)입니다. 재정적자와 국채 발행이 늘면 기간 프리미엄이 커지는 경향이 있습니다.</li><li>10년물은 미국 주택담보대출과 주식 가치 평가의 기준이라, 오르면 특히 성장주 가격에 부담입니다.</li><li>30년물이 10년물보다 크게 높아지면 장기 재정·물가 우려가 반영된 것으로 봅니다.</li></ul></details>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li><b>왜 5%인가</b>: 10년물 5%는 2007년 이후 거의 넘지 못하던 수준이라 시장이 심리적 경계선으로 봅니다. 넘으면 미국 주택담보대출 금리가 7%대 이상으로 오르고, 주식(특히 성장주) 가치 평가에 부담이 커지며, 달러 강세·원화 약세 압력이 생기기 쉽습니다. 넘은 날보다 그 위에 얼마나 오래 머무는지가 더 중요합니다.</li><li>장기 금리 = 앞으로의 단기 금리 기대 + 기간 프리미엄(오래 빌려주는 대가)입니다. 재정적자와 국채 발행이 늘면 기간 프리미엄이 커지는 경향이 있습니다.</li><li>10년물은 미국 주택담보대출과 주식 가치 평가의 기준이라, 오르면 특히 성장주 가격에 부담입니다.</li><li>30년물이 10년물보다 크게 높아지면 장기 재정·물가 우려가 반영된 것으로 봅니다.</li></ul></details>
       </div>
       <div class="mx-card" id="card-spread"><h3>10년물 − 2년물 금리차</h3><p>0 아래(역전)는 과거 경기침체에 앞서 나타났습니다.</p><div class="mx-chart" data-draw="ch-spread" data-source="spread"></div>
         <p class="mx-trend" data-draw="t-spread"></p>
@@ -886,6 +890,19 @@ dash.calc('latest', {
   },
 });
 
+// ---------- 미 10년물 5% 상태 ----------
+window.mxFive = (us) => {
+  const rs = us.filter((r) => r.t10y !== '' && r.t10y !== null);
+  const L = rs[rs.length - 1], above = +L.t10y >= 5;
+  let i = rs.length - 1; while (i >= 0 && (+rs[i].t10y >= 5) === above) i--;
+  const since = rs[i + 1]; // 지금 상태가 시작된 날
+  const days = rs.length - 1 - i; // 그 뒤 거래일 수
+  const t = new Date(L.date); t.setUTCFullYear(t.getUTCFullYear() - 1); const iso = t.toISOString().slice(0, 10);
+  const yr = rs.filter((r) => r.date > iso), daysAboveYr = yr.filter((r) => +r.t10y >= 5).length;
+  const lastCross = [...rs].reverse().find((r, j, arr) => j < arr.length - 1 && +r.t10y >= 5 && +arr[j + 1].t10y < 5); // 가장 최근에 5%를 위로 뚫은 날
+  return { v: +L.t10y, date: L.date, above, since: since.date, days, daysAboveYr, yrDays: yr.length, lastCross: lastCross ? lastCross.date : null };
+};
+
 // ---------- 공통 ----------
 window.mx = window.mx || {};
 mx.range = 5;
@@ -1104,6 +1121,14 @@ mx.line = (el, rows, series, o) => {
   svg.append('g').selectAll('text').data(yTicks).join('text').attr('x', m.l - 6).attr('y', (t) => y(t)).attr('dy', '0.32em').attr('text-anchor', 'end').text(tf);
   const nx = Math.max(2, Math.floor((W - m.l - m.r) / 80));
   svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(nx).tickSizeOuter(0).tickFormat((d) => (x.domain()[1] - x.domain()[0] > 3 * 365 * 864e5 ? d3.utcFormat('%Y')(d) : d3.utcFormat('%y.%m')(d))));
+  if (o.alert && y.domain()[1] >= o.alert.y) {
+    const ay = y(Math.max(o.alert.y, y.domain()[0]));
+    svg.append('rect').attr('x', m.l).attr('width', W - m.r - m.l).attr('y', m.t).attr('height', Math.max(0, ay - m.t)).style('fill', 'var(--warn)').style('opacity', 0.07);
+    if (o.alert.y >= y.domain()[0]) {
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', ay).attr('y2', ay).style('stroke', 'var(--warn)').style('stroke-width', 1.5).attr('stroke-dasharray', '5 3');
+      svg.append('text').attr('x', m.l + 4).attr('y', ay - 4).style('fill', 'var(--warn)').style('font-weight', '700').text(o.alert.label);
+    }
+  }
   if (o.refY !== undefined && y.domain()[0] <= o.refY && y.domain()[1] >= o.refY) svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(o.refY)).attr('y2', y(o.refY)).style('stroke', 'var(--cds-chart-reference)').attr('stroke-dasharray', '3 3');
   series.forEach((s, i) => {
     const gen = d3.line().defined((d) => val(d, s.key) !== null).x((d) => x(d.x)).y((d) => y(val(d, s.key)));
@@ -1239,7 +1264,7 @@ mx.ts('ch-krbank', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows, 'month', 1
 mx.ts('ch-fixvar', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows.filter((r) => r.fix_mort !== ''), 'month'), [{ key: 'fix_mort', label: '고정형', width: 2.4 }, { key: 'var_mort', label: '변동형', width: 2.4 }, { key: 'base', label: '기준금리', step: true, color: 'var(--cds-chart-muted)' }], { xKey: 'month', fmt: pct, unit: '%', events: mx.ev('bok', { monthly: true }), label: '주택담보대출 고정형과 변동형 금리' }));
 mx.ts('ch-fixgap', 'mort_gap', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'gap', label: '고정−변동', width: 2.4, color: 'var(--s5)' }], { xKey: 'month', fmt: d3.format('+.2f'), unit: '%p', refY: 0, area: true, label: '주담대 고정형과 변동형 금리차' }));
 mx.ts('ch-fed', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date', 2), [{ key: 'fed_upper', label: '연준 상단', step: true, width: 2.4 }, { key: 'effr', label: '실효금리' }, { key: 't3m', label: '3개월' }, { key: 't1y', label: '1년' }, { key: 't2y', label: '2년' }], { xKey: 'date', fmt: pct, unit: '%', events: mx.ev('fed'), label: '연준 기준금리와 미국 단기 국채 수익률' }));
-mx.ts('ch-uslong', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date', 2), [{ key: 't10y', label: '10년' }, { key: 't20y', label: '20년' }, { key: 't30y', label: '30년' }], { xKey: 'date', fmt: pct, unit: '%', label: '미국 장기 국채 수익률' }));
+mx.ts('ch-uslong', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date', 2), [{ key: 't10y', label: '10년', width: 2.6 }, { key: 't20y', label: '20년' }, { key: 't30y', label: '30년' }], { xKey: 'date', fmt: pct, unit: '%', alert: { y: 5, label: '10년물 5% 경계선' }, label: '미국 장기 국채 수익률, 5% 경계선 표시' }));
 mx.ts('ch-spread', 'spread', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 't10y_2y', label: '10년−2년' }], { xKey: 'date', fmt: d3.format('+.2f'), unit: '%p', refY: 0, area: true, label: '미 국채 10년물과 2년물 금리차' }));
 mx.ts('ch-debt', 'us_debt', (el, rows) => mx.stack(el, mx.cut(rows, 'date'), [{ key: 'intragov_tril', label: '정부 내부 보유' }, { key: 'public_tril', label: '민간 보유' }], { xKey: 'date', fmt: d3.format('.1f'), unit: '조$', total: true, label: '미국 연방 총부채, 민간과 정부 내부 보유' }));
 mx.ts('ch-comp', 'comp_share', (el, rows) => mx.stack(el, mx.cut(rows, 'date'), [{ key: 'bills', label: 'T-bill' }, { key: 'notes', label: 'Note' }, { key: 'bonds', label: 'Bond' }, { key: 'tips', label: 'TIPS' }, { key: 'frn', label: 'FRN' }], { xKey: 'date', fmt: d3.format('.0f'), unit: '%', max: 100, label: '시장성 국채 종류별 잔액 비중' }));
@@ -1384,6 +1409,15 @@ dash.draw('ch-curve', (el) => {
   }).on('pointerleave', () => tip.attr('hidden', true));
 });
 
+// 10년물 5% 배지
+dash.draw('f-t10y', (el) => {
+  const d = dash.data('us_rates');
+  if (d.status !== 'ok') { el.textContent = ''; return; } // hidden을 쓰면 다시 그려지지 않으므로 빈 글자로 숨김
+  const s = window.mxFive(d.data);
+  el.textContent = s.above ? '5% 넘음' : '';
+  el.closest('.mx-tile').classList.toggle('mx-tile-alert', s.above);
+});
+
 // ---------- 탭과 기간 ----------
 (() => {
   const ids = ['summary', 'krw', 'kr-rates', 'us-rates', 'us-macro', 'markets', 'risk', 'us-debt', 'demog'];
@@ -1524,9 +1558,13 @@ dash.draw('ch-curve', (el) => {
       3개월물은 ${f2(+last.t3m)}%(${sg(+last.t3m - +prev.t3m)})입니다. ${view}`;
   });
   say('t-uslong', ['us_rates'], (rows) => {
+    const five = window.mxFive(rows);
+    const fiveTxt = five.above
+      ? `10년물이 ${five.since.slice(5, 7) * 1}월 ${five.since.slice(8, 10) * 1}일부터 ${five.days}거래일째 5% 위에 있습니다. 최근 1년 중 ${five.daysAboveYr}거래일이 5% 이상이었습니다.`
+      : `10년물은 5%보다 ${f2(5 - five.v)}%p 아래입니다${five.daysAboveYr ? `(최근 1년 중 ${five.daysAboveYr}거래일은 5% 이상)` : ''}.`;
     const { prev, last, win } = ago(rows, 'date', 't10y');
     const ext = d3.extent(win, (r) => +r.t10y);
-    return `10년물은 ${f2(+prev.t10y)}%에서 ${f2(+last.t10y)}%로(${sg(+last.t10y - +prev.t10y)}), 30년물은 ${f2(+prev.t30y)}%에서 ${f2(+last.t30y)}%로(${sg(+last.t30y - +prev.t30y)}) 움직였습니다.
+    return `${fiveTxt} 10년물은 ${f2(+prev.t10y)}%에서 ${f2(+last.t10y)}%로(${sg(+last.t10y - +prev.t10y)}), 30년물은 ${f2(+prev.t30y)}%에서 ${f2(+last.t30y)}%로(${sg(+last.t30y - +prev.t30y)}) 움직였습니다.
       한 달 동안 10년물은 ${f2(ext[0])}~${f2(ext[1])}% 사이에 있었습니다.
       ${+last.t10y >= ext[1] - 0.02 ? '지금 한 달 중 최고 수준이라 장기 금리 상승 압력이 이어지고 있습니다.' : +last.t10y <= ext[0] + 0.02 ? '지금 한 달 중 최저 수준입니다.' : ''}`;
   });
@@ -1903,7 +1941,7 @@ dash.draw('debt-check', (el) => {
     const c = two(inf, 'cpi_yoy')[1], j = two(jobs, 'payems_3m')[1];
     const d = ago(mk, 'date', 'ixic'), dj = ago(mk, 'date', 'dji'), v = rk.filter((r) => ok(r.vix)).at(-1);
     return [
-      `금리: 연준 ${f2(+u.fed_lower)}~${f2(+u.fed_upper)}%(${lastMove(fed)} 유지), 한국은행 ${f2(+b.base)}%(${lastMove(bok)} 유지). 미 10년물은 ${f2(+u.t10y)}%입니다.`,
+      `금리: 연준 ${f2(+u.fed_lower)}~${f2(+u.fed_upper)}%(${lastMove(fed)} 유지), 한국은행 ${f2(+b.base)}%(${lastMove(bok)} 유지). 미 10년물은 ${f2(+u.t10y)}%${+u.t10y >= 5 ? '로 5% 경계선 위입니다' : '입니다'}.`,
       `미국 경제: ${mon(c.month)} CPI ${f2(+c.cpi_yoy)}%로 연준 목표(2%)보다 높고, 고용은 3개월 평균 월 ${f1(+j.payems_3m)}만 명 증가, 실업률 ${f1(+j.unrate)}%입니다.`,
       `시장(최근 1달): 다우 ${sp(pc(+dj.prev.dji, +dj.last.dji))}, 나스닥 ${sp(pc(+d.prev.ixic, +d.last.ixic))}, VIX ${f1(+v.vix)}${+v.vix >= 30 ? '(공포 국면)' : +v.vix >= 20 ? '(불안)' : ''}.`,
     ];
@@ -1936,7 +1974,7 @@ dash.draw('debt-check', (el) => {
     const s0 = +prev.t10y - +prev.t2y, s1 = +last.t10y - +last.t2y;
     return [
       `연준 기준금리는 ${f2(+last.fed_lower)}~${f2(+last.fed_upper)}%입니다${fed ? `(마지막 변경: ${day(fed.date)} ${f2(Math.abs(+fed.c))}%p ${+fed.c > 0 ? '인상' : '인하'})` : ''}. ${+last.t2y > +last.fed_upper ? '2년물이 기준금리보다 높아 시장은 인하를 기대하지 않는 모습입니다.' : +last.t2y < +last.fed_lower ? '2년물이 기준금리보다 낮아 시장은 인하를 예상합니다.' : ''}`,
-      `한 달 새 2년물 ${f2(+last.t2y)}%(${sg(+last.t2y - +prev.t2y)}), 10년물 ${f2(+last.t10y)}%(${sg(+last.t10y - +prev.t10y)}), 30년물 ${f2(+last.t30y)}%(${sg(+last.t30y - +prev.t30y)})입니다.`,
+      `한 달 새 2년물 ${f2(+last.t2y)}%(${sg(+last.t2y - +prev.t2y)}), 10년물 ${f2(+last.t10y)}%(${sg(+last.t10y - +prev.t10y)}), 30년물 ${f2(+last.t30y)}%(${sg(+last.t30y - +prev.t30y)})입니다. ${(() => { const v = window.mxFive(us); return v.above ? `10년물은 ${v.days}거래일째 5% 위에 있어 주의가 필요합니다.` : `10년물은 5% 경계선보다 ${f2(5 - v.v)}%p 아래입니다.`; })()}`,
       `10년−2년 금리차는 ${f2(s1)}%p로 ${s1 < 0 ? '역전 상태입니다.' : s1 > s0 ? '벌어졌습니다.' : '좁아졌습니다.'}`,
     ];
   });

@@ -46,6 +46,8 @@
 - 주담대 고정형 vs 변동형(한국 금리 탭): `kr_rates.csv`의 `fix_mort`·`var_mort`(ECOS 121Y006 BECBLA030201/030202), `fix_share`(121Y010 LN10000, 신규 주담대 중 고정 비중), `ktb5y`(국고채 5년, 고정형 기준 대용). `mort_gap` 계산 = 고정−변동. 탭 맨 위 `#mort-guide`: `mort-check`(신호 4개: 금리차, 국고채 3년−기준금리, 한은 최근 결정, 은행채 1년 3개월 추세 → 고정형 쪽/변동형 쪽/중립), `mort-verdict`(종합), 계산기(`#mc-amt` 등 입력, `mort-calc` 표, `mort-breakeven`). 계산기 금리는 최신 통계로 채우고, 사용자가 고치면(`data-touched`) 그대로 둔다. 입력값은 저장하지 않는다.
 - 은행 자금조달·대출 금리 차트에서 회사채는 뺐다(데이터의 `corp_aa` 열은 남아 있음).
 
+- 미 10년물 5% 강조: `window.mxFive(us_rates)`가 지금 위/아래, 연속 거래일, 최근 1년 중 5% 이상 일수를 계산. 장기 국채 차트는 `mx.line`의 `alert: {y: 5, label}` 옵션(경계선 + 위쪽 옅은 색), 요약 카드는 `f-t10y` 배지(`.mx-flag`, 비어 있으면 CSS로 숨김. `hidden` 속성을 쓰면 다시 그려지지 않으니 쓰지 말 것), 요약·동향 문장에도 언급.
+
 ## 지표 추가하는 법
 
 1. `scripts/fetch-data.mjs`의 `jobs`에 묶음을 추가하거나 기존 묶음에 열을 추가한다.
