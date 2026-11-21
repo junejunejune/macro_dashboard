@@ -56,7 +56,7 @@ window.dash = (() => {
 /* 레이아웃: 가운데 1200px 칼럼, 상단 고정 탭 바, 카드 그리드. 색은 모두 아래 토큰에서 */
 :root {
   --color-bg: #f6f7f9; --color-panel: #ffffff; --color-fg: #15181d; --color-fg-muted: #5d6573; --color-border-line: #e2e5ea;
-  --s1: #2f5fd0; --s2: #d0782f; --s3: #1f9a72; --s4: #c2417e; --s5: #7a52c7; --s6: #0f8fa8; --s7: #8a7a12;
+  --s1: #2f5fd0; --s2: #d0782f; --s3: #1f9a72; --s4: #c2417e; --s5: #7a52c7; --s6: #0f8fa8; --s7: #8a7a12; --ok: #1f8a5b; --ok-bg: #e3f4ec; --warn: #b5650d; --warn-bg: #fbeedd; --mid: #5d6573; --mid-bg: #eceef2;
   --cds-chart-grid: #eceef2; --cds-chart-axis: #9aa1ad; --cds-chart-reference: #a7adb8; --cds-chart-muted: #b9bec8;
   --cds-text-secondary: #5d6573; --cds-surface-popover: #ffffff; --cds-border: #d6dae1; --cds-shadow-popover: 0 6px 20px rgba(20, 30, 50, .12);
   --font-anthropic-sans: "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
@@ -67,7 +67,7 @@ window.dash = (() => {
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --color-bg: #121417; --color-panel: #1a1d22; --color-fg: #e8eaee; --color-fg-muted: #9aa2b0; --color-border-line: #2a2f37;
-    --s1: #6b93f0; --s2: #e8a060; --s3: #4cc39a; --s4: #e57aa9; --s5: #a98ae6; --s6: #4fc3dc; --s7: #cdbb52;
+    --s1: #6b93f0; --s2: #e8a060; --s3: #4cc39a; --s4: #e57aa9; --s5: #a98ae6; --s6: #4fc3dc; --s7: #cdbb52; --ok: #5fd3a0; --ok-bg: #173327; --warn: #f0a75a; --warn-bg: #3a2814; --mid: #aab1bd; --mid-bg: #262a31;
     --cds-chart-grid: #252a31; --cds-chart-axis: #5b6370; --cds-chart-reference: #6b7380; --cds-chart-muted: #4f5662;
     --cds-text-secondary: #9aa2b0; --cds-surface-popover: #22262c; --cds-border: #353b44; --cds-shadow-popover: 0 6px 20px rgba(0, 0, 0, .45);
     color-scheme: dark;
@@ -75,7 +75,7 @@ window.dash = (() => {
 }
 :root[data-theme="dark"] {
   --color-bg: #121417; --color-panel: #1a1d22; --color-fg: #e8eaee; --color-fg-muted: #9aa2b0; --color-border-line: #2a2f37;
-  --s1: #6b93f0; --s2: #e8a060; --s3: #4cc39a; --s4: #e57aa9; --s5: #a98ae6; --s6: #4fc3dc; --s7: #cdbb52;
+  --s1: #6b93f0; --s2: #e8a060; --s3: #4cc39a; --s4: #e57aa9; --s5: #a98ae6; --s6: #4fc3dc; --s7: #cdbb52; --ok: #5fd3a0; --ok-bg: #173327; --warn: #f0a75a; --warn-bg: #3a2814; --mid: #aab1bd; --mid-bg: #262a31;
   --cds-chart-grid: #252a31; --cds-chart-axis: #5b6370; --cds-chart-reference: #6b7380; --cds-chart-muted: #4f5662;
   --cds-text-secondary: #9aa2b0; --cds-surface-popover: #22262c; --cds-border: #353b44; --cds-shadow-popover: 0 6px 20px rgba(0, 0, 0, .45);
   color-scheme: dark;
@@ -126,12 +126,30 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .mx-key b { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
 .mx-plot { position: relative; }
 .mx-plot svg { display: block; overflow: visible; touch-action: pan-y; }
-@media (hover: hover) { .mx-plot svg { cursor: grab; } .mx-grabbing .mx-plot svg { cursor: grabbing; } }
+@media (hover: hover) { .mx-plot svg { cursor: crosshair; } }
+.mx-brush { position: absolute; top: 6px; bottom: 22px; background: var(--s1); opacity: .15; border-left: 1px solid var(--s1); border-right: 1px solid var(--s1); pointer-events: none; }
 .mx-zoom { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
 .mx-zoom span { margin-right: auto; font-variant-numeric: tabular-nums; }
 .mx-zoom button { font: inherit; font-size: 13px; min-width: 30px; height: 28px; padding: 0 9px; border: 1px solid var(--color-border-line); border-radius: 7px; background: var(--color-bg); color: var(--color-fg); cursor: pointer; }
 .mx-zoom button:disabled { opacity: .4; cursor: default; }
 .mx-zoom button:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 1px; }
+.mx-guide h4 { margin: var(--cds-gap-sm) 0 0; font-size: var(--cds-font-size-body); font-weight: var(--cds-font-weight-medium); }
+.mx-guide .mx-lead { font-size: 14px; color: var(--color-fg); line-height: 1.65; }
+.mx-guide .mx-lead b, .mx-how li b { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
+.mx-guide .mx-sub { margin: 0; }
+.mx-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; }
+.mx-flow span { background: var(--color-bg); border: 1px solid var(--color-border-line); border-radius: 8px; padding: 6px 10px; line-height: 1.4; }
+.mx-flow small { color: var(--color-fg-muted); font-size: 11px; }
+.mx-flow i { font-style: normal; color: var(--color-fg-muted); }
+.mx-check { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: var(--cds-gap-sm); }
+.mx-check li { border: 1px solid var(--color-border-line); border-radius: 8px; padding: var(--cds-pad-md); display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.mx-check li div { display: flex; align-items: center; gap: 8px; }
+.mx-check li b { font-weight: var(--cds-font-weight-medium); font-size: 14px; }
+.mx-check li p { margin: 0; font-size: 13px; color: var(--color-fg); line-height: 1.6; }
+.mx-chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; letter-spacing: .02em; white-space: nowrap; }
+.mx-chip.mx-warn { color: var(--warn); background: var(--warn-bg); }
+.mx-chip.mx-ok { color: var(--ok); background: var(--ok-bg); }
+.mx-chip.mx-mid { color: var(--mid); background: var(--mid-bg); }
 .mx-hint { margin: 2px 0 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
 .mx-plot text { fill: var(--cds-text-secondary); font-size: 11px; font-family: var(--font-anthropic-sans); }
 .mx-plot .grid line { stroke: var(--cds-chart-grid); }
@@ -157,7 +175,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     <h1>재테크 매크로 대시보드</h1>
     <p class="mx-lede">원/달러 <b data-draw="l-usdkrw" data-source="latest" data-field="value" data-where="metric=usdkrw">—</b>원, 미국 10년물 <b data-draw="l-t10y" data-source="latest" data-field="value" data-where="metric=t10y">—</b>%, 한국 10년물 <b data-draw="l-ktb10y" data-source="latest" data-field="value" data-where="metric=ktb10y">—</b>%. 미국과 한국의 10년물 금리 차는 <b data-draw="l-gap" data-source="latest" data-field="value" data-where="metric=us_kr_gap">—</b>%p입니다.</p>
     <p class="mx-updated">데이터 갱신 <b data-draw="updated">—</b></p>
-    <p class="mx-hint">차트 위에서 스크롤하거나 두 손가락으로 벌리면 기간이 좁아지고, 반대로 하면 넓어집니다. 컴퓨터에서는 끌어서 기간을 옮길 수 있고, 차트 아래 −·+ 버튼도 쓸 수 있어요.</p>
+    <p class="mx-hint">차트 위에서 스크롤하거나 두 손가락으로 벌리면 기간이 좁아지고, 반대로 하면 넓어집니다. 컴퓨터에서는 마우스로 원하는 기간을 끌어서 선택하면 그 기간이 확대되고, 더블클릭하면 처음 기간으로 돌아갑니다. 차트 아래 −·+ 버튼도 쓸 수 있어요.</p>
   </header>
 
   <div class="mx-bar">
@@ -354,6 +372,52 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <!-- 미국 부채·국채 -->
   <section class="mx-sec" id="us-debt" data-sec="us-debt" hidden>
     <h2>미국 부채·국채</h2>
+    <div class="mx-card mx-guide" id="debt-guide">
+      <h3>이 탭 쉽게 읽기</h3>
+      <p class="mx-lead">한 줄 요약: 미국 정부가 <b>빚을 얼마나 빨리</b>, <b>어떤 만기로</b> 빌리는지 보는 탭입니다. 이게 미국 장기 금리를 움직이고, 장기 금리는 환율·주식·내 대출 금리까지 이어집니다.</p>
+
+      <div class="mx-flow" aria-label="부채가 내 돈에 영향을 주는 경로">
+        <span>재정적자</span><i>→</i><span>국채 발행 증가</span><i>→</i><span>사줄 사람을 찾느라 금리 상승<br><small>특히 10·30년 장기 금리</small></span><i>→</i><span>달러 강세·원/달러 상승<br><small>미국 주식 가치 부담, 한국 금리도 따라 오를 압력</small></span>
+      </div>
+
+      <h4>지금 상태 체크</h4>
+      <p class="mx-sub">데이터로 자동 판단합니다. <span class="mx-chip mx-warn">주의</span>는 장기 금리를 밀어올릴 수 있는 쪽, <span class="mx-chip mx-ok">완화</span>는 부담이 줄어드는 쪽입니다.</p>
+      <ul class="mx-check" data-draw="debt-check"></ul>
+
+      <details class="mx-how" open>
+        <summary>무엇을 유의해서 볼까</summary>
+        <ul>
+          <li><b>총액보다 속도</b>: 미국 부채는 거의 항상 늘어납니다. "얼마나 많은가"보다 "작년보다 빨리 늘고 있는가"가 금리에 중요합니다.</li>
+          <li><b>부채한도 착시</b>: 의회가 정한 부채 상한에 걸리면 몇 달간 그래프가 평평해졌다가, 합의 직후 계단처럼 급증합니다. 이때 국채가 한꺼번에 풀리며 시중 자금을 빨아들여 주식·채권이 흔들리기 쉽습니다.</li>
+          <li><b>만기 구성 = 금리 위험을 누가 지는가</b>: 재무부가 단기(T-bill)로 많이 빌리면 장기 금리 부담은 줄지만, 금리가 높은 동안 이자 비용이 빠르게 불어납니다. 장기(Note·Bond)로 갈아타기 시작하면 시장에 장기채가 많이 풀려 장기 금리가 오르기 쉽습니다.</li>
+          <li><b>분기 발행 계획 발표일</b>: 재무부는 2·5·8·11월 초에 앞으로 장기물을 얼마나 발행할지 발표합니다(Quarterly Refunding). 2023년 8월 장기물 발행을 늘린다고 발표한 뒤 미 10년물 금리가 두 달여 만에 5% 가까이 오른 것이 대표적인 예입니다.</li>
+          <li><b>금리와 같이 보기</b>: 부채 지표가 나빠지는데 10년물 금리가 오르고 10년−2년 금리차가 벌어지면, 시장이 재정 부담을 금리에 반영하고 있다는 신호입니다. 미국 금리 탭과 함께 보세요.</li>
+        </ul>
+      </details>
+
+      <details class="mx-how">
+        <summary>내 투자에는 어떻게 쓰나</summary>
+        <ul>
+          <li><b>미국 장기채(ETF 등)</b>: 위 체크에서 '주의'가 많을수록 장기 금리가 더 오를(채권 가격이 더 떨어질) 위험이 큽니다. 한 번에 사기보다 나눠 사는 편이 안전합니다.</li>
+          <li><b>달러 자산</b>: 미국 금리가 높게 유지되면 달러가 강해지기 쉬워, 원/달러 환율이 높은 상태가 오래갈 수 있습니다.</li>
+          <li><b>주식</b>: 장기 금리가 빠르게 오르는 구간에는 성장주(나스닥·M7)가 더 크게 흔들리는 경향이 있습니다.</li>
+          <li><b>한국 대출</b>: 미국 장기 금리가 오르면 한국 국고채·은행채 금리도 따라 오르는 경우가 많아, 고정금리 대출 금리에 영향을 줍니다.</li>
+        </ul>
+      </details>
+
+      <details class="mx-how">
+        <summary>용어 풀이</summary>
+        <ul>
+          <li><b>T-bill</b>: 만기 1년 이하 단기 국채. 매주 발행·상환되어 발행액 막대의 대부분을 차지합니다.</li>
+          <li><b>Note</b>: 만기 2~10년 중기 국채. 10년물 금리가 흔히 말하는 "미국 국채 금리"입니다.</li>
+          <li><b>Bond</b>: 만기 20·30년 장기 국채.</li>
+          <li><b>TIPS</b>: 원금이 물가에 연동되는 국채. <b>FRN</b>: 이자가 단기 금리에 따라 바뀌는 변동금리 국채.</li>
+          <li><b>차환</b>: 만기가 된 국채를 갚으려고 새 국채를 발행하는 것. 발행액이 큰 이유는 대부분 차환 때문이라, 발행액 = 새로 늘어난 빚이 아닙니다.</li>
+          <li><b>민간 보유 / 정부 내부 보유</b>: 민간 보유는 투자자·외국 정부·연준 등이 가진 국채로 시장이 실제로 소화해야 하는 물량, 정부 내부 보유는 사회보장기금처럼 정부 계정끼리 가진 몫입니다.</li>
+          <li><b>부채한도</b>: 의회가 정한 연방 부채의 법적 상한. 상한에 걸리면 재무부는 새 빚을 못 내고 현금을 쓰며 버팁니다.</li>
+        </ul>
+      </details>
+    </div>
     <div class="mx-grid">
       <div class="mx-card" id="card-debt"><h3>연방 총부채 (조 달러)</h3><p>재무부 일별 공시(Debt to the Penny)의 월말 값. 민간 보유분과 정부 내부 보유분(사회보장기금 등)의 합입니다.</p><div class="mx-chart" data-draw="ch-debt" data-source="us_debt"></div>
         <p class="mx-trend" data-draw="t-debt"></p>
@@ -652,12 +716,36 @@ mx.bindZoom = (el, name) => {
       const sh = ev.deltaX / w * (b - a); mx.zoomTo(name, a + sh, b + sh);
     } else mx.zoomAround(name, mx.frac(el, ev.clientX), Math.exp(ev.deltaY * 0.002));
   }, { passive: false });
-  // 마우스로 끌기 = 이동, 두 손가락 = 확대/축소(+이동)
+  // 마우스로 끌기 = 기간 선택 후 그 기간으로 확대, 더블클릭 = 처음 기간, 두 손가락 = 확대/축소(+이동)
   const pts = new Map(); let g = null;
-  const plotW = () => { const r = el.__plot, w = el.querySelector('.mx-plot svg').getBoundingClientRect().width; return w * (r.r - r.l) / r.W; };
+  // 선택 상자: 그림 영역 안에서 마우스를 누른 곳부터 뗀 곳까지
+  const brush = (x0, x1) => {
+    const plot = el.querySelector('.mx-plot'); if (!plot) return;
+    let b = plot.querySelector('.mx-brush');
+    if (!b) { b = document.createElement('div'); b.className = 'mx-brush'; plot.appendChild(b); }
+    const r = el.__plot, rect = plot.querySelector('svg').getBoundingClientRect(), k = rect.width / r.W;
+    const left = Math.max(r.l * k, Math.min(x0, x1) - rect.left), right = Math.min(r.r * k, Math.max(x0, x1) - rect.left);
+    b.style.left = left + 'px'; b.style.width = Math.max(0, right - left) + 'px';
+  };
+  const brushEnd = (ev) => {
+    window.removeEventListener('pointermove', brushMove); window.removeEventListener('pointerup', brushEnd);
+    el.querySelector('.mx-brush')?.remove();
+    const gg = g; g = null; if (!gg) return;
+    if (Math.abs(ev.clientX - gg.x) < 6) return; // 그냥 클릭이면 아무것도 안 함
+    const [a, b] = gg.view, f0 = mx.frac(el, gg.x), f1 = mx.frac(el, ev.clientX);
+    mx.zoomTo(name, a + Math.min(f0, f1) * (b - a), a + Math.max(f0, f1) * (b - a));
+  };
+  const brushMove = (ev) => { if (g && g.mode === 'brush') brush(g.x, ev.clientX); };
+  el.addEventListener('dblclick', (ev) => { if (inPlot(ev) && mx.view[name]) { delete mx.view[name]; dash.draw(name); } });
   el.addEventListener('pointerdown', (ev) => {
     if (!inPlot(ev) || !mx.zinfo[name]) return;
-    if (ev.pointerType === 'mouse') { if (ev.button !== 0) return; g = { mode: 'drag', x: ev.clientX, view: mx.curView(name) }; el.classList.add('mx-grabbing'); return; }
+    if (ev.pointerType === 'mouse') {
+      if (ev.button !== 0) return;
+      ev.preventDefault(); // 글자 선택 막기
+      g = { mode: 'brush', x: ev.clientX, view: mx.curView(name) };
+      window.addEventListener('pointermove', brushMove); window.addEventListener('pointerup', brushEnd);
+      return;
+    }
     pts.set(ev.pointerId, ev.clientX);
     if (pts.size === 2) {
       const [x1, x2] = [...pts.values()];
@@ -666,10 +754,7 @@ mx.bindZoom = (el, name) => {
   });
   el.addEventListener('pointermove', (ev) => {
     if (!g) return;
-    if (g.mode === 'drag' && ev.pointerType === 'mouse') {
-      const [a, b] = g.view, sh = -(ev.clientX - g.x) / plotW() * (b - a);
-      mx.zoomTo(name, a + sh, b + sh);
-    } else if (g.mode === 'pinch' && pts.has(ev.pointerId)) {
+    if (g.mode === 'pinch' && pts.has(ev.pointerId)) {
       pts.set(ev.pointerId, ev.clientX);
       const [x1, x2] = [...pts.values()];
       const k = g.dist / Math.max(20, Math.abs(x1 - x2));
@@ -678,7 +763,7 @@ mx.bindZoom = (el, name) => {
       ev.preventDefault();
     }
   });
-  const end = (ev) => { pts.delete(ev.pointerId); if (g && (g.mode === 'drag' || pts.size < 2)) { g = null; el.classList.remove('mx-grabbing'); } };
+  const end = (ev) => { if (ev.pointerType === 'mouse') return; pts.delete(ev.pointerId); if (g && g.mode === 'pinch' && pts.size < 2) g = null; };
   ['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => el.addEventListener(t, end));
   // 두 손가락이 닿은 동안은 페이지 스크롤 대신 차트 확대
   el.addEventListener('touchmove', (ev) => { if (ev.touches.length > 1 && inPlot(ev)) ev.preventDefault(); }, { passive: false });
@@ -1223,6 +1308,84 @@ dash.draw('ch-curve', (el) => {
       최근 6개월 평균은 ${f1(avg6)}%입니다.`;
   });
 })();
+</script>
+
+<script>
+// ---------- 부채·국채 지금 상태 체크 ----------
+// 각 항목: 상태(warn 주의 / ok 완화 / mid 보통), 제목, 설명 문장. 데이터가 바뀌면 판단도 바뀝니다.
+dash.draw('debt-check', (el) => {
+  const ids = ['us_debt', 'comp_share', 'iss_share', 'us_rates'];
+  const ds = ids.map((i) => dash.data(i));
+  if (ds.some((d) => d.status !== 'ok' || !Array.isArray(d.data) || !d.data.length)) {
+    el.replaceChildren(); const li = document.createElement('li'); li.className = 'mx-msg';
+    li.textContent = ds.some((d) => d.status === 'error') ? '데이터를 불러오지 못했습니다.' : '불러오는 중…'; el.appendChild(li); return;
+  }
+  const [debt, comp, iss, us] = ds.map((d) => d.data);
+  const ok = (v) => v !== null && v !== undefined && v !== '';
+  const f1 = d3.format('.1f'), f2 = d3.format('.2f');
+  // 날짜 key 기준으로 n년 전 이전의 마지막 행
+  const yearsAgo = (rows, k, n) => { const last = rows[rows.length - 1][k]; const t = new Date(last); t.setUTCFullYear(t.getUTCFullYear() - n); const iso = t.toISOString().slice(0, last.length); let p = null; for (const r of rows) if (r[k] <= iso) p = r; return p; };
+  const items = [];
+
+  // 1. 부채 증가 속도
+  {
+    const L = debt[debt.length - 1], Y1 = yearsAgo(debt, 'date', 1), Y2 = yearsAgo(debt, 'date', 2);
+    if (Y1 && Y2) {
+      const inc1 = +L.total_tril - +Y1.total_tril, inc0 = +Y1.total_tril - +Y2.total_tril, ratio = inc1 / inc0;
+      items.push({
+        st: ratio > 1.15 ? 'warn' : ratio < 0.85 ? 'ok' : 'mid',
+        title: '부채 증가 속도',
+        text: `최근 1년 동안 ${f2(inc1)}조 달러 늘었습니다(그 전 1년은 ${f2(inc0)}조 달러). ${ratio > 1.15 ? '증가 속도가 빨라졌습니다. 부채한도 합의 직후라면 일시적일 수 있습니다.' : ratio < 0.85 ? '증가 속도가 느려졌습니다. 부채한도에 걸려 멈춘 기간이라면 나중에 몰아서 늘 수 있습니다.' : '증가 속도는 작년과 비슷합니다.'}`,
+      });
+    }
+  }
+  // 2. T-bill 비중
+  {
+    const L = comp[comp.length - 1], b = +L.bills;
+    items.push({
+      st: b > 20 ? 'warn' : b < 15 ? 'ok' : 'mid',
+      title: '단기 국채(T-bill) 비중',
+      text: `시장성 국채 중 ${f1(b)}%가 T-bill입니다. ${b > 20 ? '권고 범위(15~20%)를 웃돌아, 앞으로 장기물 발행을 늘릴 가능성이 있습니다. 그러면 장기 금리에 부담이 됩니다.' : b < 15 ? '단기 비중이 낮아 장기물 공급 부담이 상대적으로 큽니다.' : '권고 범위(15~20%) 안에 있습니다.'}`,
+    });
+  }
+  // 3. 장기물 발행 추세: 최근 3개월 평균 vs 그 전 12개월 평균
+  {
+    const v = iss.filter((r) => ok(r.coupon_share)).map((r) => +r.coupon_share);
+    if (v.length >= 15) {
+      const a3 = d3.mean(v.slice(-3)), a12 = d3.mean(v.slice(-15, -3)), d = a3 - a12;
+      items.push({
+        st: d > 2 ? 'warn' : d < -2 ? 'ok' : 'mid',
+        title: '장기물(Note·Bond) 발행 비중',
+        text: `최근 3개월 평균 ${f1(a3)}%로 그 전 1년 평균(${f1(a12)}%)보다 ${f1(Math.abs(d))}%p ${d >= 0 ? '높습니다' : '낮습니다'}. ${d > 2 ? '시장에 풀리는 장기채가 늘어 장기 금리 상승 압력이 됩니다.' : d < -2 ? 'T-bill 위주로 조달해 장기 금리 부담은 덜하지만, 이자 비용이 단기 금리에 더 민감해집니다.' : '큰 변화는 없습니다.'}`,
+      });
+    }
+  }
+  // 4. 시장 반응: 10년물 금리 1년 변화와 10년−2년 금리차
+  {
+    const rs = us.filter((r) => ok(r.t10y) && ok(r.t2y));
+    const L = rs[rs.length - 1], P = yearsAgo(rs, 'date', 1);
+    if (P) {
+      const d10 = +L.t10y - +P.t10y, sp = +L.t10y - +L.t2y, spP = +P.t10y - +P.t2y;
+      const fiscal = d10 > 0.3 && sp > spP;
+      items.push({
+        st: d10 > 0.3 ? 'warn' : d10 < -0.3 ? 'ok' : 'mid',
+        title: '시장 반응 (미 10년물 금리)',
+        text: `10년물 금리는 ${f2(+L.t10y)}%로 1년 전보다 ${d10 >= 0 ? '+' : '−'}${f2(Math.abs(d10))}%p, 10년−2년 금리차는 ${f2(spP)}%p에서 ${f2(sp)}%p가 됐습니다. ${fiscal ? '장기 금리가 오르면서 금리차도 벌어져, 시장이 재정 부담을 장기 금리에 반영하는 모습입니다.' : d10 > 0.3 ? '장기 금리가 크게 올랐지만 단기 금리가 더 많이 올라 금리차는 좁아졌습니다. 재정 우려보다는 기준금리가 높게 유지될 거라는 예상이 금리를 끌어올린 쪽에 가깝습니다.' : d10 < -0.3 ? '장기 금리가 내려 재정 우려가 금리에 크게 반영되지는 않고 있습니다.' : '장기 금리 변화가 크지 않습니다.'}`,
+      });
+    }
+  }
+
+  const label = { warn: '주의', ok: '완화', mid: '보통' };
+  el.replaceChildren(...items.map((it) => {
+    const li = document.createElement('li');
+    const chip = document.createElement('span'); chip.className = `mx-chip mx-${it.st}`; chip.textContent = label[it.st];
+    const b = document.createElement('b'); b.textContent = it.title;
+    const p = document.createElement('p'); p.textContent = it.text;
+    const head = document.createElement('div'); head.append(chip, b);
+    li.append(head, p);
+    return li;
+  }));
+});
 </script>
 
 <script>
