@@ -38,6 +38,8 @@
 
 - 상단 탐색은 2단: `.mx-grp`(묶음: 한눈에, 한국, 미국 경제, 시장, 재정·인구) → `.mx-tab`(그 묶음의 탭, `data-group`). 묶음마다 마지막으로 본 탭을 기억한다. 새 탭은 `.mx-tab`에 `data-group`을 달고 `ids` 배열에 추가.
 
+- 화면 테마: 제목 옆 자동/라이트/다크 버튼. `<html data-theme="light|dark">`, 없으면 기기 설정. 선택은 `localStorage`의 `mx-theme`(이 브라우저에만). `<head>`의 작은 스크립트가 그리기 전에 적용한다.
+
 ## 지표 추가하는 법
 
 1. `scripts/fetch-data.mjs`의 `jobs`에 묶음을 추가하거나 기존 묶음에 열을 추가한다.

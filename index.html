@@ -7,6 +7,10 @@
 <meta name="description" content="원화 가치, 통화량, 한국·미국 금리, 미국 연방부채와 국채 발행을 한눈에 보는 개인 대시보드">
 <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121417" media="(prefers-color-scheme: dark)">
+<script>
+// 화면 테마: 'light' | 'dark' | 없음(기기 설정 따름). 이 브라우저에만 저장
+try { const t = localStorage.getItem('mx-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) { /* 저장소를 못 쓰면 기기 설정 */ }
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400;500&display=swap">
@@ -179,6 +183,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .mx-brief li { position: relative; padding-left: 14px; }
 .mx-brief li::before { content: ""; position: absolute; left: 0; top: .7em; width: 5px; height: 5px; border-radius: 50%; background: var(--s1); }
 .mx-brief:empty { display: none; }
+.mx-titlebar { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--cds-gap-sm); flex-wrap: wrap; }
+.mx-titlebar h1 { flex: 1 1 auto; min-width: 0; }
+.mx-theme { display: inline-flex; border: 1px solid var(--color-border-line); border-radius: 999px; padding: 2px; background: var(--color-panel); flex: none; }
+.mx-theme button { font: inherit; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; border: 0; background: transparent; color: var(--color-fg-muted); padding: 4px 9px; border-radius: 999px; cursor: pointer; }
+.mx-theme button svg { width: 13px; height: 13px; }
+.mx-theme button[aria-pressed="true"] { background: var(--color-fg); color: var(--color-bg); }
+.mx-theme button:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 1px; }
+@media (max-width: 480px) { .mx-theme button span { display: none; } .mx-theme button { padding: 5px 8px; } }
 .mx-hint { margin: 2px 0 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
 .mx-plot text { fill: var(--cds-text-secondary); font-size: 11px; font-family: var(--font-anthropic-sans); }
 .mx-plot .grid line { stroke: var(--cds-chart-grid); }
@@ -201,7 +213,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
 <div class="mx">
   <header class="mx-head" id="top">
-    <h1>재테크 매크로 대시보드</h1>
+    <div class="mx-titlebar">
+      <h1>재테크 매크로 대시보드</h1>
+      <div class="mx-theme" role="group" aria-label="화면 테마">
+        <button type="button" data-theme-set="auto" aria-pressed="true" title="기기 설정 따르기"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 2a6 6 0 0 1 0 12z" fill="currentColor"/></svg><span>자동</span></button>
+        <button type="button" data-theme-set="light" aria-pressed="false" title="라이트 모드"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" fill="currentColor"/><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3 3l1.1 1.1M11.9 11.9 13 13M3 13l1.1-1.1M11.9 4.1 13 3"/></g></svg><span>라이트</span></button>
+        <button type="button" data-theme-set="dark" aria-pressed="false" title="다크 모드"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 10.2A6 6 0 0 1 5.8 2.5a6 6 0 1 0 7.7 7.7z" fill="currentColor"/></svg><span>다크</span></button>
+      </div>
+    </div>
     <p class="mx-lede">원/달러 <b data-draw="l-usdkrw" data-source="latest" data-field="value" data-where="metric=usdkrw">—</b>원, 미국 10년물 <b data-draw="l-t10y" data-source="latest" data-field="value" data-where="metric=t10y">—</b>%, 한국 10년물 <b data-draw="l-ktb10y" data-source="latest" data-field="value" data-where="metric=ktb10y">—</b>%. 미국과 한국의 10년물 금리 차는 <b data-draw="l-gap" data-source="latest" data-field="value" data-where="metric=us_kr_gap">—</b>%p입니다.</p>
     <p class="mx-updated">데이터 갱신 <b data-draw="updated">—</b></p>
     <p class="mx-hint">차트 위에서 원하는 기간을 옆으로 끌어 선택하면 그 기간만 확대됩니다(휴대폰은 한 손가락으로 옆으로). 스크롤이나 두 손가락으로 벌리고 오므려도 확대·축소되고, 더블클릭 또는 차트 아래 '되돌리기'로 처음 기간으로 돌아갑니다.</p>
@@ -1805,6 +1824,23 @@ dash.draw('debt-check', (el) => {
 })();
 </script>
 
+<script>
+// ---------- 화면 테마 ----------
+(() => {
+  const root = document.documentElement;
+  const metas = [...document.querySelectorAll('meta[name="theme-color"]')];
+  const apply = (t) => {
+    t = t === 'light' || t === 'dark' ? t : null; // 그 밖의 값은 자동
+    if (t === 'light' || t === 'dark') root.dataset.theme = t; else delete root.dataset.theme;
+    try { if (t === 'light' || t === 'dark') localStorage.setItem('mx-theme', t); else localStorage.removeItem('mx-theme'); } catch (e) { /* 저장 못 해도 이번 화면에는 적용 */ }
+    document.querySelectorAll('[data-theme-set]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.themeSet === (t || 'auto'))));
+    // 휴대폰 주소창 색도 테마에 맞춤
+    metas.forEach((m) => { if (t) { m.dataset.media = m.dataset.media || m.media; m.removeAttribute('media'); m.content = t === 'dark' ? '#121417' : '#f6f7f9'; } else if (m.dataset.media) { m.media = m.dataset.media; m.content = m.media.includes('dark') ? '#121417' : '#f6f7f9'; } });
+  };
+  apply(root.dataset.theme || 'auto');
+  document.querySelectorAll('[data-theme-set]').forEach((b) => b.addEventListener('click', () => apply(b.dataset.themeSet === 'auto' ? null : b.dataset.themeSet)));
+})();
+</script>
 <script>
 // ---------- 데이터 갱신 시각 ----------
 dash.draw("updated", (el) => {
