@@ -52,6 +52,8 @@
 
 - 두 칸 차트 `mx.split(el, rows, {xKey, top, bottom, topFmt, topTick, bottomFmt, bottomTick, bottomRef, bottomTitle, events})`: 단위가 다른 두 묶음을 위아래로 나눠 같은 시간축·툴팁으로 비교. 고정−변동 금리차 카드(`ch-fixgap`)가 사용(위: 고정형·변동형·기준금리·국고채 3년, 아래: 금리차).
 
+- 금리차 분석: `mort_rel` 계산(월별 gap, slope=국고채 5년−CD 91일, exp3=국고채 3년−기준금리, cyc=최근 12개월 기준금리 변화). 2013~2026 데이터로 gap과의 상관은 slope 0.73, exp3 0.61, cyc −0.16(거의 없음). `window.mxReg`(단순 회귀). `ch-fixgap` 위 칸 배경 띠(`bands`)는 실제 인상기·인하기, 아래 칸은 gap과 slope. `ch-fixrel`은 `mx.scatter` 산점도 + 회귀선, 지금 점 강조. 판단 도우미 5번째 신호 = 회귀선 대비 잔차(−0.1 미만 고정형 쪽, +0.15 초과 변동형 쪽).
+
 ## 지표 추가하는 법
 
 1. `scripts/fetch-data.mjs`의 `jobs`에 묶음을 추가하거나 기존 묶음에 열을 추가한다.
