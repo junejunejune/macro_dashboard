@@ -419,9 +419,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
         <p class="mx-trend" data-draw="t-fixvar"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>예금은행이 그달 새로 내준 주택담보대출의 평균 금리를 고정형·변동형으로 나눈 것입니다.</li><li>고정형(대부분 처음 5년 고정인 혼합형)은 5년 안팎 시장 금리(국고채·은행채 5년)를, 변동형은 코픽스·CD·은행채 단기 금리를 따라 움직입니다.</li><li>두 선이 함께 오르는 시기에는 고정형을 미리 잡아 둔 사람이 유리했고, 함께 내리는 시기에는 변동형이 유리했습니다.</li></ul></details>
       </div>
-      <div class="mx-card" id="card-fixgap"><h3>고정형 − 변동형 금리차 (%p)</h3><p>고정형을 고를 때 더 내는 금리. 0보다 아래면 고정형이 더 쌉니다.</p><div class="mx-chart" data-draw="ch-fixgap" data-source="mort_gap"></div>
+      <div class="mx-card" id="card-fixgap"><h3>고정형 − 변동형 금리차와 금리 추이</h3><p>위 칸은 주담대 고정형·변동형 금리와 기준금리·국고채 3년(시장의 금리 전망), 아래 칸은 고정형이 변동형보다 얼마나 비싼지(%p). 번호는 한국은행 금리 변경. 0보다 아래면 고정형이 더 쌉니다.</p><div class="mx-chart" data-draw="ch-fixgap" data-source="kr_rates mort_gap"></div>
         <p class="mx-trend" data-draw="t-fixgap"></p>
-        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>고정형 금리에서 변동형 금리를 뺀 값입니다. 고정형을 고를 때 내는 "금리 상승 보험료"라고 생각하면 됩니다.</li><li>차이가 작을수록(0.2%p 이하) 적은 비용으로 금리 상승 위험을 막을 수 있어 고정형이 매력적이고, 클수록(0.6%p 이상) 변동형이 당장 이자를 아낍니다.</li><li>0보다 낮으면 고정형이 오히려 더 싸다는 뜻입니다. 시장이 앞으로 금리 하락을 예상할 때 나타나며, 이때 고정형은 지금 금리를 확정하는 효과가 있습니다.</li></ul></details>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>고정형 금리에서 변동형 금리를 뺀 값입니다. 고정형을 고를 때 내는 "금리 상승 보험료"라고 생각하면 됩니다. 0.2%p 이하면 보험료가 싸서 고정형이 매력적이고, 0.6%p 이상이면 변동형이 당장 이자를 아낍니다.</li><li><b>금리가 오를 것 같을 때</b>: 시장이 금리 인상을 예상하면 국고채 3·5년 같은 중기 금리가 먼저 오르고, 이를 따르는 고정형이 변동형보다 빨리 올라 금리차가 벌어집니다. 위 칸에서 국고채 3년이 기준금리 위로 올라가는 구간과 아래 칸의 금리차가 커지는 구간을 비교해 보세요.</li><li><b>금리가 내릴 것 같을 때</b>: 인하가 예상되면 중기 금리가 먼저 내려 고정형이 변동형보다 싸지기도 합니다(금리차가 0 아래). 실제 인하가 시작되면 변동형이 몇 달에 걸쳐 따라 내려오면서 금리차가 다시 0 근처로 돌아오는 경우가 많습니다.</li><li>그래서 금리차가 작거나 0 아래인데 시장이 인상을 예상한다면(국고채 3년 > 기준금리), 고정형으로 싼 값에 금리를 묶을 기회일 수 있습니다.</li></ul></details>
       </div>
       <div class="mx-card" id="card-krbank"><h3>은행 자금조달·대출 금리</h3><p>점선 국고채 5년은 고정형(혼합형) 주담대, 은행채 1년·CD 91일은 변동형 주담대 금리의 바탕이 되는 시장 금리입니다. 월평균, 처음에는 최근 1년.</p><div class="mx-chart" data-draw="ch-krbank" data-source="kr_rates"></div>
         <p class="mx-trend" data-draw="t-krbank"></p>
@@ -1203,6 +1203,78 @@ mx.line = (el, rows, series, o) => {
   svg.on('pointermove', show).on('pointerdown', show).on('pointerleave', hide);
 };
 
+// 두 칸 차트. o = { xKey, top: [series], bottom: [series], topFmt, bottomFmt, topUnit, bottomUnit, bottomRef, events, label }
+// 단위가 다른 두 묶음을 한 축에 겹치지 않고 위아래로 나눠 같은 시점끼리 비교
+mx.split = (el, rows, o) => {
+  el.replaceChildren();
+  const val = (r, k) => (r[k] === null || r[k] === undefined || r[k] === '' ? null : +r[k]);
+  const all = [...o.top, ...o.bottom];
+  const colors = all.map((s, i) => s.color || dash.colors[i % dash.colors.length]);
+  const legend = d3.select(el).append('div').attr('class', 'mx-legend');
+  all.forEach((s, i) => {
+    const last = [...rows].reverse().find((r) => val(r, s.key) !== null);
+    const fmt = i < o.top.length ? o.topFmt : o.bottomFmt, unit = i < o.top.length ? o.topUnit : o.bottomUnit;
+    const k = legend.append('span').attr('class', 'mx-key');
+    k.append('i').style('background', colors[i]); k.append('span').text(s.label); k.append('b').text(last ? fmt(val(last, s.key)) + (unit || '') : '—');
+  });
+  const box = d3.select(el).append('div').attr('class', 'mx-plot');
+  const W = Math.max(260, el.clientWidth), topH = W > 520 ? 190 : 165, botH = W > 520 ? 110 : 95, gapH = 34;
+  const m = { t: o.events && o.events.length ? 24 : 6, r: 8, b: 22, l: 0 };
+  const H = m.t + topH + gapH + botH + m.b;
+  const svg = box.append('svg').attr('width', '100%').attr('height', H).attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', o.label || '');
+  const ext = (ss) => { const v = rows.flatMap((r) => ss.map((s) => val(r, s.key))).filter((x) => x !== null); return d3.extent(v); };
+  let [t0, t1] = ext(o.top); const tp = (t1 - t0) * 0.08 || 0.5;
+  const yT = d3.scaleLinear().domain([t0 - tp, t1 + tp]).nice(4).range([m.t + topH, m.t]);
+  let [b0, b1] = ext(o.bottom); if (o.bottomRef !== undefined) { b0 = Math.min(b0, o.bottomRef); b1 = Math.max(b1, o.bottomRef); }
+  const bp = (b1 - b0) * 0.12 || 0.2;
+  const yB = d3.scaleLinear().domain([b0 - bp, b1 + bp]).nice(3).range([m.t + topH + gapH + botH, m.t + topH + gapH]);
+  const tT = yT.ticks(4), tB = yB.ticks(3);
+  const meas = svg.append('g');
+  const tickT = o.topTick || o.topFmt, tickB = o.bottomTick || o.bottomFmt; // 눈금은 값보다 짧게
+  const wMax = Math.max(d3.max(tT, (t) => meas.append('text').text(tickT(t)).node().getComputedTextLength()) || 0, d3.max(tB, (t) => meas.append('text').text(tickB(t)).node().getComputedTextLength()) || 0);
+  meas.remove();
+  m.l = Math.ceil(wMax) + 8;
+  el.__plot = { l: m.l, r: W - m.r, W };
+  const xs = rows.map((r) => mx.px(r[o.xKey]));
+  const x = d3.scaleUtc().domain(d3.extent(xs)).range([m.l, W - m.r]);
+  const grid = (y, ticks, fmt) => {
+    svg.append('g').attr('class', 'grid').selectAll('line').data(ticks).join('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y).attr('y2', y);
+    svg.append('g').selectAll('text').data(ticks).join('text').attr('x', m.l - 6).attr('y', y).attr('dy', '0.32em').attr('text-anchor', 'end').text(fmt);
+  };
+  grid(yT, tT, tickT); grid(yB, tB, tickB);
+  // 아래 칸 제목
+  svg.append('text').attr('x', m.l).attr('y', m.t + topH + gapH - 8).style('font-weight', '600').style('fill', 'var(--color-fg)').text(o.bottomTitle || '');
+  if (o.bottomRef !== undefined) svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', yB(o.bottomRef)).attr('y2', yB(o.bottomRef)).style('stroke', 'var(--cds-chart-axis)');
+  svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(Math.max(2, Math.floor((W - m.l) / 80))).tickSizeOuter(0).tickFormat((d) => (x.domain()[1] - x.domain()[0] > 3 * 365 * 864e5 ? d3.utcFormat('%Y')(d) : d3.utcFormat('%y.%m')(d))));
+  const draw = (series, y, offset, areaBase) => series.forEach((s, j) => {
+    const i = offset + j, def = (r) => val(r, s.key) !== null;
+    const pts = rows.map((r, k) => ({ x: xs[k], v: val(r, s.key) })).filter((p) => p.v !== null);
+    if (areaBase !== undefined) svg.append('path').datum(pts).attr('d', d3.area().x((p) => x(p.x)).y0(y(areaBase)).y1((p) => y(p.v))).style('fill', colors[i]).style('opacity', 0.18);
+    const gen = d3.line().x((p) => x(p.x)).y((p) => y(p.v)); if (s.step) gen.curve(d3.curveStepAfter);
+    svg.append('path').datum(pts).attr('d', gen).style('fill', 'none').style('stroke', colors[i]).style('stroke-width', s.width || 1.8).style('stroke-dasharray', s.dash || null);
+    void def;
+  });
+  draw(o.top, yT, 0); draw(o.bottom, yB, o.top.length, o.bottomRef);
+  mx.marks(svg, o.events, (v) => x(mx.px(v)), m, W, H);
+  // 툴팁(두 칸 공통)
+  const guide = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).style('stroke', 'var(--cds-chart-axis)').style('opacity', 0);
+  const dots = svg.append('g');
+  const tip = box.append('div').attr('class', 'mx-tip').attr('hidden', true);
+  const bis = d3.bisector((d) => d).center;
+  const show = (ev) => {
+    const [px] = d3.pointer(ev, svg.node()); const sx = px * (W / svg.node().getBoundingClientRect().width);
+    const k = bis(xs, x.invert(sx)), r = rows[k]; if (!r) return;
+    guide.attr('x1', x(xs[k])).attr('x2', x(xs[k])).style('opacity', 1);
+    const pts = all.map((s, i) => ({ s, i, v: val(r, s.key), y: i < o.top.length ? yT : yB })).filter((p) => p.v !== null);
+    dots.selectAll('circle').data(pts).join('circle').attr('r', 3.5).attr('cx', x(xs[k])).attr('cy', (p) => p.y(p.v)).style('fill', (p) => colors[p.i]).style('stroke', 'var(--color-panel)');
+    tip.attr('hidden', null).html(''); tip.append('div').append('em').text(mx.fmtDate(xs[k], mx.unit(r[o.xKey])));
+    pts.forEach((p) => { const row = tip.append('div'); row.append('span').text(p.s.label).style('color', colors[p.i]); row.append('b').text((p.i < o.top.length ? o.topFmt(p.v) + (o.topUnit || '') : o.bottomFmt(p.v) + (o.bottomUnit || ''))); });
+    const bw = box.node().clientWidth, tw = tip.node().offsetWidth, cx = x(xs[k]) * (bw / W);
+    tip.style('left', `${Math.max(0, Math.min(bw - tw, cx + 10 + tw > bw ? cx - tw - 10 : cx + 10))}px`).style('top', '4px');
+  };
+  svg.on('pointermove pointerdown', show).on('pointerleave', () => { guide.style('opacity', 0); dots.selectAll('circle').remove(); tip.attr('hidden', true); });
+};
+
 // 누적 막대 / 누적 영역
 mx.stack = (el, rows, series, o) => {
   el.replaceChildren();
@@ -1306,7 +1378,16 @@ mx.ts('ch-m2', 'm2_yoy', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key
 mx.ts('ch-krgov', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'base', label: '기준금리', step: true, width: 2.4 }, { key: 'ktb3y', label: '국고채 3년' }, { key: 'ktb10y', label: '국고채 10년' }, { key: 'ktb30y', label: '국고채 30년', dash: '4 3' }], { xKey: 'month', fmt: pct, unit: '%', events: mx.ev('bok', { monthly: true }), label: '한국 기준금리와 국고채 수익률' }));
 mx.ts('ch-krbank', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows, 'month', 1), [{ key: 'mortgage', label: '주담대(신규 평균)', width: 2.4 }, { key: 'ktb5y', label: '국고채 5년', dash: '4 3' }, { key: 'kdb1y', label: '은행채(산금채 1년)' }, { key: 'cd91', label: 'CD 91일' }], { xKey: 'month', fmt: pct, unit: '%', dots: true, label: '한국 주담대 금리와 고정형·변동형의 기준 금리' }));
 mx.ts('ch-fixvar', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows.filter((r) => r.fix_mort !== ''), 'month'), [{ key: 'fix_mort', label: '고정형', width: 2.4 }, { key: 'var_mort', label: '변동형', width: 2.4 }, { key: 'base', label: '기준금리', step: true, color: 'var(--cds-chart-muted)' }], { xKey: 'month', fmt: pct, unit: '%', events: mx.ev('bok', { monthly: true }), label: '주택담보대출 고정형과 변동형 금리' }));
-mx.ts('ch-fixgap', 'mort_gap', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'gap', label: '고정−변동', width: 2.4, color: 'var(--s5)' }], { xKey: 'month', fmt: d3.format('+.2f'), unit: '%p', refY: 0, area: true, label: '주담대 고정형과 변동형 금리차' }));
+mx.ts('ch-fixgap', 'kr_rates', (el, rows) => {
+  const r = mx.cut(rows.filter((x) => x.fix_mort !== '' && x.var_mort !== ''), 'month').map((x) => ({ ...x, gap: +(+x.fix_mort - +x.var_mort).toFixed(2) }));
+  mx.split(el, r, {
+    xKey: 'month',
+    top: [{ key: 'fix_mort', label: '고정형', width: 2.2 }, { key: 'var_mort', label: '변동형', width: 2.2 }, { key: 'base', label: '기준금리', step: true, color: 'var(--cds-chart-muted)' }, { key: 'ktb3y', label: '국고채 3년', dash: '4 3', color: 'var(--s6)' }],
+    bottom: [{ key: 'gap', label: '고정−변동', width: 2.4, color: 'var(--s5)' }],
+    topFmt: d3.format('.2f'), topTick: d3.format('.1f'), topUnit: '%', bottomFmt: d3.format('+.2f'), bottomTick: (v) => (Math.abs(v) < 1e-9 ? '0' : d3.format('+.1f')(v)), bottomUnit: '%p', bottomRef: 0, bottomTitle: '고정형 − 변동형 (%p)',
+    events: mx.ev('bok', { monthly: true }), label: '주담대 고정형·변동형 금리와 기준금리·국고채 3년, 아래는 고정형과 변동형의 금리차',
+  });
+});
 mx.ts('ch-fed', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date', 2), [{ key: 'fed_upper', label: '연준 상단', step: true, width: 2.4 }, { key: 'effr', label: '실효금리' }, { key: 't3m', label: '3개월' }, { key: 't1y', label: '1년' }, { key: 't2y', label: '2년' }], { xKey: 'date', fmt: pct, unit: '%', events: mx.ev('fed'), label: '연준 기준금리와 미국 단기 국채 수익률' }));
 mx.ts('ch-uslong', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date', 2), [{ key: 't10y', label: '10년', width: 2.6 }, { key: 't20y', label: '20년' }, { key: 't30y', label: '30년' }], { xKey: 'date', fmt: pct, unit: '%', alert: { y: 5, label: '10년물 5% 경계선' }, label: '미국 장기 국채 수익률, 5% 경계선 표시' }));
 mx.ts('ch-spread', 'spread', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 't10y_2y', label: '10년−2년' }], { xKey: 'date', fmt: d3.format('+.2f'), unit: '%p', refY: 0, area: true, label: '미 국채 10년물과 2년물 금리차' }));
@@ -1588,10 +1669,13 @@ dash.draw('f-t10y', (el) => {
     const [fa, fb] = two(rows, 'fix_mort'), [va, vb] = two(rows, 'var_mort');
     return `${mon(fb.month)} 새로 나간 주담대 금리는 고정형 ${f2(+fb.fix_mort)}%(${sg(+fb.fix_mort - +fa.fix_mort)}), 변동형 ${f2(+vb.var_mort)}%(${sg(+vb.var_mort - +va.var_mort)})입니다(전달 대비).`;
   });
-  say('t-fixgap', ['mort_gap'], (rows) => {
+  say('t-fixgap', ['kr_rates', 'mort_gap'], (kr, rows) => {
     const [a, b] = two(rows, 'gap'), y = rows.find((r) => r.month === `${+b.month.slice(0, 4) - 1}${b.month.slice(4)}`);
+    const k = (m) => kr.find((r) => r.month === m);
+    const kb = k(b.month), ky = y ? k(y.month) : null;
     const sh = two(rows, 'fix_share');
-    return `${mon(b.month)} 고정형이 변동형보다 ${f2(Math.abs(+b.gap))}%p ${+b.gap >= 0 ? '비쌉니다' : '쌉니다'}(전달 ${s2(+a.gap)}%p${y ? `, 1년 전 ${s2(+y.gap)}%p` : ''}).
+    const move = ky ? `1년 동안 고정형은 ${sg(+kb.fix_mort - +ky.fix_mort)}, 변동형은 ${sg(+kb.var_mort - +ky.var_mort)} 움직여 금리차가 ${s2(+y.gap)}%p에서 ${s2(+b.gap)}%p로 ${+b.gap > +y.gap ? '벌어졌습니다' : '좁아졌습니다'}. 같은 기간 기준금리는 ${sg(+kb.base - +ky.base)}, 국고채 3년은 ${sg(+kb.ktb3y - +ky.ktb3y)}입니다.` : '';
+    return `${mon(b.month)} 고정형이 변동형보다 ${f2(Math.abs(+b.gap))}%p ${+b.gap >= 0 ? '비쌉니다' : '쌉니다'}(전달 ${s2(+a.gap)}%p). ${move}
       ${sh ? `새로 받은 주담대 중 고정형 비중은 ${f1(+sh[1].fix_share)}%입니다.` : ''}`;
   });
 

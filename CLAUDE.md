@@ -50,6 +50,8 @@
 
 - SCHD(시장 → 증시·금 탭): `schd.csv`(Yahoo 일별 가격 `price`, 배당 재투자 가격 `tr`=adjclose), `schd_div.csv`(배당락일별 1주당 배당, 분할 반영). `schd_divq` 계산 = 4분기 평균·합계, 그날 가격 기준 배당수익률, 전년 동기 대비. 요약 카드 `schd`(가격), `schd_yield`(지금 가격 기준 12개월 배당수익률).
 
+- 두 칸 차트 `mx.split(el, rows, {xKey, top, bottom, topFmt, topTick, bottomFmt, bottomTick, bottomRef, bottomTitle, events})`: 단위가 다른 두 묶음을 위아래로 나눠 같은 시간축·툴팁으로 비교. 고정−변동 금리차 카드(`ch-fixgap`)가 사용(위: 고정형·변동형·기준금리·국고채 3년, 아래: 금리차).
+
 ## 지표 추가하는 법
 
 1. `scripts/fetch-data.mjs`의 `jobs`에 묶음을 추가하거나 기존 묶음에 열을 추가한다.
