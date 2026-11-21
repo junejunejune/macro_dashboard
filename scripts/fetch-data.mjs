@@ -151,6 +151,7 @@ const jobs = {
       payems: 'PAYEMS', // 비농업 고용자 수(천 명)
       unrate: 'UNRATE', // 실업률(%)
       ahe: 'CES0500000003', // 민간 평균 시간당 임금(달러)
+      med: 'CPIMEDSL', // 의료비 CPI(병원·진료비·의약품·건강보험)
     };
     const m = {};
     for (const [k, id] of Object.entries(ids)) m[k] = monthEnd(await fred(id, '2014-01-01'));
@@ -171,6 +172,37 @@ const jobs = {
     for (const [k, sym] of Object.entries(syms)) data[k] = await yahooDaily(sym, '2019-01-01');
     const days = [...data.ixic.keys()].sort(); // 나스닥 거래일 기준
     save('markets.csv', days.map((d) => ({ date: d, ...Object.fromEntries(Object.keys(syms).map((k) => [k, round(data[k].get(d), 2)])) })), ['date', ...Object.keys(syms)]);
+  },
+
+  // 미국 정부 주요 지출(분기, 연율, 조 달러): 국방비, 이자, 메디케어, 메디케이드, 사회보장
+  async fiscal() {
+    const q = (d) => `${d.slice(0, 4)}-${String(Math.floor((+d.slice(5, 7) - 1) / 3) * 3 + 1).padStart(2, '0')}`; // 분기 첫 달
+    const quarterly = { defense: 'FDEFX', interest: 'A091RC1Q027SBEA' }; // 분기 자료
+    const monthly = { medicare: 'W824RC1', medicaid: 'W729RC1', socsec: 'W823RC1' }; // 월 자료 → 분기 평균(3개월 다 있을 때만)
+    const d = {};
+    for (const [k, id] of Object.entries(quarterly)) d[k] = new Map([...(await fred(id, '2010-01-01'))].map(([dt, v]) => [dt.slice(0, 7), v]));
+    for (const [k, id] of Object.entries(monthly)) {
+      const m = await fred(id, '2010-01-01'); const s2 = new Map();
+      for (const [dt, v] of m) { const k2 = q(dt); const a = s2.get(k2) || [0, 0]; s2.set(k2, [a[0] + v, a[1] + 1]); }
+      d[k] = new Map([...s2].filter(([, [, n]]) => n === 3).map(([k2, [t, n]]) => [k2, t / n]));
+    }
+    const keys = [...d.defense.keys()].sort();
+    save('fiscal.csv', keys.map((k) => ({ quarter: k, ...Object.fromEntries(Object.keys(d).map((x) => [x, d[x].has(k) ? round(d[x].get(k) / 1000, 3) : null])) })),
+      ['quarter', 'defense', 'interest', 'medicare', 'medicaid', 'socsec']);
+  },
+
+  // 인구(연간, 1960~, 세계은행): 합계출산율, 연령대별 인구 비중(%) — 한국·미국
+  async demog() {
+    const ids = {
+      tfr_kr: 'SPDYNTFRTINKOR', tfr_us: 'SPDYNTFRTINUSA',
+      young_kr: 'SPPOP0014TOZSKOR', young_us: 'SPPOP0014TOZSUSA',
+      work_kr: 'SPPOP1564TOZSKOR', work_us: 'SPPOP1564TOZSUSA',
+      old_kr: 'SPPOP65UPTOZSKOR', old_us: 'SPPOP65UPTOZSUSA',
+    };
+    const d = {};
+    for (const [k, id] of Object.entries(ids)) d[k] = new Map([...(await fred(id, '1960-01-01'))].map(([dt, v]) => [dt.slice(0, 4), v]));
+    const years = [...new Set(Object.values(d).flatMap((m) => [...m.keys()]))].sort();
+    save('demog.csv', years.map((y) => ({ year: y, ...Object.fromEntries(Object.keys(ids).map((k) => [k, d[k].has(y) ? round(d[k].get(y), 3) : null])) })), ['year', ...Object.keys(ids)]);
   },
 
   // 유가·달러·위험 지표(일별, 2019~)

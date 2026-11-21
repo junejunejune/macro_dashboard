@@ -29,7 +29,7 @@
       "error": null
     },
     "us_macro": {
-      "updated": "2026-11-21T04:59:18.031Z",
+      "updated": "2026-11-21T06:06:03.838Z",
       "error": null
     },
     "us_claims": {
@@ -47,7 +47,15 @@
     "risk": {
       "updated": "2026-11-21T06:02:10.453Z",
       "error": null
+    },
+    "fiscal": {
+      "updated": "2026-11-21T06:06:03.838Z",
+      "error": null
+    },
+    "demog": {
+      "updated": "2026-11-21T06:06:03.838Z",
+      "error": null
     }
   },
-  "checked": "2026-11-21T06:02:10.453Z"
+  "checked": "2026-11-21T06:06:03.838Z"
 }

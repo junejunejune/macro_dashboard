@@ -15,7 +15,7 @@
 1. `<head>`의 로더가 `window.dash`를 만든다: `FILES` 배열의 CSV를 읽고 `dash.data(id)`, `dash.calc(id, {inputs, fn})`, `dash.draw(name, fn)`를 제공. CSV 값은 문자열이므로 계산할 때 `+`로 숫자로 바꾼다. 빈 칸은 `""`.
 2. `dash.calc`로 파생 값을 만든다: `krw_idx`, `m2_yoy`, `spread`, `us_curve`, `comp_share`, `iss_share`, `inflation`, `jobs`, `claims`, `m7`(M7 동일가중 지수, 2019년 첫 거래일 = 100), `latest`(요약 카드용, `metric`별 한 행). 전년비는 `yoyOf`/`prevYearVal`을 쓴다. 1년 전 달이 미발표면(2025년 10월 CPI 등) 앞뒤 달 평균으로 메운다.
 3. 화면의 `data-draw="이름"` 요소마다 `dash.draw`가 그린다. 숨은 탭(`hidden`)은 그리지 않고, 탭을 열 때 `dash.setLink`가 다시 그린다.
-4. 차트 도우미: `mx.line`(선), `mx.stack`(누적 영역/막대, `bars: true`), `mx.bars`(음수 가능한 막대 + 선 하나), `mx.ts(drawName, dataId, fn)`. 기간 버튼은 `mx.range`(년)와 `mx.cut(rows, key, years?)`. `years`를 주면 그 차트의 기본 기간이 고정된다(은행 금리 1년, 물가·고용·연준 금리·장기 국채 2년).
+4. 차트 도우미: `mx.line`(선), `mx.stack`(누적 영역/막대, `bars: true`), `mx.bars`(음수 가능한 막대 + 선 하나), `mx.ts(drawName, dataId, fn)`. 기간 버튼은 `mx.range`(년)와 `mx.cut(rows, key, years?)`. `years`를 주면 그 차트의 기본 기간이 고정된다(은행 금리·물가·고용 1년, 연준 금리·장기 국채 2년, 인구·정부 지출은 99 = 전체).
    - 확대·축소·이동: `mx.ts`로 그린 시계열 차트는 모두 지원. 차트별 보이는 기간은 `mx.view[drawName] = [시작ms, 끝ms]`, 없으면 기본 기간. 휠·트랙패드(위아래 확대, 좌우 이동), 마우스로 끌어 기간 선택 → 그 기간 확대(`.mx-brush`), 더블클릭 = 되돌리기, 두 손가락 핀치, 차트 아래 −/+/되돌리기 버튼(`mx.zoomBar`). 기간 버튼을 누르면 `mx.view`를 비운다. 차트 함수는 `el.__plot = {l, r, W}`(그림 영역 좌표)를 남겨야 한다. 수익률 곡선(`ch-curve`)은 시계열이 아니라 제외.
 5. 카드마다 차트 아래에 두 가지가 붙는다.
    - `<p class="mx-trend" data-draw="t-이름">`: 최근 1달 동향 문장. "최근 1달 동향 문장" 스크립트의 `say('t-이름', [데이터], fn)`이 데이터로 만든다. 월별 지표는 최신 달 vs 전달, 일별·주별은 최신 vs 한 달 전.
@@ -29,6 +29,10 @@
 
 - 유가·달러·위험 탭: `data/risk.csv`(FRED 일별: WTI, 브렌트, 달러 인덱스 DTWEXBGS, 10년 실질금리 DFII10, 기대인플레이션 T10YIE, 하이일드 스프레드 BAMLH0A0HYM2(최근 3년만), VIX).
 - 주소의 `#탭id`가 바뀌면(`hashchange`) 그 탭을 연다.
+
+- 정부 지출: `data/fiscal.csv`(분기, 연율 조 달러: 국방 FDEFX, 이자 A091RC1Q027SBEA, 메디케어 W824RC1, 메디케이드 W729RC1, 사회보장 W823RC1). 월 자료는 3개월이 다 있는 분기만 평균. `mx.line`에 `quarterly: true`면 툴팁이 분기로 표시.
+- 인구 탭: `data/demog.csv`(연간 `year`=YYYY, 세계은행: 합계출산율, 0~14·15~64·65세 이상 비중, 한국·미국). `mx.px`는 YYYY, YYYY-MM, YYYY-MM-DD를 모두 읽는다. `say(name, src, fn, label)`의 label로 "최근 1달" 대신 "최근 분기"·"최근 발표".
+- 의료비 물가: `us_macro.csv`의 `med`(CPIMEDSL), `inflation` 계산의 `med_yoy`.
 
 ## 지표 추가하는 법
 

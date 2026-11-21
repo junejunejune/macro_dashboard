@@ -16,7 +16,7 @@
 // data/*.csv 를 읽고, 아래 페이지 스크립트가 쓰는 dash.calc / dash.data / dash.draw 를 제공합니다.
 // 새 CSV를 추가하면 FILES에 이름을 넣으세요.
 window.dash = (() => {
-  const FILES = ['krw_value', 'money_supply', 'kr_rates', 'us_rates', 'us_macro', 'us_claims', 'markets', 'risk', 'events', 'us_debt', 'treasury_composition', 'treasury_issuance'];
+  const FILES = ['krw_value', 'money_supply', 'kr_rates', 'us_rates', 'us_macro', 'us_claims', 'markets', 'risk', 'events', 'fiscal', 'demog', 'us_debt', 'treasury_composition', 'treasury_issuance'];
   const raw = {}, calcs = {}, cache = {}, draws = [];
   let status = 'loading';
   const runOne = (name, fn) => document.querySelectorAll(`[data-draw="${name}"]`).forEach((el) => {
@@ -195,6 +195,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       <button class="mx-tab" role="tab" data-tab="markets" aria-selected="false">미국 증시·금</button>
       <button class="mx-tab" role="tab" data-tab="risk" aria-selected="false">유가·달러·위험</button>
       <button class="mx-tab" role="tab" data-tab="us-debt" aria-selected="false">미국 부채·국채</button>
+      <button class="mx-tab" role="tab" data-tab="demog" aria-selected="false">인구</button>
     </div>
     <div class="mx-ranges" role="group" aria-label="차트 기간">
       <button class="mx-rng" data-range="1" aria-pressed="false">1년</button>
@@ -340,7 +341,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <!-- 미국 물가·고용 -->
   <section class="mx-sec" id="us-macro" data-sec="us-macro" hidden>
     <h2>미국 물가·고용</h2>
-    <p class="mx-note">이 탭의 차트는 기간 버튼과 관계없이 최근 2년을 보여줍니다.</p>
+    <p class="mx-note">이 탭의 차트는 처음에 최근 1년을 보여줍니다. 축소(−)하거나 기간 버튼을 누르면 더 길게 볼 수 있어요.</p>
     <div class="mx-grid">
       <div class="mx-card" id="card-infl"><h3>물가 상승률, 전년 동월 대비</h3><p>소비자물가(CPI)와 개인소비지출 물가(PCE), 각각 식품·에너지를 뺀 근원 지표. 점선은 연준 목표 2%. 2025년 10월 CPI는 미 정부 셧다운으로 발표되지 않아, 1년 뒤 상승률 계산에는 앞뒤 달 평균을 썼습니다.</p><div class="mx-chart" data-draw="ch-infl" data-source="inflation"></div>
         <ol class="mx-events" data-draw="e-infl" data-kind="cpi" aria-label="최근 발표·결정"></ol>
@@ -360,6 +361,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       <div class="mx-card" id="card-claims"><h3>신규 실업수당 청구 (주간, 만 건)</h3><p>매주 목요일 발표되는 가장 빠른 고용 지표. 굵은 선은 4주 평균.</p><div class="mx-chart" data-draw="ch-claims" data-source="claims"></div>
         <p class="mx-trend" data-draw="t-claims"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>매주 발표돼 가장 빨리 나오는 고용 지표입니다. 20만 건 초반이면 해고가 적은 상태입니다.</li><li>4주 평균이 몇 달에 걸쳐 꾸준히 오르면 고용 악화의 초기 신호로 봅니다.</li><li>연말연초·명절 무렵에는 계절 조정이 잘 안 맞아 값이 튀기도 합니다.</li></ul></details>
+      </div>
+      <div class="mx-card" id="card-med"><h3>의료비 물가 상승률</h3><p>병원·의사 진료비, 의약품, 건강보험료 등의 소비자물가(전년비)를 전체 CPI와 비교합니다.</p><div class="mx-chart" data-draw="ch-med" data-source="inflation"></div>
+        <p class="mx-trend" data-draw="t-med"></p>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>의료비 물가는 병원·의사 진료비, 의약품, 건강보험료 등을 포함합니다.</li><li>의료비는 경기와 크게 상관없이 꾸준히 오르는 서비스 물가라, 전체 물가가 내려갈 때도 잘 내려가지 않는 경향이 있습니다.</li><li>의료비가 오르면 정부의 메디케어·메디케이드 지출도 늘어 재정적자에 영향을 줍니다(부채·국채 탭의 정부 지출 차트).</li></ul></details>
       </div>
     </div>
   </section>
@@ -475,6 +480,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
         <p class="mx-trend" data-draw="t-debt"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>부채가 빨리 늘수록 국채 발행이 늘어, 시장이 정하는 장기 국채 금리를 밀어올리는 요인이 됩니다. 연준이 정하는 기준금리와는 다른 이야기입니다.</li><li>부채한도 협상 기간에는 증가가 멈췄다가, 합의 뒤 계단처럼 한꺼번에 늘어납니다.</li><li>민간 보유분이 실제로 시장에서 사줘야 하는 물량이고, 정부 내부 보유분은 사회보장기금 같은 정부 계정이 가진 몫입니다.</li></ul></details>
       </div>
+      <div class="mx-card" id="card-spend"><h3>미국 정부 주요 지출 (연율, 조 달러)</h3><p>국방비, 국채 이자, 메디케어·메디케이드(의료), 사회보장(연금). 분기별, 1년 치로 환산한 금액.</p><div class="mx-chart" data-draw="ch-spend" data-source="fiscal"></div>
+        <p class="mx-trend" data-draw="t-spend"></p>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>분기 지출을 1년 치로 환산한 금액(조 달러)입니다. 사회보장·메디케어는 고령화와 함께 자동으로 늘어나는 "의무 지출"이라 정치적으로 줄이기 어렵습니다.</li><li>이자 비용이 국방비와 맞먹을 만큼 커진 것은 금리 상승과 부채 증가가 겹친 결과로, 재정 부담을 보여주는 대표 지표입니다. 이자가 늘수록 국채를 더 발행해야 하는 악순환이 생길 수 있습니다.</li><li>메디케이드는 연방과 주 정부가 함께 지급하는 금액입니다. 국방비는 국방 소비·투자 지출(미 경제분석국 BEA 기준)이라 예산서의 국방 예산과는 조금 다릅니다.</li></ul></details>
+      </div>
       <div class="mx-card" id="card-comp"><h3>시장성 국채 만기 구성 (잔액 비중)</h3><p>T-bill(1년 이하), Note(2~10년), Bond(20·30년), 물가연동채(TIPS), 변동금리채(FRN). 월간 국채 명세서(MSPD) 기준.</p><div class="mx-chart" data-draw="ch-comp" data-source="comp_share"></div>
         <p class="mx-trend" data-draw="t-comp"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>T-bill 비중이 높을수록 재무부가 짧게 빌린 돈이 많아, 금리가 바뀌면 이자 비용이 빨리 따라 움직입니다.</li><li>재무부 자문위원회(TBAC)는 T-bill 비중을 15~20% 정도로 권고해 왔습니다. 이보다 높으면 앞으로 장기물 발행을 늘려 장기 금리에 부담이 될 수 있습니다.</li><li>Bond(20·30년) 비중이 늘면 정부가 장기 고정금리로 갈아타는 중이라는 뜻입니다.</li></ul></details>
@@ -486,6 +495,30 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       <div class="mx-card" id="card-issshare"><h3>발행액 중 T-bill 이외 비중</h3><p>Note·Bond·TIPS·FRN 발행이 전체에서 차지하는 비율. 높아질수록 재무부가 장기 조달을 늘린 것입니다.</p><div class="mx-chart" data-draw="ch-issshare" data-source="iss_share"></div>
         <p class="mx-trend" data-draw="t-issshare"></p>
         <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>높아질수록 재무부가 장기 조달을 늘린 것으로, 장기 금리 상승 압력이 됩니다.</li><li>월별로 들쭉날쭉하므로 3~6개월 평균 흐름으로 보세요.</li><li>T-bill 비중을 늘리면 장기 금리 부담은 줄지만 단기 금리 변화에 재정이 더 민감해집니다.</li></ul></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 인구 -->
+  <section class="mx-sec" id="demog" data-sec="demog" hidden>
+    <h2>인구</h2>
+    <p class="mx-note">세계은행 연간 자료입니다(출산율은 1~2년 늦게 발표). 1960년부터 전체 기간을 보여주며, 끌어서 원하는 기간을 확대할 수 있어요.</p>
+    <div class="mx-grid">
+      <div class="mx-card" id="card-tfr"><h3>합계출산율: 한국 vs 미국</h3><p>여성 한 명이 평생 낳을 것으로 예상되는 아이 수. 점선 2.1명은 인구가 유지되는 수준.</p><div class="mx-chart" data-draw="ch-tfr" data-source="demog"></div>
+        <p class="mx-trend" data-draw="t-tfr"></p>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>합계출산율은 여성 한 명이 평생 낳을 것으로 예상되는 아이 수입니다. 2.1명이 인구를 유지하는 수준(점선)입니다.</li><li>한국은 세계에서 가장 낮은 수준이라 일하는 인구가 빠르게 줄고, 장기적으로 경제 성장률과 금리를 낮추는 요인으로 꼽힙니다.</li><li>출산율 변화가 노동시장에 반영되기까지는 20년 이상 걸립니다. 지금 수치는 2040년대 이후의 경제 모습을 보여줍니다.</li></ul></details>
+      </div>
+      <div class="mx-card" id="card-old"><h3>65세 이상 인구 비중: 한국 vs 미국</h3><p>전체 인구 중 65세 이상의 비율(%). 점선 20%는 초고령사회 기준.</p><div class="mx-chart" data-draw="ch-old" data-source="demog"></div>
+        <p class="mx-trend" data-draw="t-old"></p>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>65세 이상 비중이 7%면 고령화사회, 14%면 고령사회, 20%면 초고령사회라고 부릅니다(점선).</li><li>고령 인구가 늘면 연금·의료비 지출이 커져 정부 부채가 늘기 쉽습니다. 미국의 사회보장·메디케어 지출 증가(부채·국채 탭)와 같은 흐름입니다.</li><li>고령층은 소비보다 저축을, 위험자산보다 안전자산을 선호해 장기적으로 금리를 낮추는 쪽으로 작용한다는 분석이 많습니다.</li></ul></details>
+      </div>
+      <div class="mx-card" id="card-agekr"><h3>한국 연령 구성</h3><p>0~14세, 15~64세(생산가능인구), 65세 이상의 비중(%).</p><div class="mx-chart" data-draw="ch-agekr" data-source="demog"></div>
+        <p class="mx-trend" data-draw="t-agekr"></p>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>15~64세(생산가능인구)가 일하고 세금을 내는 주력 세대입니다. 이 비중이 줄면 성장률이 낮아지고, 일하는 사람 한 명이 부양해야 하는 사람이 늘어납니다.</li><li>한국은 생산가능인구 비중이 정점을 지나 얼마나 빨리 줄고 있는지 보세요. 줄어드는 속도가 빠를수록 연금·의료 재정 부담이 빨리 커집니다.</li><li>집·주식 같은 자산을 주로 사는 30~50대가 줄면 장기적으로 자산 수요가 약해질 수 있다는 분석이 있습니다.</li></ul></details>
+      </div>
+      <div class="mx-card" id="card-ageus"><h3>미국 연령 구성</h3><p>0~14세, 15~64세(생산가능인구), 65세 이상의 비중(%).</p><div class="mx-chart" data-draw="ch-ageus" data-source="demog"></div>
+        <p class="mx-trend" data-draw="t-ageus"></p>
+        <details class="mx-how" open><summary>이 차트 읽는 법</summary><ul><li>15~64세(생산가능인구)가 일하고 세금을 내는 주력 세대입니다. 이 비중이 줄면 성장률이 낮아지고, 일하는 사람 한 명이 부양해야 하는 사람이 늘어납니다.</li><li>미국도 생산가능인구 비중이 정점을 지나 얼마나 빨리 줄고 있는지 보세요. 줄어드는 속도가 빠를수록 연금·의료 재정 부담이 빨리 커집니다.</li><li>집·주식 같은 자산을 주로 사는 30~50대가 줄면 장기적으로 자산 수요가 약해질 수 있다는 분석이 있습니다.</li></ul></details>
       </div>
     </div>
   </section>
@@ -594,10 +627,11 @@ const yoyOf = (rows, k) => {
 dash.calc('inflation', {
   inputs: ['us_macro'],
   title: '미국 물가 상승률(전년비)',
-  description: 'CPI·근원 CPI·PCE·근원 PCE의 전년 동월 대비 상승률(%)',
+  description: 'CPI·근원 CPI·PCE·근원 PCE·의료비 CPI의 전년 동월 대비 상승률(%)',
   fn: (m) => {
     const f = Object.fromEntries(['cpi', 'core_cpi', 'pce', 'core_pce'].map((k) => [k, yoyOf(m, k)]));
-    return m.map((r) => ({ month: r.month, cpi_yoy: f.cpi(r), core_cpi_yoy: f.core_cpi(r), pce_yoy: f.pce(r), core_pce_yoy: f.core_pce(r) }))
+    const med = yoyOf(m, 'med');
+    return m.map((r) => ({ month: r.month, cpi_yoy: f.cpi(r), core_cpi_yoy: f.core_cpi(r), pce_yoy: f.pce(r), core_pce_yoy: f.core_pce(r), med_yoy: med(r) }))
       .filter((r) => r.cpi_yoy !== null || r.pce_yoy !== null);
   },
 });
@@ -713,7 +747,10 @@ window.mx = window.mx || {};
 mx.range = 5;
 mx.pm = d3.utcParse('%Y-%m');
 mx.pd = d3.utcParse('%Y-%m-%d');
-mx.px = (s) => (s.length === 7 ? mx.pm(s) : mx.pd(s));
+mx.py = d3.utcParse('%Y');
+mx.px = (s) => (s.length === 4 ? mx.py(s) : s.length === 7 ? mx.pm(s) : mx.pd(s));
+// 날짜 문자열 길이로 단위 판단: 4 = 연, 7 = 월, 10 = 일
+mx.unit = (s) => (s.length === 4 ? 'y' : s.length === 7 ? 'm' : 'd');
 // 보이는 기간만 자름. 기본은 기간 버튼(mx.range) 또는 years 인자,
 // 사용자가 확대·축소·이동한 차트는 mx.view[차트이름] = [시작ms, 끝ms]를 따름
 mx.view = {};
@@ -851,7 +888,7 @@ mx.zoomBar = (el, name) => {
   const z = mx.zinfo[name]; if (!z) return;
   const [a, b] = mx.curView(name);
   const monthly = z.step > 20 * 864e5;
-  const f = d3.utcFormat(monthly ? '%Y.%m' : '%Y.%m.%d');
+  const f = d3.utcFormat(z.step > 300 * 864e5 ? '%Y' : monthly ? '%Y.%m' : '%Y.%m.%d');
   const bar = d3.select(el).append('div').attr('class', 'mx-zoom');
   bar.append('span').text(`${f(new Date(a))} ~ ${f(new Date(b))}`);
   const btn = (label, aria, fn, disabled) => bar.append('button').attr('type', 'button').attr('aria-label', aria).property('disabled', !!disabled).text(label).on('click', fn);
@@ -866,7 +903,7 @@ mx.msg = (el, st) => {
   p.textContent = st === 'error' ? '이 차트의 데이터를 불러오지 못했습니다.' : st === 'loading' ? '불러오는 중…' : '—';
   el.appendChild(p);
 };
-mx.fmtDate = (d, monthly) => (monthly ? d3.utcFormat('%Y년 %-m월')(d) : d3.utcFormat('%Y-%m-%d')(d));
+mx.fmtDate = (d, u) => (u === 'y' ? d3.utcFormat('%Y년')(d) : u === 'q' ? `${d.getUTCFullYear()}년 ${Math.floor(d.getUTCMonth() / 3) + 1}분기` : u === true || u === 'm' ? d3.utcFormat('%Y년 %-m월')(d) : d3.utcFormat('%Y-%m-%d')(d));
 
 // 이벤트 표시: 세로 점선 + 번호. evs = [{x: 날짜 문자열, n: 번호}], xpos = 날짜 → 그림 x좌표
 mx.marks = (svg, evs, xpos, m, W, H) => {
@@ -888,7 +925,7 @@ mx.ev = (kind, { monthly = false, useRef = false } = {}) => {
 // 선 차트. series: [{key,label}], o: {xKey, fmt, unit, zero, refY, label, step, area}
 mx.line = (el, rows, series, o) => {
   el.replaceChildren();
-  const monthly = rows.length && rows[0][o.xKey].length === 7;
+  const monthly = rows.length ? (o.quarterly ? 'q' : mx.unit(rows[0][o.xKey])) : 'd';
   const data = rows.map((r) => ({ x: mx.px(r[o.xKey]), r }));
   const val = (d, k) => { const v = d.r[k]; return v === null || v === undefined || v === '' ? null : +v; };
   const colors = series.map((s, i) => s.color || dash.colors[i % dash.colors.length]);
@@ -1005,7 +1042,7 @@ mx.stack = (el, rows, series, o) => {
     const r = rows[bi];
     guide.attr('x1', xPos(bi)).attr('x2', xPos(bi)).style('opacity', 1);
     tip.attr('hidden', null).html('');
-    tip.append('div').append('em').text(mx.fmtDate(xs[bi], r[o.xKey].length === 7));
+    tip.append('div').append('em').text(mx.fmtDate(xs[bi], mx.unit(r[o.xKey])));
     [...series].reverse().forEach((s) => { const row = tip.append('div'); row.append('span').text(s.label).style('color', colors[series.indexOf(s)]); row.append('b').text(fmt(+r[s.key]) + (o.unit || '')); });
     if (o.total) { const row = tip.append('div'); row.append('span').text('합계'); row.append('b').text(fmt(series.reduce((a, s) => a + (+r[s.key] || 0), 0)) + (o.unit || '')); }
     const bwid = box.node().clientWidth, tw = tip.node().offsetWidth, cx = xPos(bi) * (bwid / W);
@@ -1107,10 +1144,10 @@ mx.bars = (el, rows, o) => {
     tip.style('left', `${Math.max(0, Math.min(bw - tw, c + 10 + tw > bw ? c - tw - 10 : c + 10))}px`).style('top', '4px');
   }).on('pointerleave', () => { guide.style('opacity', 0); tip.attr('hidden', true); });
 };
-mx.ts('ch-infl', 'inflation', (el, rows) => mx.line(el, mx.cut(rows, 'month', 2), [{ key: 'cpi_yoy', label: 'CPI' }, { key: 'core_cpi_yoy', label: '근원 CPI' }, { key: 'pce_yoy', label: 'PCE', dash: '4 3' }, { key: 'core_pce_yoy', label: '근원 PCE', width: 2.4 }], { xKey: 'month', fmt: pct, unit: '%', refY: 2, dots: true, events: mx.ev('cpi', { useRef: true }), label: '미국 CPI와 PCE 물가 상승률, 최근 2년' }));
-mx.ts('ch-jobs', 'jobs', (el, rows) => mx.bars(el, mx.cut(rows, 'month', 2), { xKey: 'month', key: 'payems_chg', label: '월 증감', line: 'payems_3m', lineLabel: '3개월 평균', fmt: d3.format(',.1f'), unit: '만 명', events: mx.ev('jobs', { useRef: true }), aria: '미국 비농업 고용 월별 증감과 3개월 평균' }));
-mx.ts('ch-unrate', 'jobs', (el, rows) => mx.line(el, mx.cut(rows, 'month', 2), [{ key: 'unrate', label: '실업률', width: 2.4 }, { key: 'ahe_yoy', label: '임금 상승률' }], { xKey: 'month', fmt: d3.format('.1f'), unit: '%', dots: true, events: mx.ev('jobs', { useRef: true }), label: '미국 실업률과 시간당 임금 상승률, 최근 2년' }));
-mx.ts('ch-claims', 'claims', (el, rows) => mx.line(el, mx.cut(rows, 'date', 2), [{ key: 'claims', label: '주간', width: 1 }, { key: 'claims_4w', label: '4주 평균', width: 2.4 }], { xKey: 'date', fmt: d3.format('.1f'), unit: '만', label: '미국 신규 실업수당 청구 건수' }));
+mx.ts('ch-infl', 'inflation', (el, rows) => mx.line(el, mx.cut(rows, 'month', 1), [{ key: 'cpi_yoy', label: 'CPI' }, { key: 'core_cpi_yoy', label: '근원 CPI' }, { key: 'pce_yoy', label: 'PCE', dash: '4 3' }, { key: 'core_pce_yoy', label: '근원 PCE', width: 2.4 }], { xKey: 'month', fmt: pct, unit: '%', refY: 2, dots: true, events: mx.ev('cpi', { useRef: true }), label: '미국 CPI와 PCE 물가 상승률' }));
+mx.ts('ch-jobs', 'jobs', (el, rows) => mx.bars(el, mx.cut(rows, 'month', 1), { xKey: 'month', key: 'payems_chg', label: '월 증감', line: 'payems_3m', lineLabel: '3개월 평균', fmt: d3.format(',.1f'), unit: '만 명', events: mx.ev('jobs', { useRef: true }), aria: '미국 비농업 고용 월별 증감과 3개월 평균' }));
+mx.ts('ch-unrate', 'jobs', (el, rows) => mx.line(el, mx.cut(rows, 'month', 1), [{ key: 'unrate', label: '실업률', width: 2.4 }, { key: 'ahe_yoy', label: '임금 상승률' }], { xKey: 'month', fmt: d3.format('.1f'), unit: '%', dots: true, events: mx.ev('jobs', { useRef: true }), label: '미국 실업률과 시간당 임금 상승률' }));
+mx.ts('ch-claims', 'claims', (el, rows) => mx.line(el, mx.cut(rows, 'date', 1), [{ key: 'claims', label: '주간', width: 1 }, { key: 'claims_4w', label: '4주 평균', width: 2.4 }], { xKey: 'date', fmt: d3.format('.1f'), unit: '만', label: '미국 신규 실업수당 청구 건수' }));
 // 기간 첫날 = 100으로 맞추기
 mx.rebase = (rows, keys) => {
   const base = Object.fromEntries(keys.map((k) => { const r = rows.find((x) => x[k] !== '' && x[k] !== null && x[k] !== undefined); return [k, r ? +r[k] : null]; }));
@@ -1136,6 +1173,12 @@ mx.ts('ch-dxy', 'risk', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 
 mx.ts('ch-real', 'risk', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'real10', label: '실질금리', width: 2.2 }, { key: 'bei10', label: '기대인플레이션' }], { xKey: 'date', fmt: pct, unit: '%', refY: 0, label: '미국 10년 실질금리와 기대인플레이션' }));
 mx.ts('ch-hy', 'risk', (el, rows) => mx.line(el, mx.cut(rows.filter((r) => r.hy !== '' && r.hy !== null), 'date'), [{ key: 'hy', label: '하이일드 스프레드', color: 'var(--s4)' }], { xKey: 'date', fmt: pct, unit: '%p', area: true, label: '하이일드 회사채 신용 스프레드' }));
 mx.ts('ch-vix', 'risk', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'vix', label: 'VIX', color: 'var(--s5)' }], { xKey: 'date', fmt: d3.format('.1f'), refY: 20, area: true, label: 'VIX 변동성 지수 일별' }));
+mx.ts('ch-med', 'inflation', (el, rows) => mx.line(el, mx.cut(rows, 'month', 1), [{ key: 'med_yoy', label: '의료비', width: 2.4, color: 'var(--s4)' }, { key: 'cpi_yoy', label: '전체 CPI', color: 'var(--cds-chart-muted)' }], { xKey: 'month', fmt: pct, unit: '%', dots: true, label: '미국 의료비 물가와 전체 CPI 상승률' }));
+mx.ts('ch-spend', 'fiscal', (el, rows) => mx.line(el, mx.cut(rows, 'quarter', 99), [{ key: 'socsec', label: '사회보장' }, { key: 'medicare', label: '메디케어' }, { key: 'medicaid', label: '메디케이드' }, { key: 'defense', label: '국방비', width: 2.4 }, { key: 'interest', label: '이자', width: 2.4 }], { xKey: 'quarter', fmt: d3.format('.2f'), unit: '조$', quarterly: true, label: '미국 정부 주요 지출: 국방비, 이자, 메디케어, 메디케이드, 사회보장' }));
+mx.ts('ch-tfr', 'demog', (el, rows) => mx.line(el, mx.cut(rows.filter((r) => r.tfr_kr !== '' || r.tfr_us !== ''), 'year', 99), [{ key: 'tfr_kr', label: '한국', width: 2.4 }, { key: 'tfr_us', label: '미국' }], { xKey: 'year', fmt: d3.format('.2f'), unit: '명', refY: 2.1, label: '한국과 미국 합계출산율' }));
+mx.ts('ch-old', 'demog', (el, rows) => mx.line(el, mx.cut(rows, 'year', 99), [{ key: 'old_kr', label: '한국', width: 2.4 }, { key: 'old_us', label: '미국' }], { xKey: 'year', fmt: d3.format('.1f'), unit: '%', refY: 20, label: '한국과 미국 65세 이상 인구 비중' }));
+mx.ts('ch-agekr', 'demog', (el, rows) => mx.stack(el, mx.cut(rows.filter((r) => r.work_kr !== ''), 'year', 99), [{ key: 'young_kr', label: '0~14세' }, { key: 'work_kr', label: '15~64세' }, { key: 'old_kr', label: '65세 이상' }], { xKey: 'year', fmt: d3.format('.0f'), unit: '%', max: 100, label: '한국 연령대별 인구 비중' }));
+mx.ts('ch-ageus', 'demog', (el, rows) => mx.stack(el, mx.cut(rows.filter((r) => r.work_us !== ''), 'year', 99), [{ key: 'young_us', label: '0~14세' }, { key: 'work_us', label: '15~64세' }, { key: 'old_us', label: '65세 이상' }], { xKey: 'year', fmt: d3.format('.0f'), unit: '%', max: 100, label: '미국 연령대별 인구 비중' }));
 
 // 수익률 곡선
 dash.draw('ch-curve', (el) => {
@@ -1175,7 +1218,7 @@ dash.draw('ch-curve', (el) => {
 
 // ---------- 탭과 기간 ----------
 (() => {
-  const ids = ['summary', 'krw', 'kr-rates', 'us-rates', 'us-macro', 'markets', 'risk', 'us-debt'];
+  const ids = ['summary', 'krw', 'kr-rates', 'us-rates', 'us-macro', 'markets', 'risk', 'us-debt', 'demog'];
   const open = (id) => {
     if (!ids.includes(id)) id = 'summary';
     document.querySelectorAll('.mx-sec').forEach((s) => { s.hidden = s.dataset.sec !== id; });
@@ -1187,7 +1230,7 @@ dash.draw('ch-curve', (el) => {
     mx.range = +b.dataset.range;
     mx.view = {};
     document.querySelectorAll('.mx-rng').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-    ['ch-usdkrw', 'ch-krwidx', 'ch-goldkrw', 'ch-m2', 'ch-krgov', 'ch-krbank', 'ch-fed', 'ch-uslong', 'ch-spread', 'ch-debt', 'ch-comp', 'ch-iss', 'ch-issshare', 'ch-infl', 'ch-jobs', 'ch-unrate', 'ch-claims', 'ch-dji', 'ch-ixic', 'ch-idx', 'ch-m7', 'ch-gold', 'ch-oil', 'ch-dxy', 'ch-real', 'ch-hy', 'ch-vix'].forEach((n) => dash.draw(n));
+    ['ch-usdkrw', 'ch-krwidx', 'ch-goldkrw', 'ch-m2', 'ch-krgov', 'ch-krbank', 'ch-fed', 'ch-uslong', 'ch-spread', 'ch-debt', 'ch-comp', 'ch-iss', 'ch-issshare', 'ch-infl', 'ch-jobs', 'ch-unrate', 'ch-claims', 'ch-dji', 'ch-ixic', 'ch-idx', 'ch-m7', 'ch-gold', 'ch-oil', 'ch-dxy', 'ch-real', 'ch-hy', 'ch-vix', 'ch-med', 'ch-spend', 'ch-tfr', 'ch-old', 'ch-agekr', 'ch-ageus'].forEach((n) => dash.draw(n));
   }));
   const h = (location.hash || '').slice(1);
   if (h) open(h);
@@ -1220,13 +1263,13 @@ dash.draw('ch-curve', (el) => {
   };
   const thisMonth = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 7); // 한국 시간 기준 이번 달
   const partial = (m) => (m === thisMonth ? '(이번 달은 아직 진행 중이라 지금까지의 평균입니다)' : '');
-  const say = (name, sources, fn) => dash.draw(name, (el) => {
+  const say = (name, sources, fn, label = '최근 1달') => dash.draw(name, (el) => {
     const ds = sources.map((s) => dash.data(s));
     if (ds.some((d) => d.status !== 'ok' || !Array.isArray(d.data) || !d.data.length)) { el.replaceChildren(); return; }
     let text = null;
     try { text = fn(...ds.map((d) => d.data)); } catch (e) { console.error(name, e); }
     if (!text) { el.replaceChildren(); return; }
-    const b = document.createElement('b'); b.textContent = '최근 1달';
+    const b = document.createElement('b'); b.textContent = label;
     el.replaceChildren(b, document.createTextNode(' ' + text.replace(/\s+/g, ' ').trim()));
   });
 
@@ -1412,6 +1455,43 @@ dash.draw('ch-curve', (el) => {
     return `VIX는 ${f1(c.a)}에서 ${f1(c.b)}로 ${d >= 0 ? '올랐습니다' : '내렸습니다'}(한 달 최고 ${f1(c.hi)}).
       ${c.b >= 30 ? '공포 국면입니다. 주가 변동이 매우 큰 시기입니다.' : c.b >= 20 ? '평소보다 불안한 상태입니다.' : c.b <= 15 ? '시장이 안심하고 있는 상태입니다.' : '보통 수준입니다.'}`;
   });
+
+  // 의료비·정부 지출·인구
+  say('t-med', ['inflation'], (rows) => {
+    const [a, b] = two(rows, 'med_yoy'), c = two(rows, 'cpi_yoy')[1];
+    return `${mon(b.month)} 의료비 물가는 1년 전보다 ${f2(+b.med_yoy)}% 올라 전달(${f2(+a.med_yoy)}%)보다 ${sg(+b.med_yoy - +a.med_yoy)}입니다.
+      전체 CPI(${f2(+c.cpi_yoy)}%)보다 ${+b.med_yoy >= +c.cpi_yoy ? '빠르게' : '느리게'} 오르고 있습니다.`;
+  });
+  say('t-spend', ['fiscal'], (rows) => {
+    const L = rows[rows.length - 1], P = rows[rows.length - 5];
+    const q = (k) => `${k.slice(0, 4)}년 ${Math.floor((+k.slice(5, 7) - 1) / 3) + 1}분기`;
+    const g = (k) => (+L[k] / +P[k] - 1) * 100;
+    const ratio = (+L.interest / +L.defense - 1) * 100;
+    const f = (k) => `${f2(+L[k])}조 달러(1년 새 ${g(k) >= 0 ? '+' : '−'}${f1(Math.abs(g(k)))}%)`;
+    return `${q(L.quarter)} 기준 연율로 사회보장 ${f('socsec')}, 메디케어 ${f('medicare')}, 메디케이드 ${f('medicaid')}, 국방비 ${f('defense')}, 국채 이자 ${f('interest')}입니다.
+      이자가 국방비보다 ${f1(Math.abs(ratio))}% ${ratio >= 0 ? '많습니다' : '적습니다'}.`;
+  }, '최근 분기');
+  say('t-tfr', ['demog'], (rows) => {
+    const [ka, kb] = two(rows, 'tfr_kr'), ub = two(rows, 'tfr_us')[1];
+    const peak10 = rows.filter((r) => ok(r.tfr_kr) && +r.year >= +kb.year - 10)[0];
+    return `${kb.year}년 한국 합계출산율은 ${f2(+kb.tfr_kr)}명으로 전년(${f2(+ka.tfr_kr)}명)보다 ${sg(+kb.tfr_kr - +ka.tfr_kr, f2, '명')}, 10년 전(${peak10.year}년 ${f2(+peak10.tfr_kr)}명)의 ${f1(+kb.tfr_kr / +peak10.tfr_kr * 100)}% 수준입니다.
+      미국은 ${f2(+ub.tfr_us)}명입니다. 한국은 인구 유지 수준(2.1명)의 약 ${f1(+kb.tfr_kr / 2.1 * 100)}%에 그칩니다.`;
+  }, '최근 발표');
+  say('t-old', ['demog'], (rows) => {
+    const b = two(rows, 'old_kr')[1], u = two(rows, 'old_us')[1];
+    const k10 = rows.find((r) => r.year === String(+b.year - 10));
+    const stage = (v) => (v >= 20 ? '초고령사회' : v >= 14 ? '고령사회' : v >= 7 ? '고령화사회' : '');
+    return `${b.year}년 65세 이상 비중은 한국 ${f1(+b.old_kr)}%(${stage(+b.old_kr)}), 미국 ${f1(+u.old_us)}%(${stage(+u.old_us)})입니다.
+      한국은 10년 전(${f1(+k10.old_kr)}%)보다 ${f1(+b.old_kr - +k10.old_kr)}%p 늘어, 미국보다 고령화가 훨씬 빠릅니다.`;
+  }, '최근 발표');
+  const ageSay = (cc, name) => (rows) => {
+    const rs = rows.filter((r) => ok(r['work_' + cc]));
+    const L = rs[rs.length - 1], pk = rs.reduce((a, r) => (+r['work_' + cc] > +a['work_' + cc] ? r : a));
+    return `${L.year}년 ${name} 인구 구성은 0~14세 ${f1(+L['young_' + cc])}%, 15~64세 ${f1(+L['work_' + cc])}%, 65세 이상 ${f1(+L['old_' + cc])}%입니다.
+      생산가능인구 비중은 ${pk.year}년 ${f1(+pk['work_' + cc])}%가 정점이었고, 지금은 그보다 ${f1(+pk['work_' + cc] - +L['work_' + cc])}%p 낮습니다.`;
+  };
+  say('t-agekr', ['demog'], ageSay('kr', '한국'), '최근 발표');
+  say('t-ageus', ['demog'], ageSay('us', '미국'), '최근 발표');
 
   // 미국 부채·국채
   say('t-debt', ['us_debt'], (rows) => {
