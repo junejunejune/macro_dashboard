@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>재테크 매크로 대시보드</title>
+<meta name="description" content="원화 가치, 통화량, 한국·미국 금리, 미국 연방부채와 국채 발행을 한눈에 보는 개인 대시보드">
+<meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121417" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+// ---------- 데이터 로더 ----------
+// data/*.csv 를 읽고, 아래 페이지 스크립트가 쓰는 dash.calc / dash.data / dash.draw 를 제공합니다.
+// 새 CSV를 추가하면 FILES에 이름을 넣으세요.
+window.dash = (() => {
+  const FILES = ['krw_value', 'money_supply', 'kr_rates', 'us_rates', 'us_debt', 'treasury_composition', 'treasury_issuance'];
+  const raw = {}, calcs = {}, cache = {}, draws = [];
+  let status = 'loading';
+  const runOne = (name, fn) => document.querySelectorAll(`[data-draw="${name}"]`).forEach((el) => {
+    if (el.closest('[hidden]')) return; // 숨은 탭은 열릴 때 그림
+    try { fn(el); } catch (e) { console.error(name, e); el.textContent = '이 부분을 그리지 못했습니다.'; }
+  });
+  const redraw = () => draws.forEach(([n, f]) => runOne(n, f));
+  const api = {
+    colors: ['var(--s1)', 'var(--s2)', 'var(--s3)', 'var(--s4)', 'var(--s5)'],
+    meta: null,
+    calc(id, o) { calcs[id] = o; },
+    data(id) {
+      if (status !== 'ok') return { status, data: [] };
+      if (raw[id]) return { status: 'ok', data: raw[id] };
+      if (cache[id]) return cache[id];
+      const c = calcs[id];
+      if (!c) return { status: 'missing', data: [] };
+      try { cache[id] = { status: 'ok', data: c.fn(...c.inputs.map((i) => api.data(i).data)) }; } catch (e) { console.error(id, e); cache[id] = { status: 'error', data: [] }; }
+      return cache[id];
+    },
+    draw(name, fn) { if (fn) draws.push([name, fn]); else draws.filter((d) => d[0] === name).forEach(([n, f]) => runOne(n, f)); },
+    setLink(id) { try { history.replaceState(null, '', id === 'summary' ? location.pathname : '#' + id); } catch (e) { /* 무시 */ } redraw(); },
+    onData() {},
+  };
+  const v = new Date().toISOString().slice(0, 13); // 한 시간 단위로 캐시 무효화
+  Promise.all([
+    ...FILES.map((f) => d3.csv(`data/${f}.csv?v=${v}`).then((rows) => { raw[f] = rows; })),
+    d3.json(`data/meta.json?v=${v}`).then((m) => { api.meta = m; }).catch(() => {}),
+  ]).then(() => { status = 'ok'; redraw(); }, (e) => { console.error(e); status = 'error'; redraw(); });
+  document.addEventListener('DOMContentLoaded', redraw);
+  let w = innerWidth, t;
+  addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => { if (innerWidth !== w) { w = innerWidth; redraw(); } }, 150); });
+  return api;
+})();
+</script>
+<style>
+/* 레이아웃: 가운데 1200px 칼럼, 상단 고정 탭 바, 카드 그리드. 색은 모두 아래 토큰에서 */
+:root {
+  --color-bg: #f6f7f9; --color-panel: #ffffff; --color-fg: #15181d; --color-fg-muted: #5d6573; --color-border-line: #e2e5ea;
+  --s1: #2f5fd0; --s2: #d0782f; --s3: #1f9a72; --s4: #c2417e; --s5: #7a52c7;
+  --cds-chart-grid: #eceef2; --cds-chart-axis: #9aa1ad; --cds-chart-reference: #a7adb8; --cds-chart-muted: #b9bec8;
+  --cds-text-secondary: #5d6573; --cds-surface-popover: #ffffff; --cds-border: #d6dae1; --cds-shadow-popover: 0 6px 20px rgba(20, 30, 50, .12);
+  --font-anthropic-sans: "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-anthropic-serif: "Noto Serif KR", "AppleMyungjo", "Batang", serif;
+  --cds-font-size-caption: 12px; --cds-font-size-body: 14px; --cds-font-size-heading: 18px; --cds-font-size-title: 26px; --cds-font-weight-medium: 600;
+  --cds-gap-xs: 4px; --cds-gap-sm: 8px; --cds-gap-md: 14px; --cds-gap-lg: 22px; --cds-pad-sm: 8px; --cds-pad-md: 12px; --cds-pad-lg: 16px; --cds-radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #121417; --color-panel: #1a1d22; --color-fg: #e8eaee; --color-fg-muted: #9aa2b0; --color-border-line: #2a2f37;
+    --s1: #6b93f0; --s2: #e8a060; --s3: #4cc39a; --s4: #e57aa9; --s5: #a98ae6;
+    --cds-chart-grid: #252a31; --cds-chart-axis: #5b6370; --cds-chart-reference: #6b7380; --cds-chart-muted: #4f5662;
+    --cds-text-secondary: #9aa2b0; --cds-surface-popover: #22262c; --cds-border: #353b44; --cds-shadow-popover: 0 6px 20px rgba(0, 0, 0, .45);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --color-bg: #121417; --color-panel: #1a1d22; --color-fg: #e8eaee; --color-fg-muted: #9aa2b0; --color-border-line: #2a2f37;
+  --s1: #6b93f0; --s2: #e8a060; --s3: #4cc39a; --s4: #e57aa9; --s5: #a98ae6;
+  --cds-chart-grid: #252a31; --cds-chart-axis: #5b6370; --cds-chart-reference: #6b7380; --cds-chart-muted: #4f5662;
+  --cds-text-secondary: #9aa2b0; --cds-surface-popover: #22262c; --cds-border: #353b44; --cds-shadow-popover: 0 6px 20px rgba(0, 0, 0, .45);
+  color-scheme: dark;
+}
+html { -webkit-text-size-adjust: 100%; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-family: var(--font-anthropic-sans); font-size: var(--cds-font-size-body); line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--color-bg); }
+#dash-root { max-width: 1200px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: calc(20px + env(safe-area-inset-top, 0px)) calc(32px + env(safe-area-inset-bottom, 0px)); }
+.mx-updated { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin: var(--cds-gap-xs) 0 0; }
+.mx-updated b[data-warn] { color: #c0392b; font-weight: 500; }
+@media (prefers-reduced-motion: no-preference) { .mx-tab, .mx-rng { transition: background .15s, color .15s; } }
+</style>
+</head>
+<body>
+<div id="dash-root">
+<style>
+.mx { display: flex; flex-direction: column; gap: var(--cds-gap-lg); font-variant-numeric: tabular-nums; }
+.mx-head h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0 0 var(--cds-gap-xs); text-wrap: balance; }
+.mx-lede { margin: 0; color: var(--color-fg-muted); line-height: 1.6; max-width: 68ch; }
+.mx-lede b { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
+.mx-bar { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); align-items: center; justify-content: space-between; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--color-bg); padding-block: var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); }
+.mx-tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
+.mx-tabs::-webkit-scrollbar { display: none; }
+.mx-tab, .mx-rng { font: inherit; font-size: var(--cds-font-size-body); border: 0; background: transparent; color: var(--color-fg-muted); padding: 6px 12px; border-radius: var(--cds-radius); cursor: pointer; white-space: nowrap; }
+.mx-tab[aria-selected="true"] { background: var(--color-panel); color: var(--color-fg); font-weight: var(--cds-font-weight-medium); box-shadow: inset 0 0 0 1px var(--color-border-line); }
+.mx-tab:focus-visible, .mx-rng:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 1px; }
+.mx-ranges { display: flex; gap: 2px; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: 2px; }
+.mx-rng { padding: 3px 10px; font-size: var(--cds-font-size-caption); }
+.mx-rng[aria-pressed="true"] { background: var(--color-fg); color: var(--color-bg); }
+.mx-sec { display: flex; flex-direction: column; gap: var(--cds-gap-lg); }
+.mx-sec > h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0; }
+.mx-group { display: flex; flex-direction: column; gap: var(--cds-gap-sm); }
+.mx-group h3 { margin: 0; font-size: var(--cds-font-size-caption); font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); letter-spacing: .04em; }
+.mx-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--cds-gap-sm); }
+.mx-tile { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-md); display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.mx-tile span { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.mx-tile b { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: 1.6rem; line-height: 1.15; }
+.mx-tile small { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.mx-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--cds-gap-md); }
+.mx-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: flex; flex-direction: column; gap: var(--cds-gap-sm); min-width: 0; }
+.mx-card h3 { margin: 0; font-size: var(--cds-font-size-body); font-weight: var(--cds-font-weight-medium); }
+.mx-card p { margin: 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); line-height: 1.5; }
+.mx-chart { min-height: 260px; position: relative; }
+.mx-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: var(--cds-font-size-caption); color: var(--cds-text-secondary); margin-bottom: 6px; }
+.mx-key { display: inline-flex; align-items: center; gap: 5px; }
+.mx-key i { width: 10px; height: 3px; border-radius: 2px; display: inline-block; }
+.mx-key b { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
+.mx-plot { position: relative; }
+.mx-plot svg { display: block; overflow: visible; touch-action: pan-y; }
+.mx-plot text { fill: var(--cds-text-secondary); font-size: 11px; font-family: var(--font-anthropic-sans); }
+.mx-plot .grid line { stroke: var(--cds-chart-grid); }
+.mx-plot .domain { display: none; }
+.mx-plot .tick line { stroke: var(--cds-chart-grid); }
+.mx-tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); box-shadow: var(--cds-shadow-popover); border-radius: var(--cds-radius); padding: 6px 8px; font-size: var(--cds-font-size-caption); white-space: nowrap; z-index: 3; }
+.mx-tip div { display: flex; gap: 8px; justify-content: space-between; }
+.mx-tip em { font-style: normal; color: var(--cds-text-secondary); }
+.mx-msg { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); padding: var(--cds-pad-lg) 0; }
+.mx-note { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); line-height: 1.6; }
+.mx-note summary { cursor: pointer; }
+@media print { .mx-bar { position: static; } .mx-sec[hidden] { display: flex !important; } .mx-sec { break-before: page; } }
+</style>
+
+<div class="mx">
+  <header class="mx-head" id="top">
+    <h1>재테크 매크로 대시보드</h1>
+    <p class="mx-lede">원/달러 <b data-draw="l-usdkrw" data-source="latest" data-field="value" data-where="metric=usdkrw">—</b>원, 미국 10년물 <b data-draw="l-t10y" data-source="latest" data-field="value" data-where="metric=t10y">—</b>%, 한국 10년물 <b data-draw="l-ktb10y" data-source="latest" data-field="value" data-where="metric=ktb10y">—</b>%. 미국과 한국의 10년물 금리 차는 <b data-draw="l-gap" data-source="latest" data-field="value" data-where="metric=us_kr_gap">—</b>%p입니다.</p>
+    <p class="mx-updated">데이터 갱신 <b data-draw="updated">—</b></p>
+  </header>
+
+  <div class="mx-bar">
+    <div class="mx-tabs" role="tablist" aria-label="대시보드 탭">
+      <button class="mx-tab" role="tab" data-tab="summary" aria-selected="true">요약</button>
+      <button class="mx-tab" role="tab" data-tab="krw" aria-selected="false">원화 가치</button>
+      <button class="mx-tab" role="tab" data-tab="kr-rates" aria-selected="false">한국 금리</button>
+      <button class="mx-tab" role="tab" data-tab="us-rates" aria-selected="false">미국 금리</button>
+      <button class="mx-tab" role="tab" data-tab="us-debt" aria-selected="false">미국 부채·국채</button>
+    </div>
+    <div class="mx-ranges" role="group" aria-label="차트 기간">
+      <button class="mx-rng" data-range="1" aria-pressed="false">1년</button>
+      <button class="mx-rng" data-range="3" aria-pressed="false">3년</button>
+      <button class="mx-rng" data-range="5" aria-pressed="true">5년</button>
+      <button class="mx-rng" data-range="99" aria-pressed="false">전체</button>
+    </div>
+  </div>
+
+  <!-- 요약 -->
+  <section class="mx-sec" id="summary" data-sec="summary">
+    <h2>요약</h2>
+    <div class="mx-group">
+      <h3>원화 가치·통화량</h3>
+      <div class="mx-tiles">
+        <div class="mx-tile" id="tile-usdkrw"><span>원/달러 (월평균)</span><b data-draw="v-usdkrw" data-source="latest" data-field="value" data-where="metric=usdkrw">—</b><small data-draw="c-usdkrw" data-source="latest" data-field="change" data-where="metric=usdkrw">—</small></div>
+        <div class="mx-tile" id="tile-gold"><span>금 1g 원화 가격</span><b data-draw="v-gold" data-source="latest" data-field="value" data-where="metric=gold_krw_g">—</b><small data-draw="c-gold" data-source="latest" data-field="change" data-where="metric=gold_krw_g">—</small></div>
+        <div class="mx-tile" id="tile-krm2"><span>한국 M2 증가율 (전년비)</span><b data-draw="v-krm2" data-source="latest" data-field="value" data-where="metric=kr_m2_yoy">—</b><small data-draw="c-krm2" data-source="latest" data-field="change" data-where="metric=kr_m2_yoy">—</small></div>
+        <div class="mx-tile" id="tile-usm2"><span>미국 M2 증가율 (전년비)</span><b data-draw="v-usm2" data-source="latest" data-field="value" data-where="metric=us_m2_yoy">—</b><small data-draw="c-usm2" data-source="latest" data-field="change" data-where="metric=us_m2_yoy">—</small></div>
+      </div>
+    </div>
+    <div class="mx-group">
+      <h3>한국 금리</h3>
+      <div class="mx-tiles">
+        <div class="mx-tile" id="tile-krbase"><span>한국은행 기준금리</span><b data-draw="v-krbase" data-source="latest" data-field="value" data-where="metric=kr_base">—</b><small data-draw="c-krbase" data-source="latest" data-field="change" data-where="metric=kr_base">—</small></div>
+        <div class="mx-tile" id="tile-ktb10y"><span>국고채 10년</span><b data-draw="v-ktb10y" data-source="latest" data-field="value" data-where="metric=ktb10y">—</b><small data-draw="c-ktb10y" data-source="latest" data-field="change" data-where="metric=ktb10y">—</small></div>
+        <div class="mx-tile" id="tile-kdb"><span>은행채 (산금채 1년)</span><b data-draw="v-kdb" data-source="latest" data-field="value" data-where="metric=kdb1y">—</b><small data-draw="c-kdb" data-source="latest" data-field="change" data-where="metric=kdb1y">—</small></div>
+        <div class="mx-tile" id="tile-mort"><span>주택담보대출 금리 (신규)</span><b data-draw="v-mort" data-source="latest" data-field="value" data-where="metric=mortgage">—</b><small data-draw="c-mort" data-source="latest" data-field="change" data-where="metric=mortgage">—</small></div>
+      </div>
+    </div>
+    <div class="mx-group">
+      <h3>미국 금리</h3>
+      <div class="mx-tiles">
+        <div class="mx-tile" id="tile-fed"><span>연준 기준금리 (상단)</span><b data-draw="v-fed" data-source="latest" data-field="value" data-where="metric=fed_upper">—</b><small data-draw="c-fed" data-source="latest" data-field="change" data-where="metric=fed_upper">—</small></div>
+        <div class="mx-tile" id="tile-t2y"><span>미 국채 2년</span><b data-draw="v-t2y" data-source="latest" data-field="value" data-where="metric=t2y">—</b><small data-draw="c-t2y" data-source="latest" data-field="change" data-where="metric=t2y">—</small></div>
+        <div class="mx-tile" id="tile-t10y"><span>미 국채 10년</span><b data-draw="v-t10y" data-source="latest" data-field="value" data-where="metric=t10y">—</b><small data-draw="c-t10y" data-source="latest" data-field="change" data-where="metric=t10y">—</small></div>
+        <div class="mx-tile" id="tile-t30y"><span>미 국채 30년</span><b data-draw="v-t30y" data-source="latest" data-field="value" data-where="metric=t30y">—</b><small data-draw="c-t30y" data-source="latest" data-field="change" data-where="metric=t30y">—</small></div>
+      </div>
+    </div>
+    <div class="mx-group">
+      <h3>미국 부채·국채</h3>
+      <div class="mx-tiles">
+        <div class="mx-tile" id="tile-debt"><span>연방 총부채</span><b data-draw="v-debt" data-source="latest" data-field="value" data-where="metric=debt_total">—</b><small data-draw="c-debt" data-source="latest" data-field="change" data-where="metric=debt_total">—</small></div>
+        <div class="mx-tile" id="tile-bills"><span>시장성 국채 중 단기채(T-bill) 비중</span><b data-draw="v-bills" data-source="latest" data-field="value" data-where="metric=bills_share">—</b><small data-draw="c-bills" data-source="latest" data-field="change" data-where="metric=bills_share">—</small></div>
+        <div class="mx-tile" id="tile-spread"><span>미 10년−2년 금리차</span><b data-draw="v-spread" data-source="latest" data-field="value" data-where="metric=spread_10_2">—</b><small data-draw="c-spread" data-source="latest" data-field="change" data-where="metric=spread_10_2">—</small></div>
+        <div class="mx-tile" id="tile-iss"><span>최근 12개월 국채 총발행액</span><b data-draw="v-iss" data-source="latest" data-field="value" data-where="metric=issuance_12m">—</b><small data-draw="c-iss" data-source="latest" data-field="change" data-where="metric=issuance_12m">—</small></div>
+      </div>
+    </div>
+    <p class="mx-note">각 카드 아래 작은 글씨는 1년 전과 비교한 변화입니다. 기준 날짜: <span data-draw="asof" data-source="latest" data-field="asof" data-where="metric=t10y">—</span> (미국 금리 기준, 지표마다 발표 주기가 다릅니다).</p>
+  </section>
+
+  <!-- 원화 가치 -->
+  <section class="mx-sec" id="krw" data-sec="krw" hidden>
+    <h2>원화 가치</h2>
+    <div class="mx-grid">
+      <div class="mx-card" id="card-usdkrw"><h3>원/달러 환율</h3><p>오르면 원화 가치가 떨어진 것입니다. 월평균 매매기준율.</p><div class="mx-chart" data-draw="ch-usdkrw" data-source="krw_value"></div></div>
+      <div class="mx-card" id="card-krwidx"><h3>원화 구매력 지수 (2015년 1월 = 100)</h3><p>1원으로 살 수 있는 달러와 금의 양을 2015년 1월 기준으로 나타냈습니다. 100보다 낮으면 그만큼 원화 가치가 줄었습니다.</p><div class="mx-chart" data-draw="ch-krwidx" data-source="krw_idx"></div></div>
+      <div class="mx-card" id="card-goldkrw"><h3>금 1g 원화 가격</h3><p>국제 금 선물 가격(달러/온스)을 그 달 환율로 환산했습니다. 국내 KRX 금 시세와는 다를 수 있습니다.</p><div class="mx-chart" data-draw="ch-goldkrw" data-source="krw_idx"></div></div>
+      <div class="mx-card" id="card-m2"><h3>통화량(M2) 증가율, 전년 동월 대비</h3><p>돈이 얼마나 빨리 풀리는지 보여줍니다. 한국은 평잔·계절조정, 미국은 계절조정 기준.</p><div class="mx-chart" data-draw="ch-m2" data-source="m2_yoy"></div></div>
+    </div>
+  </section>
+
+  <!-- 한국 금리 -->
+  <section class="mx-sec" id="kr-rates" data-sec="kr-rates" hidden>
+    <h2>한국 금리</h2>
+    <div class="mx-grid">
+      <div class="mx-card" id="card-krgov"><h3>기준금리와 국고채</h3><p>월평균 수익률. 장단기 금리차가 좁아지면 경기 둔화 신호로 읽힙니다.</p><div class="mx-chart" data-draw="ch-krgov" data-source="kr_rates"></div></div>
+      <div class="mx-card" id="card-krbank"><h3>은행 자금조달·대출 금리</h3><p>은행채(산금채 1년)와 CD 91일물은 변동금리 대출의 기준이 되는 시장금리입니다.</p><div class="mx-chart" data-draw="ch-krbank" data-source="kr_rates"></div></div>
+    </div>
+    <p class="mx-note">코픽스(COFIX)는 은행연합회만 공개하고 공개 API가 없어 자동으로 넣지 못했습니다. 코픽스를 따르는 주택담보대출 금리(예금은행 신규취급액 기준)와 그 바탕인 은행채·CD 금리를 대신 보여줍니다.</p>
+  </section>
+
+  <!-- 미국 금리 -->
+  <section class="mx-sec" id="us-rates" data-sec="us-rates" hidden>
+    <h2>미국 금리</h2>
+    <div class="mx-grid">
+      <div class="mx-card" id="card-fed"><h3>연준 기준금리와 단기 국채 (2년 이하)</h3><p>연준 목표범위 상단, 실효 연방기금금리, 3개월·1년·2년물. 2년물은 시장이 예상하는 앞으로의 기준금리를 반영합니다.</p><div class="mx-chart" data-draw="ch-fed" data-source="us_rates"></div></div>
+      <div class="mx-card" id="card-uslong"><h3>장기 국채 (10·20·30년)</h3><p>주택담보대출, 회사채 등 장기 자금 비용의 기준입니다.</p><div class="mx-chart" data-draw="ch-uslong" data-source="us_rates"></div></div>
+      <div class="mx-card" id="card-spread"><h3>10년물 − 2년물 금리차</h3><p>0 아래(역전)는 과거 경기침체에 앞서 나타났습니다.</p><div class="mx-chart" data-draw="ch-spread" data-source="spread"></div></div>
+      <div class="mx-card" id="card-curve"><h3>미 국채 수익률 곡선</h3><p>만기별 금리를 최신, 1년 전, 2년 전과 비교합니다. 기간 버튼과 무관합니다.</p><div class="mx-chart" data-draw="ch-curve" data-source="us_curve"></div></div>
+    </div>
+  </section>
+
+  <!-- 미국 부채·국채 -->
+  <section class="mx-sec" id="us-debt" data-sec="us-debt" hidden>
+    <h2>미국 부채·국채</h2>
+    <div class="mx-grid">
+      <div class="mx-card" id="card-debt"><h3>연방 총부채 (조 달러)</h3><p>재무부 일별 공시(Debt to the Penny)의 월말 값. 민간 보유분과 정부 내부 보유분(사회보장기금 등)의 합입니다.</p><div class="mx-chart" data-draw="ch-debt" data-source="us_debt"></div></div>
+      <div class="mx-card" id="card-comp"><h3>시장성 국채 만기 구성 (잔액 비중)</h3><p>T-bill(1년 이하), Note(2~10년), Bond(20·30년), 물가연동채(TIPS), 변동금리채(FRN). 월간 국채 명세서(MSPD) 기준.</p><div class="mx-chart" data-draw="ch-comp" data-source="comp_share"></div></div>
+      <div class="mx-card" id="card-iss"><h3>월별 국채 발행액 (입찰 낙찰액, 십억 달러)</h3><p>만기가 돌아온 국채를 다시 발행하는 차환분을 포함한 총발행액입니다. T-bill은 매주 여러 번 발행돼 규모가 큽니다.</p><div class="mx-chart" data-draw="ch-iss" data-source="treasury_issuance"></div></div>
+      <div class="mx-card" id="card-issshare"><h3>발행액 중 T-bill 이외 비중</h3><p>Note·Bond·TIPS·FRN 발행이 전체에서 차지하는 비율. 높아질수록 재무부가 장기 조달을 늘린 것입니다.</p><div class="mx-chart" data-draw="ch-issshare" data-source="iss_share"></div></div>
+    </div>
+  </section>
+
+  <details class="mx-note" id="notes">
+    <summary>데이터 출처와 갱신 방법</summary>
+    <p>미국 금리·환율·M2: FRED(세인트루이스 연준). 한국 금리·M2: 한국은행 ECOS. 연방부채·국채 구성·입찰: 미 재무부 Fiscal Data. 금 가격: COMEX 금 선물(Yahoo Finance).</p>
+    <p>GitHub Actions가 매일 아침 7시(한국 시간)에 새 데이터를 받아 이 페이지를 갱신합니다. 지표마다 발표 주기가 달라(일별·월별) 최신 날짜가 서로 다릅니다.</p>
+  </details>
+</div>
+
+<script>
+// ---------- 계산 ----------
+const num = (v) => (v === null || v === undefined || v === '' ? null : +v);
+
+dash.calc('krw_idx', {
+  inputs: ['krw_value'],
+  title: '원화 구매력 지수·금 1g 원화 가격',
+  description: '2015년 1월을 100으로 놓고 1원으로 살 수 있는 달러·금의 양을 지수로 만들고, 금 가격을 원화 1g으로 환산',
+  fn: (krw) => {
+    const b = krw[0];
+    const usd0 = +b.usdkrw, gold0 = +b.gold_usd_oz * +b.usdkrw;
+    return krw.map((r) => {
+      const goldKrwOz = +r.gold_usd_oz * +r.usdkrw;
+      return { month: r.month, krw_vs_usd: +(usd0 / +r.usdkrw * 100).toFixed(1), krw_vs_gold: +(gold0 / goldKrwOz * 100).toFixed(1), gold_krw_g: Math.round(goldKrwOz / 31.1035) };
+    });
+  },
+});
+
+dash.calc('m2_yoy', {
+  inputs: ['money_supply'],
+  title: 'M2 전년 동월 대비 증가율',
+  description: '같은 달 1년 전 M2 대비 증가율(%)',
+  fn: (ms) => {
+    const by = new Map(ms.map((r) => [r.month, r]));
+    const prev = (m) => `${+m.slice(0, 4) - 1}${m.slice(4)}`;
+    return ms.map((r) => {
+      const p = by.get(prev(r.month));
+      const yoy = (k) => (p && r[k] !== null && r[k] !== '' && p[k] !== null && p[k] !== '' ? +((+r[k] / +p[k] - 1) * 100).toFixed(2) : null);
+      return { month: r.month, kr_yoy: yoy('kr_m2_bil_krw'), us_yoy: yoy('us_m2_bil_usd') };
+    }).filter((r) => r.kr_yoy !== null || r.us_yoy !== null);
+  },
+});
+
+dash.calc('spread', {
+  inputs: ['us_rates'],
+  title: '미 국채 10년−2년 금리차',
+  description: '같은 날 10년물에서 2년물 수익률을 뺀 값(%p)',
+  fn: (us) => us.filter((r) => r.t10y !== null && r.t10y !== '' && r.t2y !== null && r.t2y !== '').map((r) => ({ date: r.date, t10y_2y: +(+r.t10y - +r.t2y).toFixed(2) })),
+});
+
+dash.calc('us_curve', {
+  inputs: ['us_rates'],
+  title: '미 국채 수익률 곡선',
+  description: '최신 거래일, 그로부터 1년 전, 2년 전의 만기별 수익률',
+  fn: (us) => {
+    const rows = us.filter((r) => r.t10y !== null && r.t10y !== '');
+    const last = rows[rows.length - 1];
+    const before = (yrs) => { const d = new Date(last.date); d.setUTCFullYear(d.getUTCFullYear() - yrs); const iso = d.toISOString().slice(0, 10); let hit = rows[0]; for (const r of rows) if (r.date <= iso) hit = r; return hit; };
+    const y1 = before(1), y2 = before(2);
+    const ten = [['3개월', 't3m', 0.25], ['1년', 't1y', 1], ['2년', 't2y', 2], ['5년', 't5y', 5], ['10년', 't10y', 10], ['20년', 't20y', 20], ['30년', 't30y', 30]];
+    return ten.map(([tenor, k, yrs]) => ({ tenor, years: yrs, now: +last[k], y1ago: +y1[k], y2ago: +y2[k], now_date: last.date, y1_date: y1.date, y2_date: y2.date }));
+  },
+});
+
+dash.calc('comp_share', {
+  inputs: ['treasury_composition'],
+  title: '시장성 국채 잔액 비중',
+  description: '월말 시장성 국채 잔액에서 종류별 비중(%)',
+  fn: (tc) => tc.map((r) => {
+    const ks = ['bills', 'notes', 'bonds', 'tips', 'frn'];
+    const tot = ks.reduce((s, k) => s + +r[k], 0);
+    const o = { date: r.date };
+    ks.forEach((k) => { o[k] = +(+r[k] / tot * 100).toFixed(2); });
+    return o;
+  }),
+});
+
+dash.calc('iss_share', {
+  inputs: ['treasury_issuance'],
+  title: '국채 발행액 중 T-bill 이외 비중',
+  description: '월 발행액에서 Note·Bond·TIPS·FRN이 차지하는 비율(%)',
+  fn: (ti) => ti.map((r) => {
+    const coupons = +r.notes + +r.bonds + +r.tips + +r.frn;
+    const tot = coupons + +r.bills;
+    return { month: r.month, coupon_share: tot ? +(coupons / tot * 100).toFixed(1) : null };
+  }),
+});
+
+dash.calc('latest', {
+  inputs: ['krw_value', 'kr_rates', 'us_rates', 'us_debt', 'money_supply', 'treasury_composition', 'treasury_issuance'],
+  title: '최신 값과 1년 전 대비 변화',
+  description: '각 지표의 가장 최근 값과, 그 시점에서 1년 전 값 대비 변화',
+  fn: (krw, kr, us, debt, ms, tc, ti) => {
+    const out = [];
+    const ok = (v) => v !== null && v !== undefined && v !== '';
+    // 시계열에서 마지막 값과 약 1년 전 값
+    const pick = (rows, dk, k, monthly) => {
+      const rs = rows.filter((r) => ok(r[k]));
+      if (!rs.length) return null;
+      const last = rs[rs.length - 1];
+      const d = last[dk];
+      let target;
+      if (monthly) target = `${+d.slice(0, 4) - 1}${d.slice(4)}`;
+      else { const t = new Date(d); t.setUTCFullYear(t.getUTCFullYear() - 1); target = t.toISOString().slice(0, d.length); }
+      let prev = null; for (const r of rs) if (r[dk] <= target) prev = r;
+      return { v: +last[k], p: prev ? +prev[k] : null, asof: d };
+    };
+    const add = (metric, x, kind, digits) => {
+      if (!x) return;
+      const change = x.p === null ? null : kind === 'pct' ? +((x.v / x.p - 1) * 100).toFixed(1) : +(x.v - x.p).toFixed(2);
+      out.push({ metric, value: +x.v.toFixed(digits), change, change_kind: kind === 'pct' ? '%' : '%p', asof: x.asof });
+    };
+    add('usdkrw', pick(krw, 'month', 'usdkrw', true), 'pct', 1);
+    const gold = krw.map((r) => ({ month: r.month, g: +r.gold_usd_oz * +r.usdkrw / 31.1035 }));
+    add('gold_krw_g', pick(gold, 'month', 'g', true), 'pct', 0);
+    const yoy = (k) => { const by = new Map(ms.map((r) => [r.month, r])); return ms.filter((r) => ok(r[k])).map((r) => { const p = by.get(`${+r.month.slice(0, 4) - 1}${r.month.slice(4)}`); return { month: r.month, y: p && ok(p[k]) ? (+r[k] / +p[k] - 1) * 100 : '' }; }); };
+    add('kr_m2_yoy', pick(yoy('kr_m2_bil_krw'), 'month', 'y', true), 'pp', 2);
+    add('us_m2_yoy', pick(yoy('us_m2_bil_usd'), 'month', 'y', true), 'pp', 2);
+    for (const k of [['kr_base', 'base'], ['ktb10y', 'ktb10y'], ['kdb1y', 'kdb1y'], ['mortgage', 'mortgage']]) add(k[0], pick(kr, 'month', k[1], true), 'pp', 2);
+    for (const k of ['fed_upper', 't2y', 't10y', 't30y']) add(k, pick(us, 'date', k, false), 'pp', 2);
+    const sp = us.filter((r) => ok(r.t10y) && ok(r.t2y)).map((r) => ({ date: r.date, s: +r.t10y - +r.t2y }));
+    add('spread_10_2', pick(sp, 'date', 's', false), 'pp', 2);
+    const krM = pick(kr, 'month', 'ktb10y', true);
+    const us10 = pick(us, 'date', 't10y', false);
+    if (krM && us10) out.push({ metric: 'us_kr_gap', value: +(us10.v - krM.v).toFixed(2), change: null, change_kind: '%p', asof: us10.asof });
+    add('debt_total', pick(debt, 'date', 'total_tril', false), 'pct', 2);
+    const share = tc.map((r) => ({ date: r.date, s: +r.bills / (+r.bills + +r.notes + +r.bonds + +r.tips + +r.frn) * 100 }));
+    add('bills_share', pick(share, 'date', 's', false), 'pp', 1);
+    // 최근 12개월 발행액(조 달러)과 그 1년 전 12개월
+    const tot = ti.map((r) => ({ month: r.month, t: +r.bills + +r.notes + +r.bonds + +r.tips + +r.frn }));
+    if (tot.length >= 24) {
+      const a = tot.slice(-12).reduce((s, r) => s + r.t, 0) / 1000, b = tot.slice(-24, -12).reduce((s, r) => s + r.t, 0) / 1000;
+      out.push({ metric: 'issuance_12m', value: +a.toFixed(2), change: +((a / b - 1) * 100).toFixed(1), change_kind: '%', asof: tot[tot.length - 1].month });
+    }
+    return out;
+  },
+});
+
+// ---------- 공통 ----------
+window.mx = window.mx || {};
+mx.range = 5;
+mx.pm = d3.utcParse('%Y-%m');
+mx.pd = d3.utcParse('%Y-%m-%d');
+mx.px = (s) => (s.length === 7 ? mx.pm(s) : mx.pd(s));
+mx.cut = (rows, key) => {
+  if (!rows.length || mx.range >= 99) return rows;
+  const last = mx.px(rows[rows.length - 1][key]);
+  const c = new Date(last); c.setUTCFullYear(c.getUTCFullYear() - mx.range);
+  return rows.filter((r) => mx.px(r[key]) >= c);
+};
+mx.msg = (el, st) => {
+  el.replaceChildren();
+  const p = document.createElement('div'); p.className = 'mx-msg';
+  p.textContent = st === 'error' ? '이 차트의 데이터를 불러오지 못했습니다.' : st === 'loading' ? '불러오는 중…' : '—';
+  el.appendChild(p);
+};
+mx.fmtDate = (d, monthly) => (monthly ? d3.utcFormat('%Y년 %-m월')(d) : d3.utcFormat('%Y-%m-%d')(d));
+
+// 선 차트. series: [{key,label}], o: {xKey, fmt, unit, zero, refY, label, step, area}
+mx.line = (el, rows, series, o) => {
+  el.replaceChildren();
+  const monthly = rows.length && rows[0][o.xKey].length === 7;
+  const data = rows.map((r) => ({ x: mx.px(r[o.xKey]), r }));
+  const val = (d, k) => { const v = d.r[k]; return v === null || v === undefined || v === '' ? null : +v; };
+  const colors = series.map((s, i) => s.color || dash.colors[i % dash.colors.length]);
+  const fmt = o.fmt || ((v) => d3.format(',.2f')(v));
+  const legend = d3.select(el).append('div').attr('class', 'mx-legend');
+  series.forEach((s, i) => {
+    const last = [...data].reverse().find((d) => val(d, s.key) !== null);
+    const k = legend.append('span').attr('class', 'mx-key');
+    k.append('i').style('background', colors[i]);
+    k.append('span').text(s.label);
+    k.append('b').text(last ? fmt(val(last, s.key)) + (o.unit || '') : '—');
+  });
+  const box = d3.select(el).append('div').attr('class', 'mx-plot');
+  const W = Math.max(260, el.clientWidth), H = o.height || 220;
+  const svg = box.append('svg').attr('width', '100%').attr('height', H).attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', o.label || '');
+  const all = data.flatMap((d) => series.map((s) => val(d, s.key))).filter((v) => v !== null);
+  let [lo, hi] = d3.extent(all);
+  if (o.zero) { lo = Math.min(0, lo); hi = Math.max(0, hi); }
+  const pad = (hi - lo) * 0.08 || 1;
+  const y = d3.scaleLinear().domain([o.zero && lo >= 0 ? 0 : lo >= 0 ? Math.max(0, lo - pad) : lo - pad, hi + pad]).nice(5);
+  const yTicks = y.ticks(5);
+  const tf = o.tick || fmt;
+  const meas = svg.append('g');
+  const wMax = d3.max(yTicks, (t) => { const n = meas.append('text').text(tf(t)).node(); return n.getComputedTextLength(); }) || 30;
+  meas.remove();
+  const m = { t: 6, r: 8, b: 22, l: Math.ceil(wMax) + 8 };
+  const x = d3.scaleUtc().domain(d3.extent(data, (d) => d.x)).range([m.l, W - m.r]);
+  y.range([H - m.b, m.t]);
+  svg.append('g').attr('class', 'grid').selectAll('line').data(yTicks).join('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y).attr('y2', y);
+  svg.append('g').selectAll('text').data(yTicks).join('text').attr('x', m.l - 6).attr('y', (t) => y(t)).attr('dy', '0.32em').attr('text-anchor', 'end').text(tf);
+  const nx = Math.max(2, Math.floor((W - m.l - m.r) / 80));
+  svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(nx).tickSizeOuter(0).tickFormat((d) => (x.domain()[1] - x.domain()[0] > 3 * 365 * 864e5 ? d3.utcFormat('%Y')(d) : d3.utcFormat('%y.%m')(d))));
+  if (o.refY !== undefined && y.domain()[0] <= o.refY && y.domain()[1] >= o.refY) svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(o.refY)).attr('y2', y(o.refY)).style('stroke', 'var(--cds-chart-reference)').attr('stroke-dasharray', '3 3');
+  series.forEach((s, i) => {
+    const gen = d3.line().defined((d) => val(d, s.key) !== null).x((d) => x(d.x)).y((d) => y(val(d, s.key)));
+    if (s.step) gen.curve(d3.curveStepAfter);
+    if (o.area && i === 0) {
+      const ar = d3.area().defined((d) => val(d, s.key) !== null).x((d) => x(d.x)).y0(y(Math.max(y.domain()[0], 0))).y1((d) => y(val(d, s.key)));
+      svg.append('path').datum(data).attr('d', ar).style('fill', colors[i]).style('opacity', 0.12);
+    }
+    svg.append('path').datum(data).attr('d', gen).style('fill', 'none').style('stroke', colors[i]).style('stroke-width', s.width || 1.8).style('stroke-dasharray', s.dash || null);
+    const last = [...data].reverse().find((d) => val(d, s.key) !== null);
+    if (last) svg.append('circle').attr('cx', x(last.x)).attr('cy', y(val(last, s.key))).attr('r', 3).style('fill', colors[i]);
+  });
+  // 툴팁
+  const guide = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).style('stroke', 'var(--cds-chart-axis)').style('opacity', 0);
+  const dots = svg.append('g');
+  const tip = box.append('div').attr('class', 'mx-tip').attr('hidden', true);
+  const bis = d3.bisector((d) => d.x).center;
+  const show = (ev) => {
+    const [px] = d3.pointer(ev, svg.node());
+    const sx = px * (W / svg.node().getBoundingClientRect().width);
+    const d = data[bis(data, x.invert(sx))]; if (!d) return;
+    guide.attr('x1', x(d.x)).attr('x2', x(d.x)).style('opacity', 1);
+    dots.selectAll('circle').data(series.filter((s) => val(d, s.key) !== null)).join('circle').attr('r', 3.5).attr('cx', x(d.x)).attr('cy', (s) => y(val(d, s.key))).style('fill', (s) => colors[series.indexOf(s)]).style('stroke', 'var(--color-panel)');
+    tip.attr('hidden', null).html('');
+    tip.append('div').append('em').text(mx.fmtDate(d.x, monthly));
+    series.forEach((s, i) => { const v = val(d, s.key); if (v === null) return; const row = tip.append('div'); row.append('span').text(s.label).style('color', colors[i]); row.append('b').text(fmt(v) + (o.unit || '')); });
+    const bw = box.node().clientWidth, tw = tip.node().offsetWidth, cx = x(d.x) * (bw / W);
+    tip.style('left', `${Math.max(0, Math.min(bw - tw, cx + 10 + tw > bw ? cx - tw - 10 : cx + 10))}px`).style('top', '4px');
+  };
+  const hide = () => { guide.style('opacity', 0); dots.selectAll('circle').remove(); tip.attr('hidden', true); };
+  svg.on('pointermove', show).on('pointerdown', show).on('pointerleave', hide);
+};
+
+// 누적 막대 / 누적 영역
+mx.stack = (el, rows, series, o) => {
+  el.replaceChildren();
+  const colors = series.map((s, i) => dash.colors[i % dash.colors.length]);
+  const fmt = o.fmt;
+  const last = rows[rows.length - 1];
+  const legend = d3.select(el).append('div').attr('class', 'mx-legend');
+  series.forEach((s, i) => { const k = legend.append('span').attr('class', 'mx-key'); k.append('i').style('background', colors[i]); k.append('span').text(s.label); k.append('b').text(last ? fmt(+last[s.key]) + (o.unit || '') : '—'); });
+  const box = d3.select(el).append('div').attr('class', 'mx-plot');
+  const W = Math.max(260, el.clientWidth), H = o.height || 220;
+  const svg = box.append('svg').attr('width', '100%').attr('height', H).attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', o.label || '');
+  const st = d3.stack().keys(series.map((s) => s.key)).value((r, k) => +r[k] || 0)(rows);
+  const hi = o.max || d3.max(st[st.length - 1], (d) => d[1]);
+  const y = d3.scaleLinear().domain([0, hi]).nice(5);
+  const yTicks = y.ticks(5);
+  const meas = svg.append('g');
+  const wMax = d3.max(yTicks, (t) => meas.append('text').text(fmt(t)).node().getComputedTextLength()) || 30;
+  meas.remove();
+  const m = { t: 6, r: 8, b: 22, l: Math.ceil(wMax) + 8 };
+  y.range([H - m.b, m.t]);
+  const xs = rows.map((r) => mx.px(r[o.xKey]));
+  svg.append('g').attr('class', 'grid').selectAll('line').data(yTicks).join('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y).attr('y2', y);
+  svg.append('g').selectAll('text').data(yTicks).join('text').attr('x', m.l - 6).attr('y', (t) => y(t)).attr('dy', '0.32em').attr('text-anchor', 'end').text(fmt);
+  let xPos, bw = 0;
+  if (o.bars) {
+    const xb = d3.scaleBand().domain(rows.map((r) => r[o.xKey])).range([m.l, W - m.r]).padding(0.15);
+    bw = xb.bandwidth(); xPos = (i) => xb(rows[i][o.xKey]) + bw / 2;
+    st.forEach((layer, li) => svg.append('g').style('fill', colors[li]).selectAll('rect').data(layer).join('rect').attr('x', (d, i) => xb(rows[i][o.xKey])).attr('width', bw).attr('y', (d) => y(d[1])).attr('height', (d) => Math.max(0, y(d[0]) - y(d[1]))));
+    const xt = d3.scaleUtc().domain(d3.extent(xs)).range([xPos(0), xPos(rows.length - 1)]);
+    svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(xt).ticks(Math.max(2, Math.floor((W - m.l) / 80))).tickSizeOuter(0).tickFormat((d) => (rows.length > 40 ? d3.utcFormat('%Y')(d) : d3.utcFormat('%y.%m')(d))));
+  } else {
+    const x = d3.scaleUtc().domain(d3.extent(xs)).range([m.l, W - m.r]);
+    xPos = (i) => x(xs[i]);
+    const ar = d3.area().x((d, i) => x(xs[i])).y0((d) => y(d[0])).y1((d) => y(d[1]));
+    st.forEach((layer, li) => svg.append('path').datum(layer).attr('d', ar).style('fill', colors[li]).style('opacity', 0.85));
+    svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(Math.max(2, Math.floor((W - m.l) / 80))).tickSizeOuter(0).tickFormat(d3.utcFormat('%Y')));
+  }
+  const guide = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).style('stroke', 'var(--cds-chart-axis)').style('opacity', 0);
+  const tip = box.append('div').attr('class', 'mx-tip').attr('hidden', true);
+  const show = (ev) => {
+    const [px] = d3.pointer(ev, svg.node());
+    const sx = px * (W / svg.node().getBoundingClientRect().width);
+    let bi = 0, bd = Infinity; rows.forEach((r, i) => { const dd = Math.abs(xPos(i) - sx); if (dd < bd) { bd = dd; bi = i; } });
+    const r = rows[bi];
+    guide.attr('x1', xPos(bi)).attr('x2', xPos(bi)).style('opacity', 1);
+    tip.attr('hidden', null).html('');
+    tip.append('div').append('em').text(mx.fmtDate(xs[bi], r[o.xKey].length === 7));
+    [...series].reverse().forEach((s) => { const row = tip.append('div'); row.append('span').text(s.label).style('color', colors[series.indexOf(s)]); row.append('b').text(fmt(+r[s.key]) + (o.unit || '')); });
+    if (o.total) { const row = tip.append('div'); row.append('span').text('합계'); row.append('b').text(fmt(series.reduce((a, s) => a + (+r[s.key] || 0), 0)) + (o.unit || '')); }
+    const bwid = box.node().clientWidth, tw = tip.node().offsetWidth, cx = xPos(bi) * (bwid / W);
+    tip.style('left', `${Math.max(0, Math.min(bwid - tw, cx + 10 + tw > bwid ? cx - tw - 10 : cx + 10))}px`).style('top', '4px');
+  };
+  svg.on('pointermove', show).on('pointerdown', show).on('pointerleave', () => { guide.style('opacity', 0); tip.attr('hidden', true); });
+};
+
+// 데이터 소스를 읽어 차트를 그리는 drawing 등록
+mx.ts = (name, source, fn) => dash.draw(name, (el) => {
+  const d = dash.data(source);
+  if (d.status !== 'ok' || !Array.isArray(d.data) || !d.data.length) { mx.msg(el, d.status); return; }
+  fn(el, d.data);
+});
+</script>
+
+<script>
+// ---------- 요약 숫자 ----------
+(() => {
+  const fmtV = {
+    usdkrw: (v) => d3.format(',.1f')(v) + '원', gold_krw_g: (v) => d3.format(',')(v) + '원',
+    debt_total: (v) => '$' + d3.format(',.2f')(v) + '조', spread_10_2: (v) => d3.format('+.2f')(v) + '%p', issuance_12m: (v) => '$' + d3.format(',.1f')(v) + '조',
+  };
+  const tiles = { usdkrw: 'usdkrw', gold: 'gold_krw_g', krm2: 'kr_m2_yoy', usm2: 'us_m2_yoy', krbase: 'kr_base', ktb10y: 'ktb10y', kdb: 'kdb1y', mort: 'mortgage', fed: 'fed_upper', t2y: 't2y', t10y: 't10y', t30y: 't30y', debt: 'debt_total', bills: 'bills_share', spread: 'spread_10_2', iss: 'issuance_12m' };
+  const row = (metric) => { const d = dash.data('latest'); return d.status === 'ok' && Array.isArray(d.data) ? d.data.find((r) => r.metric === metric) : null; };
+  for (const [t, metric] of Object.entries(tiles)) {
+    dash.draw('v-' + t, (el) => { const r = row(metric); el.classList.toggle('dash-skeleton', !r && dash.data('latest').status === 'loading'); el.textContent = r ? (fmtV[metric] ? fmtV[metric](r.value) : d3.format('.2f')(r.value) + '%') : '—'; });
+    dash.draw('c-' + t, (el) => {
+      const r = row(metric);
+      if (!r || r.change === null) { el.textContent = '—'; return; }
+      const arrow = r.change > 0 ? '▲' : r.change < 0 ? '▼' : '';
+      el.textContent = `1년 전 대비 ${arrow}${d3.format('.2f')(Math.abs(r.change))}${r.change_kind} · ${r.asof}`;
+    });
+  }
+  const lede = { 'l-usdkrw': ['usdkrw', (v) => d3.format(',.1f')(v)], 'l-t10y': ['t10y', (v) => d3.format('.2f')(v)], 'l-ktb10y': ['ktb10y', (v) => d3.format('.2f')(v)], 'l-gap': ['us_kr_gap', (v) => d3.format('+.2f')(v)] };
+  for (const [n, [metric, f]] of Object.entries(lede)) dash.draw(n, (el) => { const r = row(metric); el.textContent = r ? f(r.value) : '—'; });
+  dash.draw('asof', (el) => { const r = row('t10y'); el.textContent = r ? r.asof : '—'; });
+})();
+
+// ---------- 차트 ----------
+const pct = (v) => d3.format('.2f')(v);
+mx.ts('ch-usdkrw', 'krw_value', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'usdkrw', label: '원/달러' }], { xKey: 'month', fmt: d3.format(',.0f'), unit: '원', area: true, label: '원/달러 환율 월평균 추이' }));
+mx.ts('ch-krwidx', 'krw_idx', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'krw_vs_usd', label: '달러 대비' }, { key: 'krw_vs_gold', label: '금 대비' }], { xKey: 'month', fmt: d3.format('.1f'), refY: 100, label: '원화 구매력 지수, 달러와 금 대비' }));
+mx.ts('ch-goldkrw', 'krw_idx', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'gold_krw_g', label: '금 1g' }], { xKey: 'month', fmt: d3.format(','), unit: '원', tick: d3.format('~s'), area: true, label: '금 1그램 원화 가격 추이' }));
+mx.ts('ch-m2', 'm2_yoy', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'kr_yoy', label: '한국 M2' }, { key: 'us_yoy', label: '미국 M2' }], { xKey: 'month', fmt: d3.format('.1f'), unit: '%', refY: 0, label: '한국과 미국 M2 전년비 증가율' }));
+mx.ts('ch-krgov', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'base', label: '기준금리', step: true, width: 2.4 }, { key: 'ktb3y', label: '국고채 3년' }, { key: 'ktb10y', label: '국고채 10년' }, { key: 'ktb30y', label: '국고채 30년', dash: '4 3' }], { xKey: 'month', fmt: pct, unit: '%', label: '한국 기준금리와 국고채 수익률' }));
+mx.ts('ch-krbank', 'kr_rates', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'mortgage', label: '주담대(신규)', width: 2.4 }, { key: 'kdb1y', label: '은행채(산금채 1년)' }, { key: 'cd91', label: 'CD 91일' }, { key: 'corp_aa', label: '회사채 AA-', dash: '4 3' }], { xKey: 'month', fmt: pct, unit: '%', label: '한국 은행채, CD, 주담대, 회사채 금리' }));
+mx.ts('ch-fed', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 'fed_upper', label: '연준 상단', step: true, width: 2.4 }, { key: 'effr', label: '실효금리' }, { key: 't3m', label: '3개월' }, { key: 't1y', label: '1년' }, { key: 't2y', label: '2년' }], { xKey: 'date', fmt: pct, unit: '%', label: '연준 기준금리와 미국 단기 국채 수익률' }));
+mx.ts('ch-uslong', 'us_rates', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 't10y', label: '10년' }, { key: 't20y', label: '20년' }, { key: 't30y', label: '30년' }], { xKey: 'date', fmt: pct, unit: '%', label: '미국 장기 국채 수익률' }));
+mx.ts('ch-spread', 'spread', (el, rows) => mx.line(el, mx.cut(rows, 'date'), [{ key: 't10y_2y', label: '10년−2년' }], { xKey: 'date', fmt: d3.format('+.2f'), unit: '%p', refY: 0, area: true, label: '미 국채 10년물과 2년물 금리차' }));
+mx.ts('ch-debt', 'us_debt', (el, rows) => mx.stack(el, mx.cut(rows, 'date'), [{ key: 'intragov_tril', label: '정부 내부 보유' }, { key: 'public_tril', label: '민간 보유' }], { xKey: 'date', fmt: d3.format('.1f'), unit: '조$', total: true, label: '미국 연방 총부채, 민간과 정부 내부 보유' }));
+mx.ts('ch-comp', 'comp_share', (el, rows) => mx.stack(el, mx.cut(rows, 'date'), [{ key: 'bills', label: 'T-bill' }, { key: 'notes', label: 'Note' }, { key: 'bonds', label: 'Bond' }, { key: 'tips', label: 'TIPS' }, { key: 'frn', label: 'FRN' }], { xKey: 'date', fmt: d3.format('.0f'), unit: '%', max: 100, label: '시장성 국채 종류별 잔액 비중' }));
+mx.ts('ch-iss', 'treasury_issuance', (el, rows) => mx.stack(el, mx.cut(rows, 'month'), [{ key: 'bills', label: 'T-bill' }, { key: 'notes', label: 'Note' }, { key: 'bonds', label: 'Bond' }, { key: 'tips', label: 'TIPS' }, { key: 'frn', label: 'FRN' }], { xKey: 'month', fmt: d3.format(',.0f'), unit: '', bars: true, total: true, label: '월별 미국 국채 발행액, 종류별' }));
+mx.ts('ch-issshare', 'iss_share', (el, rows) => mx.line(el, mx.cut(rows, 'month'), [{ key: 'coupon_share', label: 'T-bill 이외 비중' }], { xKey: 'month', fmt: d3.format('.1f'), unit: '%', area: true, label: '월 국채 발행액 중 T-bill 이외 비중' }));
+
+// 수익률 곡선
+dash.draw('ch-curve', (el) => {
+  const d = dash.data('us_curve');
+  if (d.status !== 'ok' || !Array.isArray(d.data) || !d.data.length) { mx.msg(el, d.status); return; }
+  const rows = d.data;
+  el.replaceChildren();
+  const series = [{ key: 'now', label: '최신', date: rows[0].now_date }, { key: 'y1ago', label: '1년 전', date: rows[0].y1_date }, { key: 'y2ago', label: '2년 전', date: rows[0].y2_date }];
+  const colors = [dash.colors[0], 'var(--cds-chart-muted)', 'var(--cds-chart-reference)'];
+  const legend = d3.select(el).append('div').attr('class', 'mx-legend');
+  series.forEach((s, i) => { const k = legend.append('span').attr('class', 'mx-key'); k.append('i').style('background', colors[i]); k.append('span').text(`${s.label} (${s.date})`); });
+  const box = d3.select(el).append('div').attr('class', 'mx-plot');
+  const W = Math.max(260, el.clientWidth), H = 220, m = { t: 14, r: 10, b: 22, l: 36 };
+  const svg = box.append('svg').attr('width', '100%').attr('height', H).attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', '미 국채 수익률 곡선: 최신, 1년 전, 2년 전');
+  const x = d3.scalePoint().domain(rows.map((r) => r.tenor)).range([m.l, W - m.r]).padding(0.3);
+  const all = rows.flatMap((r) => series.map((s) => r[s.key]));
+  const y = d3.scaleLinear().domain([d3.min(all) - 0.2, d3.max(all) + 0.2]).nice(5).range([H - m.b, m.t]);
+  svg.append('g').attr('class', 'grid').selectAll('line').data(y.ticks(5)).join('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y).attr('y2', y);
+  svg.append('g').selectAll('text').data(y.ticks(5)).join('text').attr('x', m.l - 6).attr('y', y).attr('dy', '0.32em').attr('text-anchor', 'end').text(d3.format('.1f'));
+  svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).tickSize(0).tickPadding(8));
+  [...series].reverse().forEach((s) => {
+    const i = series.indexOf(s);
+    svg.append('path').datum(rows).attr('d', d3.line().x((r) => x(r.tenor)).y((r) => y(r[s.key]))).style('fill', 'none').style('stroke', colors[i]).style('stroke-width', i === 0 ? 2.4 : 1.6);
+    svg.append('g').selectAll('circle').data(rows).join('circle').attr('cx', (r) => x(r.tenor)).attr('cy', (r) => y(r[s.key])).attr('r', i === 0 ? 3.5 : 2.5).style('fill', colors[i]);
+  });
+  svg.append('g').selectAll('text').data(rows).join('text').attr('x', (r) => x(r.tenor)).attr('y', (r) => y(r.now) - 8).attr('text-anchor', 'middle').style('fill', 'var(--color-fg)').text((r) => r.now.toFixed(2));
+  const tip = box.append('div').attr('class', 'mx-tip').attr('hidden', true);
+  svg.on('pointermove pointerdown', (ev) => {
+    const [px] = d3.pointer(ev, svg.node()); const sx = px * (W / svg.node().getBoundingClientRect().width);
+    let r = rows[0], bd = Infinity; rows.forEach((q) => { const dd = Math.abs(x(q.tenor) - sx); if (dd < bd) { bd = dd; r = q; } });
+    tip.attr('hidden', null).html(''); tip.append('div').append('em').text(r.tenor + ' 만기');
+    series.forEach((s, i) => { const row = tip.append('div'); row.append('span').text(s.label).style('color', colors[i]); row.append('b').text(r[s.key].toFixed(2) + '%'); });
+    const bw = box.node().clientWidth, tw = tip.node().offsetWidth, cx = x(r.tenor) * (bw / W);
+    tip.style('left', `${Math.max(0, Math.min(bw - tw, cx + 10))}px`).style('top', '4px');
+  }).on('pointerleave', () => tip.attr('hidden', true));
+});
+
+// ---------- 탭과 기간 ----------
+(() => {
+  const ids = ['summary', 'krw', 'kr-rates', 'us-rates', 'us-debt'];
+  const open = (id) => {
+    if (!ids.includes(id)) id = 'summary';
+    document.querySelectorAll('.mx-sec').forEach((s) => { s.hidden = s.dataset.sec !== id; });
+    document.querySelectorAll('.mx-tab').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === id)));
+    dash.setLink(id);
+  };
+  document.querySelectorAll('.mx-tab').forEach((b) => b.addEventListener('click', () => open(b.dataset.tab)));
+  document.querySelectorAll('.mx-rng').forEach((b) => b.addEventListener('click', () => {
+    mx.range = +b.dataset.range;
+    document.querySelectorAll('.mx-rng').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    ['ch-usdkrw', 'ch-krwidx', 'ch-goldkrw', 'ch-m2', 'ch-krgov', 'ch-krbank', 'ch-fed', 'ch-uslong', 'ch-spread', 'ch-debt', 'ch-comp', 'ch-iss', 'ch-issshare'].forEach((n) => dash.draw(n));
+  }));
+  const h = (location.hash || '').slice(1);
+  if (h) open(h);
+  let was = null;
+  window.addEventListener('beforeprint', () => { if (was === null) { was = [...document.querySelectorAll('.mx-sec')].map((s) => s.hidden); document.querySelectorAll('.mx-sec').forEach((s) => { s.hidden = false; }); } });
+  window.addEventListener('afterprint', () => { if (was) { document.querySelectorAll('.mx-sec').forEach((s, i) => { s.hidden = was[i]; }); was = null; } });
+})();
+</script>
+
+<script>
+// ---------- 데이터 갱신 시각 ----------
+dash.draw("updated", (el) => {
+  const m = dash.meta;
+  if (!m || !m.checked) { el.textContent = "—"; return; }
+  const f = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  const bad = Object.entries(m.datasets || {}).filter(([, d]) => d.error).map(([k]) => k);
+  el.textContent = f.format(new Date(m.checked)) + (bad.length ? ` · 일부 갱신 실패: ${bad.join(", ")} (이전 데이터 표시 중)` : "");
+  if (bad.length) el.setAttribute("data-warn", ""); else el.removeAttribute("data-warn");
+});
+</script>
+</div>
+</body>
+</html>

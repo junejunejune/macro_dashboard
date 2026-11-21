@@ -1,0 +1,33 @@
+{
+  "datasets": {
+    "krw_value": {
+      "updated": "2026-11-20T10:48:39.588Z",
+      "error": null
+    },
+    "money_supply": {
+      "updated": "2026-11-20T10:48:39.588Z",
+      "error": null
+    },
+    "kr_rates": {
+      "updated": "2026-11-20T10:48:39.588Z",
+      "error": null
+    },
+    "us_rates": {
+      "updated": "2026-11-20T10:48:39.588Z",
+      "error": null
+    },
+    "us_debt": {
+      "updated": "2026-11-20T10:48:39.588Z",
+      "error": null
+    },
+    "treasury_composition": {
+      "updated": "2026-11-20T10:48:39.588Z",
+      "error": null
+    },
+    "treasury_issuance": {
+      "updated": "2026-11-20T10:48:39.588Z",
+      "error": null
+    }
+  },
+  "checked": "2026-11-20T10:48:39.588Z"
+}
