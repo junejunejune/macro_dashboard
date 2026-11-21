@@ -34,6 +34,8 @@
 - 인구 탭: `data/demog.csv`(연간 `year`=YYYY, 세계은행: 합계출산율, 0~14·15~64·65세 이상 비중, 한국·미국). `mx.px`는 YYYY, YYYY-MM, YYYY-MM-DD를 모두 읽는다. `say(name, src, fn, label)`의 label로 "최근 1달" 대신 "최근 분기"·"최근 발표".
 - 의료비 물가: `us_macro.csv`의 `med`(CPIMEDSL), `inflation` 계산의 `med_yoy`.
 
+- 탭 요약: 각 탭 `<h2>` 아래 `<ul class="mx-brief" data-draw="b-탭id">`. "탭별 최근 동향 요약" 스크립트의 `brief(탭id, [데이터], fn)`이 2~3문장을 만든다. 동향 문장 도우미는 `window.mxT`로 공유. 부채 탭 요약은 상태 체크(`debt-check`)가 그린 "주의" 개수를 읽으므로 그 스크립트보다 뒤에 있어야 한다.
+
 ## 지표 추가하는 법
 
 1. `scripts/fetch-data.mjs`의 `jobs`에 묶음을 추가하거나 기존 묶음에 열을 추가한다.

@@ -157,6 +157,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .mx-events b { font-weight: var(--cds-font-weight-medium); }
 .mx-events .mx-events-note { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); padding-left: 24px; }
 .mx-events:empty { display: none; }
+.mx-brief { list-style: none; margin: 0; padding: var(--cds-pad-md) var(--cds-pad-lg); background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.6; }
+.mx-brief li { position: relative; padding-left: 14px; }
+.mx-brief li::before { content: ""; position: absolute; left: 0; top: .7em; width: 5px; height: 5px; border-radius: 50%; background: var(--s1); }
+.mx-brief:empty { display: none; }
 .mx-hint { margin: 2px 0 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
 .mx-plot text { fill: var(--cds-text-secondary); font-size: 11px; font-family: var(--font-anthropic-sans); }
 .mx-plot .grid line { stroke: var(--cds-chart-grid); }
@@ -208,6 +212,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <!-- 요약 -->
   <section class="mx-sec" id="summary" data-sec="summary">
     <h2>요약</h2>
+    <ul class="mx-brief" data-draw="b-summary" aria-label="요약 최근 동향 요약"></ul>
     <div class="mx-group">
       <h3>원화 가치·통화량</h3>
       <div class="mx-tiles">
@@ -277,6 +282,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <!-- 원화 가치 -->
   <section class="mx-sec" id="krw" data-sec="krw" hidden>
     <h2>원화 가치</h2>
+    <ul class="mx-brief" data-draw="b-krw" aria-label="원화 가치 최근 동향 요약"></ul>
     <div class="mx-grid">
       <div class="mx-card" id="card-usdkrw"><h3>원/달러 환율</h3><p>오르면 원화 가치가 떨어진 것입니다. 월평균 매매기준율.</p><div class="mx-chart" data-draw="ch-usdkrw" data-source="krw_value"></div>
         <p class="mx-trend" data-draw="t-usdkrw"></p>
@@ -300,6 +306,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <!-- 한국 금리 -->
   <section class="mx-sec" id="kr-rates" data-sec="kr-rates" hidden>
     <h2>한국 금리</h2>
+    <ul class="mx-brief" data-draw="b-kr-rates" aria-label="한국 금리 최근 동향 요약"></ul>
     <div class="mx-grid">
       <div class="mx-card" id="card-krgov"><h3>기준금리와 국고채</h3><p>월평균 수익률. 장단기 금리차가 좁아지면 경기 둔화 신호로 읽힙니다.</p><div class="mx-chart" data-draw="ch-krgov" data-source="kr_rates"></div>
         <ol class="mx-events" data-draw="e-krgov" data-kind="bok" aria-label="최근 발표·결정"></ol>
@@ -317,6 +324,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <!-- 미국 금리 -->
   <section class="mx-sec" id="us-rates" data-sec="us-rates" hidden>
     <h2>미국 금리</h2>
+    <ul class="mx-brief" data-draw="b-us-rates" aria-label="미국 금리 최근 동향 요약"></ul>
     <div class="mx-grid">
       <div class="mx-card" id="card-fed"><h3>연준 기준금리와 단기 국채 (2년 이하)</h3><p>연준 목표범위 상단, 실효 연방기금금리, 3개월·1년·2년물. 2년물은 시장이 예상하는 앞으로의 기준금리를 반영합니다. 처음에는 최근 2년을 보여줍니다.</p><div class="mx-chart" data-draw="ch-fed" data-source="us_rates"></div>
         <ol class="mx-events" data-draw="e-fed" data-kind="fed" aria-label="최근 발표·결정"></ol>
@@ -341,6 +349,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <!-- 미국 물가·고용 -->
   <section class="mx-sec" id="us-macro" data-sec="us-macro" hidden>
     <h2>미국 물가·고용</h2>
+    <ul class="mx-brief" data-draw="b-us-macro" aria-label="미국 물가·고용 최근 동향 요약"></ul>
     <p class="mx-note">이 탭의 차트는 처음에 최근 1년을 보여줍니다. 축소(−)하거나 기간 버튼을 누르면 더 길게 볼 수 있어요.</p>
     <div class="mx-grid">
       <div class="mx-card" id="card-infl"><h3>물가 상승률, 전년 동월 대비</h3><p>소비자물가(CPI)와 개인소비지출 물가(PCE), 각각 식품·에너지를 뺀 근원 지표. 점선은 연준 목표 2%. 2025년 10월 CPI는 미 정부 셧다운으로 발표되지 않아, 1년 뒤 상승률 계산에는 앞뒤 달 평균을 썼습니다.</p><div class="mx-chart" data-draw="ch-infl" data-source="inflation"></div>
@@ -372,6 +381,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <!-- 미국 증시·금 -->
   <section class="mx-sec" id="markets" data-sec="markets" hidden>
     <h2>미국 증시·금</h2>
+    <ul class="mx-brief" data-draw="b-markets" aria-label="미국 증시·금 최근 동향 요약"></ul>
     <div class="mx-grid">
       <div class="mx-card" id="card-dji"><h3>다우존스 산업평균지수</h3><p>미국 대형 우량주 30개. 일별 종가(포인트).</p><div class="mx-chart" data-draw="ch-dji" data-source="markets"></div>
         <p class="mx-trend" data-draw="t-dji"></p>
@@ -399,6 +409,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <!-- 유가·달러·위험 -->
   <section class="mx-sec" id="risk" data-sec="risk" hidden>
     <h2>유가·달러·위험</h2>
+    <ul class="mx-brief" data-draw="b-risk" aria-label="유가·달러·위험 최근 동향 요약"></ul>
     <div class="mx-grid">
       <div class="mx-card" id="card-oil"><h3>국제 유가 (달러/배럴)</h3><p>WTI와 브렌트 원유 일별 가격.</p><div class="mx-chart" data-draw="ch-oil" data-source="risk"></div>
         <p class="mx-trend" data-draw="t-oil"></p>
@@ -426,6 +437,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <!-- 미국 부채·국채 -->
   <section class="mx-sec" id="us-debt" data-sec="us-debt" hidden>
     <h2>미국 부채·국채</h2>
+    <ul class="mx-brief" data-draw="b-us-debt" aria-label="미국 부채·국채 최근 동향 요약"></ul>
     <div class="mx-card mx-guide" id="debt-guide">
       <h3>이 탭 쉽게 읽기</h3>
       <p class="mx-lead">한 줄 요약: 미국 정부가 <b>빚을 얼마나 빨리</b>, <b>어떤 만기로</b> 빌리는지 보는 탭입니다. 이게 미국 장기 금리를 움직이고, 장기 금리는 환율·주식·내 대출 금리까지 이어집니다.</p>
@@ -502,6 +514,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   <!-- 인구 -->
   <section class="mx-sec" id="demog" data-sec="demog" hidden>
     <h2>인구</h2>
+    <ul class="mx-brief" data-draw="b-demog" aria-label="인구 최근 동향 요약"></ul>
     <p class="mx-note">세계은행 연간 자료입니다(출산율은 1~2년 늦게 발표). 1960년부터 전체 기간을 보여주며, 끌어서 원하는 기간을 확대할 수 있어요.</p>
     <div class="mx-grid">
       <div class="mx-card" id="card-tfr"><h3>합계출산율: 한국 vs 미국</h3><p>여성 한 명이 평생 낳을 것으로 예상되는 아이 수. 점선 2.1명은 인구가 유지되는 수준.</p><div class="mx-chart" data-draw="ch-tfr" data-source="demog"></div>
@@ -1263,6 +1276,7 @@ dash.draw('ch-curve', (el) => {
   };
   const thisMonth = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 7); // 한국 시간 기준 이번 달
   const partial = (m) => (m === thisMonth ? '(이번 달은 아직 진행 중이라 지금까지의 평균입니다)' : '');
+  window.mxT = { ok, two, ago, sg, f1, f2, won, mon, day };
   const say = (name, sources, fn, label = '최근 1달') => dash.draw(name, (el) => {
     const ds = sources.map((s) => dash.data(s));
     if (ds.some((d) => d.status !== 'ok' || !Array.isArray(d.data) || !d.data.length)) { el.replaceChildren(); return; }
@@ -1637,6 +1651,124 @@ dash.draw('debt-check', (el) => {
   }
 })();
 </script>
+<script>
+// ---------- 탭별 최근 동향 요약(2~3줄) ----------
+// 각 탭 맨 위 <ul class="mx-brief" data-draw="b-탭id">. 문장은 모두 데이터로 만듭니다.
+(() => {
+  const { ok, two, ago, sg, f1, f2, won, mon, day } = window.mxT;
+  const pc = (a, b) => (b / a - 1) * 100;
+  const sp = (v, d = 1) => `${v >= 0 ? '+' : '−'}${d3.format(`.${d}f`)(Math.abs(v))}%`; // 부호 있는 %
+  const ev = (rows, kind) => rows.filter((r) => r.kind === kind);
+  const brief = (tab, sources, fn) => dash.draw('b-' + tab, (el) => {
+    const ds = sources.map((s) => dash.data(s));
+    if (ds.some((d) => d.status !== 'ok' || !Array.isArray(d.data) || !d.data.length)) { el.replaceChildren(); return; }
+    let lines = [];
+    try { lines = fn(...ds.map((d) => d.data)).filter(Boolean); } catch (e) { console.error('b-' + tab, e); }
+    el.replaceChildren(...lines.map((t) => { const li = document.createElement('li'); li.textContent = t.replace(/\s+/g, ' ').trim(); return li; }));
+  });
+  // 연준·한은 마지막 금리 변경 설명
+  const lastMove = (e) => (e ? `${day(e.date)} ${f2(Math.abs(+e.c))}%p ${+e.c > 0 ? '인상' : '인하'} 후` : '');
+
+  brief('summary', ['us_rates', 'kr_rates', 'events', 'inflation', 'jobs', 'markets', 'risk'], (us, kr, evs, inf, jobs, mk, rk) => {
+    const u = us.filter((r) => ok(r.t10y)).at(-1), b = two(kr, 'base')[1];
+    const fed = ev(evs, 'fed').at(-1), bok = ev(evs, 'bok').at(-1);
+    const c = two(inf, 'cpi_yoy')[1], j = two(jobs, 'payems_3m')[1];
+    const d = ago(mk, 'date', 'ixic'), dj = ago(mk, 'date', 'dji'), v = rk.filter((r) => ok(r.vix)).at(-1);
+    return [
+      `금리: 연준 ${f2(+u.fed_lower)}~${f2(+u.fed_upper)}%(${lastMove(fed)} 유지), 한국은행 ${f2(+b.base)}%(${lastMove(bok)} 유지). 미 10년물은 ${f2(+u.t10y)}%입니다.`,
+      `미국 경제: ${mon(c.month)} CPI ${f2(+c.cpi_yoy)}%로 연준 목표(2%)보다 높고, 고용은 3개월 평균 월 ${f1(+j.payems_3m)}만 명 증가, 실업률 ${f1(+j.unrate)}%입니다.`,
+      `시장(최근 1달): 다우 ${sp(pc(+dj.prev.dji, +dj.last.dji))}, 나스닥 ${sp(pc(+d.prev.ixic, +d.last.ixic))}, VIX ${f1(+v.vix)}${+v.vix >= 30 ? '(공포 국면)' : +v.vix >= 20 ? '(불안)' : ''}.`,
+    ];
+  });
+
+  brief('krw', ['krw_value', 'm2_yoy'], (kv, m2) => {
+    const [a, b] = two(kv, 'usdkrw'), y = kv.find((r) => r.month === `${+b.month.slice(0, 4) - 1}${b.month.slice(4)}`);
+    const g = (r) => +r.gold_usd_oz * +r.usdkrw / 31.1035;
+    const k = two(m2, 'kr_yoy')[1], us = two(m2, 'us_yoy')[1];
+    return [
+      `원/달러는 ${mon(b.month)} 평균 ${won(+b.usdkrw)}원으로 한 달 새 ${sp(pc(+a.usdkrw, +b.usdkrw))}${y ? `, 1년 새 ${sp(pc(+y.usdkrw, +b.usdkrw))}` : ''}입니다. ${y ? (+b.usdkrw < +y.usdkrw ? '1년 전보다 원화가 강해졌습니다.' : '1년 전보다 원화가 약해졌습니다.') : ''}`,
+      `금 1g은 ${won(g(b))}원으로 한 달 새 ${sp(pc(g(a), g(b)))}${y ? `, 1년 새 ${sp(pc(g(y), g(b)))}` : ''}입니다.`,
+      `통화량(M2)은 1년 전보다 한국 ${f2(+k.kr_yoy)}%, 미국 ${f2(+us.us_yoy)}% 늘었습니다(${mon(k.month)} 기준).`,
+    ];
+  });
+
+  brief('kr-rates', ['kr_rates', 'events'], (kr, evs) => {
+    const b = two(kr, 'base')[1], [ta, tb] = two(kr, 'ktb3y'), [la, lb] = two(kr, 'ktb10y'), [ma, mb] = two(kr, 'mortgage'), [ka, kb] = two(kr, 'kdb1y');
+    const bok = ev(evs, 'bok').at(-1);
+    return [
+      `한국은행 기준금리는 ${f2(+b.base)}%입니다${bok ? `(${day(bok.date)} ${f2(Math.abs(+bok.c))}%p ${+bok.c > 0 ? '인상' : '인하'})` : ''}. 국고채 3년 ${f2(+tb.ktb3y)}%(${sg(+tb.ktb3y - +ta.ktb3y)}), 10년 ${f2(+lb.ktb10y)}%(${sg(+lb.ktb10y - +la.ktb10y)})입니다(${mon(lb.month)} 평균, 전달 대비).`,
+      `${+tb.ktb3y > +b.base + 0.25 ? '3년물이 기준금리보다 꽤 높아, 시장은 추가 인하보다 동결·인상 쪽을 보고 있습니다.' : +tb.ktb3y < +b.base - 0.1 ? '3년물이 기준금리보다 낮아, 시장은 금리 인하를 예상하고 있습니다.' : '3년물이 기준금리 근처라 당분간 동결 예상이 우세합니다.'}`,
+      `은행채(산금채 1년)는 ${f2(+kb.kdb1y)}%(${sg(+kb.kdb1y - +ka.kdb1y)}), 주담대 금리는 ${mon(mb.month)} ${f2(+mb.mortgage)}%(${sg(+mb.mortgage - +ma.mortgage)})입니다.`,
+    ];
+  });
+
+  brief('us-rates', ['us_rates', 'events'], (us, evs) => {
+    const { prev, last } = ago(us, 'date', 't10y');
+    const fed = ev(evs, 'fed').at(-1);
+    const s0 = +prev.t10y - +prev.t2y, s1 = +last.t10y - +last.t2y;
+    return [
+      `연준 기준금리는 ${f2(+last.fed_lower)}~${f2(+last.fed_upper)}%입니다${fed ? `(마지막 변경: ${day(fed.date)} ${f2(Math.abs(+fed.c))}%p ${+fed.c > 0 ? '인상' : '인하'})` : ''}. ${+last.t2y > +last.fed_upper ? '2년물이 기준금리보다 높아 시장은 인하를 기대하지 않는 모습입니다.' : +last.t2y < +last.fed_lower ? '2년물이 기준금리보다 낮아 시장은 인하를 예상합니다.' : ''}`,
+      `한 달 새 2년물 ${f2(+last.t2y)}%(${sg(+last.t2y - +prev.t2y)}), 10년물 ${f2(+last.t10y)}%(${sg(+last.t10y - +prev.t10y)}), 30년물 ${f2(+last.t30y)}%(${sg(+last.t30y - +prev.t30y)})입니다.`,
+      `10년−2년 금리차는 ${f2(s1)}%p로 ${s1 < 0 ? '역전 상태입니다.' : s1 > s0 ? '벌어졌습니다.' : '좁아졌습니다.'}`,
+    ];
+  });
+
+  brief('us-macro', ['inflation', 'jobs', 'claims'], (inf, jobs, cl) => {
+    const [ca, cb] = two(inf, 'cpi_yoy'), p = two(inf, 'core_pce_yoy')[1], j = two(jobs, 'payems_3m')[1];
+    const c4 = cl.filter((r) => ok(r.claims_4w)).at(-1);
+    return [
+      `${mon(cb.month)} CPI 상승률은 ${f2(+cb.cpi_yoy)}%로 전달(${f2(+ca.cpi_yoy)}%)보다 ${+cb.cpi_yoy > +ca.cpi_yoy ? '높아졌고' : '낮아졌고'}, 연준이 보는 근원 PCE는 ${f2(+p.core_pce_yoy)}%로 목표 2%를 ${+p.core_pce_yoy > 2 ? '웃돕니다' : '밑돕니다'}.`,
+      `고용은 ${mon(j.month)} ${+j.payems_chg >= 0 ? '+' : '−'}${f1(Math.abs(+j.payems_chg))}만 명(3개월 평균 ${f1(+j.payems_3m)}만 명), 실업률 ${f1(+j.unrate)}%입니다. 신규 실업수당 청구 4주 평균은 ${f1(+c4.claims_4w)}만 건입니다.`,
+      `${+p.core_pce_yoy > 2.5 && +j.payems_3m > 10 ? '물가가 목표보다 높고 고용도 버티고 있어, 연준이 금리를 서둘러 내릴 이유가 적은 상황입니다.' : +j.payems_3m < 5 ? '고용이 약해지고 있어 금리 인하 압력이 커지는 상황입니다.' : ''}`,
+    ];
+  });
+
+  brief('markets', ['markets', 'm7'], (mk, m7) => {
+    const r = (k) => { const { prev, last } = ago(mk, 'date', k); return pc(+prev[k], +last[k]); };
+    const hi = (k) => { const v = mk.filter((x) => ok(x[k])); return (+v.at(-1)[k] / d3.max(v, (x) => +x[k]) - 1) * 100; };
+    const names = [['aapl', '애플'], ['msft', '마이크로소프트'], ['googl', '알파벳'], ['amzn', '아마존'], ['meta', '메타'], ['nvda', '엔비디아'], ['tsla', '테슬라']];
+    const res = names.map(([k, n]) => [n, r(k)]).sort((a, b) => b[1] - a[1]);
+    const g = ago(mk, 'date', 'gold');
+    return [
+      `최근 1달 다우 ${sp(r('dji'))}, 나스닥 ${sp(r('ixic'))}입니다. 사상 최고치 대비 다우 ${sp(hi('dji'))}, 나스닥 ${sp(hi('ixic'))}${Math.min(hi('dji'), hi('ixic')) <= -10 ? '로 조정 구간에 있습니다.' : '입니다.'}`,
+      `M7 중 가장 강한 종목은 ${res[0][0]}(${sp(res[0][1])}), 가장 약한 종목은 ${res[6][0]}(${sp(res[6][1])})입니다.`,
+      `국제 금값은 온스당 ${won(+g.last.gold)}달러로 한 달 새 ${sp(pc(+g.prev.gold, +g.last.gold))}입니다.`,
+    ];
+  });
+
+  brief('risk', ['risk'], (rk) => {
+    const c = (k) => ago(rk, 'date', k);
+    const w = c('wti'), x = c('dxy'), rr = c('real10'), be = c('bei10'), v = c('vix'), h = c('hy');
+    return [
+      `유가(WTI)는 ${f1(+w.last.wti)}달러로 한 달 새 ${sp(pc(+w.prev.wti, +w.last.wti))}, 달러 인덱스는 ${sp(pc(+x.prev.dxy, +x.last.dxy))}로 달러가 ${+x.last.dxy >= +x.prev.dxy ? '강해졌습니다' : '약해졌습니다'}.`,
+      `10년 실질금리 ${f2(+rr.last.real10)}%(${sg(+rr.last.real10 - +rr.prev.real10)}), 기대인플레이션 ${f2(+be.last.bei10)}%(${sg(+be.last.bei10 - +be.prev.bei10)})입니다.`,
+      `VIX는 ${f1(+v.last.vix)}${+v.last.vix >= 30 ? '(공포)' : +v.last.vix >= 20 ? '(불안)' : '(안정)'}, 하이일드 스프레드는 ${f2(+h.last.hy)}%p${+h.last.hy >= 5 ? '(신용 불안)' : +h.last.hy < 4 ? '(낙관)' : ''}입니다.`,
+    ];
+  });
+
+  brief('us-debt', ['us_debt', 'fiscal', 'comp_share'], (debt, fis, comp) => {
+    const L = debt.at(-1), t = new Date(L.date); t.setUTCFullYear(t.getUTCFullYear() - 1);
+    const iso = t.toISOString().slice(0, 10); let P = debt[0]; for (const r of debt) if (r.date <= iso) P = r;
+    const F = fis.at(-1), b = +comp.at(-1).bills;
+    const warn = document.querySelectorAll('[data-draw="debt-check"] .mx-chip.mx-warn').length;
+    return [
+      `연방 총부채는 ${f2(+L.total_tril)}조 달러로 1년 새 ${f2(+L.total_tril - +P.total_tril)}조 달러(${sp(pc(+P.total_tril, +L.total_tril))}) 늘었습니다.`,
+      `연간 국채 이자 ${f2(+F.interest)}조 달러로 국방비(${f2(+F.defense)}조 달러)${+F.interest >= +F.defense ? '를 넘었습니다' : '에 육박합니다'}. T-bill 비중은 ${f1(b)}%${b > 20 ? '로 권고 범위(15~20%) 위입니다' : '입니다'}.`,
+      warn ? `아래 상태 체크 4개 중 ${warn}개가 '주의'입니다.` : '',
+    ];
+  });
+
+  brief('demog', ['demog'], (dm) => {
+    const k = two(dm, 'tfr_kr')[1], u = two(dm, 'tfr_us')[1], o = two(dm, 'old_kr')[1];
+    const w = dm.filter((r) => ok(r.work_kr)), pk = w.reduce((a, r) => (+r.work_kr > +a.work_kr ? r : a)), wl = w.at(-1);
+    return [
+      `합계출산율은 ${k.year}년 한국 ${f2(+k.tfr_kr)}명, 미국 ${f2(+u.tfr_us)}명으로, 한국은 인구 유지 수준(2.1명)의 ${f1(+k.tfr_kr / 2.1 * 100)}%에 그칩니다.`,
+      `한국의 65세 이상 비중은 ${o.year}년 ${f1(+o.old_kr)}%로 ${+o.old_kr >= 20 ? '초고령사회에 들어섰고' : '고령사회이고'}, 일하는 나이(15~64세) 비중은 ${pk.year}년 정점(${f1(+pk.work_kr)}%) 이후 ${f1(+wl.work_kr)}%로 줄었습니다.`,
+    ];
+  });
+})();
+</script>
+
 <script>
 // ---------- 데이터 갱신 시각 ----------
 dash.draw("updated", (el) => {
