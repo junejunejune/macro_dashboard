@@ -1,94 +1,94 @@
 {
   "datasets": {
     "krw_value": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "money_supply": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "kr_rates": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "us_rates": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "us_debt": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "treasury_composition": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "treasury_issuance": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "us_macro": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "us_claims": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "markets": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "events": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "risk": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "fiscal": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "demog": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "auctions": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "tga": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "deficit": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "avgrate": {
       "error": null,
       "failedAt": "2026-11-21T06:20:46.734Z",
-      "updated": "2026-11-22T01:57:15.496Z"
+      "updated": "2026-11-23T02:22:57.046Z"
     },
     "schd": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "china_gold": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "wgc_cb": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     },
     "termprem": {
-      "updated": "2026-11-22T01:57:15.496Z",
+      "updated": "2026-11-23T02:22:57.046Z",
       "error": null
     }
   },
-  "checked": "2026-11-22T01:57:15.496Z"
+  "checked": "2026-11-23T02:22:57.046Z"
 }
