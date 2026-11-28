@@ -1,98 +1,98 @@
 {
   "datasets": {
     "krw_value": {
-      "updated": "2026-11-27T03:58:54.196Z",
+      "updated": "2026-11-28T03:46:16.114Z",
       "error": null
     },
     "money_supply": {
-      "updated": "2026-11-27T03:58:54.196Z",
+      "updated": "2026-11-28T03:46:16.114Z",
       "error": null
     },
     "kr_rates": {
-      "updated": "2026-11-27T03:58:54.196Z",
+      "updated": "2026-11-28T03:46:16.114Z",
       "error": null
     },
     "us_rates": {
-      "updated": "2026-11-27T03:58:54.196Z",
+      "updated": "2026-11-28T03:46:16.114Z",
       "error": null
     },
     "us_debt": {
-      "updated": "2026-11-26T04:00:17.881Z",
-      "error": "요청 실패: https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?fields=record_date,tot_pub_debt_out_amt,debt_held_public_amt,intragov_hold_amt&filter=record_date:gte:2015-01-01&sort=record_date&page%5Bsize%5D=10000&page%5Bnumber%5D=1",
+      "updated": "2026-11-28T03:46:16.114Z",
+      "error": null,
       "failedAt": "2026-11-27T03:58:54.196Z"
     },
     "treasury_composition": {
-      "updated": "2026-11-26T04:00:17.881Z",
-      "error": "요청 실패: https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/debt/mspd/mspd_table_1?fields=record_date,security_type_desc,security_class_desc,total_mil_amt&filter=record_date:gte:2015-01-01,security_type_desc:eq:Marketable&sort=record_date&page%5Bsize%5D=10000&page%5Bnumber%5D=1",
+      "updated": "2026-11-28T03:46:16.114Z",
+      "error": null,
       "failedAt": "2026-11-27T03:58:54.196Z"
     },
     "treasury_issuance": {
-      "updated": "2026-11-26T04:00:17.881Z",
-      "error": "요청 실패: https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/auctions_query?fields=issue_date,security_type,total_accepted,offering_amt,inflation_index_security,floating_rate&filter=issue_date:gte:2018-01-01&sort=issue_date&page%5Bsize%5D=10000&page%5Bnumber%5D=1",
+      "updated": "2026-11-28T03:46:16.114Z",
+      "error": null,
       "failedAt": "2026-11-27T03:58:54.196Z"
     },
     "us_macro": {
-      "updated": "2026-11-27T03:58:54.196Z",
+      "updated": "2026-11-28T03:46:16.114Z",
       "error": null
     },
     "us_claims": {
-      "updated": "2026-11-27T03:58:54.196Z",
+      "updated": "2026-11-28T03:46:16.114Z",
       "error": null
     },
     "markets": {
-      "updated": "2026-11-27T03:58:54.196Z",
+      "updated": "2026-11-28T03:46:16.114Z",
       "error": null
     },
     "events": {
-      "updated": "2026-11-27T03:58:54.196Z",
+      "updated": "2026-11-28T03:46:16.114Z",
       "error": null
     },
     "risk": {
-      "updated": "2026-11-27T03:58:54.196Z",
+      "updated": "2026-11-28T03:46:16.114Z",
       "error": null
     },
     "fiscal": {
-      "updated": "2026-11-27T03:58:54.196Z",
+      "updated": "2026-11-28T03:46:16.114Z",
       "error": null
     },
     "demog": {
-      "updated": "2026-11-27T03:58:54.196Z",
+      "updated": "2026-11-28T03:46:16.114Z",
       "error": null
     },
     "auctions": {
-      "updated": "2026-11-26T04:00:17.881Z",
-      "error": "요청 실패: https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/auctions_query?fields=auction_date,security_term,original_security_term,inflation_index_security,bid_to_cover_ratio,high_yield,comp_accepted,indirect_bidder_accepted,direct_bidder_accepted,primary_dealer_accepted&filter=original_security_term:in:(10-Year,30-Year),auction_date:gte:2019-01-01&sort=auction_date&page%5Bsize%5D=10000&page%5Bnumber%5D=1",
+      "updated": "2026-11-28T03:46:16.114Z",
+      "error": null,
       "failedAt": "2026-11-27T03:58:54.196Z"
     },
     "tga": {
-      "updated": "2026-11-27T03:58:54.196Z",
+      "updated": "2026-11-28T03:46:16.114Z",
       "error": null
     },
     "deficit": {
-      "updated": "2026-11-27T03:58:54.196Z",
+      "updated": "2026-11-28T03:46:16.114Z",
       "error": null
     },
     "avgrate": {
-      "error": "요청 실패: https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?fields=record_date,security_desc,avg_interest_rate_amt&filter=record_date:gte:2015-01-01,security_desc:in:(Total%20Marketable,Treasury%20Bills,Treasury%20Notes,Treasury%20Bonds)&sort=record_date&page%5Bsize%5D=10000&page%5Bnumber%5D=1",
+      "error": null,
       "failedAt": "2026-11-27T03:58:54.196Z",
-      "updated": "2026-11-26T04:00:17.881Z"
+      "updated": "2026-11-28T03:46:16.114Z"
     },
     "schd": {
-      "updated": "2026-11-27T03:58:54.196Z",
+      "updated": "2026-11-28T03:46:16.114Z",
       "error": null
     },
     "china_gold": {
-      "updated": "2026-11-27T03:58:54.196Z",
+      "updated": "2026-11-28T03:46:16.114Z",
       "error": null
     },
     "wgc_cb": {
-      "updated": "2026-11-27T03:58:54.196Z",
+      "updated": "2026-11-28T03:46:16.114Z",
       "error": null
     },
     "termprem": {
-      "updated": "2026-11-27T03:58:54.196Z",
+      "updated": "2026-11-28T03:46:16.114Z",
       "error": null
     }
   },
-  "checked": "2026-11-27T03:58:54.196Z"
+  "checked": "2026-11-28T03:46:16.114Z"
 }
